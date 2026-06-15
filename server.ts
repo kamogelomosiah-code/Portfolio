@@ -76,12 +76,12 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     }
 
     const hfClient = new InferenceClient(process.env.HF_TOKEN);
+    // @ts-ignore - The user's snippet uses 'data' but the types request 'inputs'
     const output = await hfClient.automaticSpeechRecognition({
-      // @ts-ignore - The user's snippet uses 'data' but the types request 'inputs'
       data: req.file.buffer,
       model: "nvidia/nemotron-3.5-asr-streaming-0.6b:fastest",
       provider: "auto",
-    });
+    } as any);
 
     return res.status(200).json({ text: output.text });
   } catch (error: any) {

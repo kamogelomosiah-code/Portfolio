@@ -61,78 +61,73 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4 }}
-      className="flex-1 h-full w-full bg-[#F9F9F9] text-black flex flex-col overflow-hidden relative"
+      className="flex-1 h-full w-full bg-[#F8F9FA] text-[#202124] flex flex-col overflow-hidden relative"
     >
-      {/* Top Navbar with Back Button */}
-      <div className="w-full h-20 flex items-center justify-between px-4 sm:px-6 bg-[#F9F9F9] z-10 shrink-0 border-b border-gray-200/60">
-        <div className="flex items-center gap-3 m-0 p-0">
+      {/* Top Navbar with Back Button - Material 3 */}
+      <div className="w-full h-[64px] flex items-center justify-between px-2 sm:px-4 bg-white z-20 shrink-0 border-b border-gray-200 shadow-sm">
+        <div className="flex items-center gap-2 m-0 p-0">
           <button 
             onClick={onBackToChat}
-            className="flex items-center justify-center w-10 h-10 border border-gray-200 bg-white hover:bg-gray-50 text-black transition-colors shadow-sm cursor-pointer shrink-0 m-0"
-            style={{ borderRadius: '100%' }}
+            className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-black/5 text-[#5F6368] transition-colors cursor-pointer shrink-0 m-0 border-0 bg-transparent"
             title="Back to conversational agent"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={24} />
           </button>
-          <h1 className="font-semibold text-lg text-black tracking-tight font-sans m-0 p-0">Curriculum Vitae</h1>
+          <h1 className="font-medium text-[20px] text-[#202124] tracking-normal font-display m-0 p-0 ml-1">Curriculum Vitae</h1>
         </div>
       </div>
 
-      {/* Main Content Area - Flush on mobile, card on desktop */}
-      <div className="flex-1 overflow-y-auto w-full md:w-auto flex flex-col items-center pb-32 px-6 md:px-12 bg-white md:rounded-tl-2xl md:shadow-sm md:border md:border-gray-100 md:mx-4 md:mt-2 mx-0 mt-0 border-0 rounded-none shadow-none">
-        <div className="w-full max-w-4xl pt-10 md:pt-14 font-sans">
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6">
+        <div className="w-full max-w-4xl pt-8 sm:pt-10">
           
           {/* Header Block inline within the sheet */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-8 border-b border-gray-100 mb-12">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-gray-200 mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="text-accent" size={24} />
-                <span className="text-xs font-semibold tracking-widest text-gray-400 uppercase">Curriculum Vitae</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-black mt-2 tracking-tight">
+              <h1 className="text-[32px] md:text-[40px] font-medium text-[#202124] tracking-normal font-display">
                 Kamogelo Mosia
               </h1>
-              <p className="text-gray-500 text-lg mt-1 font-medium">
-                IT Intern | BSc Computer Science & Informatics Graduate
+              <p className="text-[#5F6368] text-[18px] mt-1 font-medium tracking-wide">
+                IT Intern | BSc Computer Science
               </p>
-              <div className="flex flex-wrap gap-4 text-xs font-mono text-gray-400 mt-4">
-                <span className="flex items-center gap-1.5"><Mail size={12} /> kamogelomosiah@gmail.com</span>
-                <span className="flex items-center gap-1.5"><MapPin size={12} /> Alexandra, Johannesburg</span>
+              <div className="flex flex-wrap gap-4 text-[13px] font-medium text-[#5F6368] mt-4">
+                <span className="flex items-center gap-1.5"><Mail size={16} className="text-[#1A73E8]" /> kamogelomosiah@gmail.com</span>
+                <span className="flex items-center gap-1.5"><MapPin size={16} className="text-[#1A73E8]" /> Johannesburg, SA</span>
               </div>
             </div>
 
-            <button className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full hover:bg-accent transition-colors font-semibold text-sm cursor-pointer shadow-sm">
-              Download PDF CV <Download size={14} />
+            <button className="flex items-center gap-2 bg-[#1A73E8] text-white px-6 py-3 rounded-full hover:bg-[#1557B0] transition-colors font-medium text-[14px] cursor-pointer shadow-sm border-0">
+              Download PDF <Download size={18} />
             </button>
           </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
           {/* Timeline and Details (Col-span 2) */}
           <div className="lg:col-span-2 flex flex-col gap-10">
             <div>
-              <h2 className="text-xl font-bold mb-6 text-black border-l-4 border-accent pl-4">
+              <h2 className="text-[20px] font-medium mb-6 text-[#1A73E8] border-l-4 border-[#1A73E8] pl-4 font-display">
                 Work Experience
               </h2>
-              <div className="flex flex-col gap-8 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100">
+              <div className="flex flex-col gap-8 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-200">
                 {experiences.map((exp, i) => (
                   <div key={i} className="relative pl-10">
                     {/* Ring Indicator */}
-                    <div className="absolute left-[9px] top-1.5 w-4 h-4 rounded-full border border-accent bg-white flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+                    <div className="absolute left-[9px] top-1.5 w-4 h-4 rounded-full border border-[#1A73E8] bg-white flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 bg-[#1A73E8] rounded-full" />
                     </div>
 
-                    <p className="flex items-center gap-2 text-xs font-mono text-accent uppercase font-bold">
-                      <Calendar size={12} /> {exp.period}
+                    <p className="flex items-center gap-2 text-[12px] font-mono text-[#1A73E8] uppercase font-medium">
+                      <Calendar size={14} /> {exp.period}
                     </p>
-                    <h3 className="text-lg font-bold text-black mt-1">
-                      {exp.role} <span className="text-gray-400 font-normal">at {exp.company}</span>
+                    <h3 className="text-[18px] font-medium text-[#202124] mt-1 font-display">
+                      {exp.role} <span className="text-[#5F6368] font-normal">at {exp.company}</span>
                     </h3>
-                    <p className="text-xs text-gray-400 mt-0.5">{exp.location}</p>
+                    <p className="text-[13px] text-[#5F6368] mt-0.5">{exp.location}</p>
 
                     <ul className="mt-4 flex flex-col gap-2.5">
                       {exp.bullets.map((bullet, idx) => (
-                        <li key={idx} className="text-gray-600 text-sm leading-relaxed relative pl-4 before:absolute before:left-0 before:top-2.5 before:w-1.5 before:h-1.5 before:bg-gray-300 before:rounded-full">
+                        <li key={idx} className="text-[#444746] text-[14px] leading-relaxed relative pl-4 before:absolute before:left-0 before:top-2.5 before:w-1.5 before:h-1.5 before:bg-[#E8EAED] before:rounded-full">
                           {bullet}
                         </li>
                       ))}
@@ -143,18 +138,18 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
             </div>
 
             <div>
-              <h2 className="text-xl font-bold mb-6 text-black border-l-4 border-accent pl-4">
+              <h2 className="text-[20px] font-medium mb-6 text-[#1A73E8] border-l-4 border-[#1A73E8] pl-4 font-display">
                 Education
               </h2>
-              <div className="flex flex-col gap-8 pl-4 border-l border-gray-100">
+              <div className="flex flex-col gap-8 pl-4 border-l border-gray-200">
                 {education.map((edu, i) => (
                   <div key={i} className="flex flex-col gap-1">
-                    <p className="text-xs font-mono text-gray-400">{edu.period}</p>
-                    <h3 className="text-base font-bold text-black">
+                    <p className="text-[12px] font-mono text-[#5F6368]">{edu.period}</p>
+                    <h3 className="text-[16px] font-medium text-[#202124] font-display">
                       {edu.degree}
                     </h3>
-                    <p className="text-sm font-semibold text-accent">{edu.school} {edu.grade && `| ${edu.grade}`}</p>
-                    {edu.details && <p className="text-sm text-gray-500 mt-1 leading-relaxed">{edu.details}</p>}
+                    <p className="text-[14px] font-medium text-[#1A73E8]">{edu.school} {edu.grade && `| ${edu.grade}`}</p>
+                    {edu.details && <p className="text-[14px] text-[#444746] mt-1 leading-relaxed">{edu.details}</p>}
                   </div>
                 ))}
               </div>
@@ -162,68 +157,68 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
           </div>
 
           {/* Core Technical skills, Sidebar layout (Col-span 1) */}
-          <div className="flex flex-col gap-8">
-            <div className="border border-gray-100 rounded-[20px] p-6 bg-gray-50/50">
-              <h3 className="text-sm font-bold text-black tracking-widest uppercase mb-4">
+          <div className="flex flex-col gap-6">
+            <div className="border border-gray-200 rounded-[24px] p-6 bg-white shadow-sm">
+              <h3 className="text-[14px] font-medium text-[#5F6368] tracking-wide mb-5 uppercase">
                 Technical Toolkit
               </h3>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 <div>
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span>Systems & Networking</span>
-                    <span>88%</span>
+                  <div className="flex justify-between text-[13px] font-medium mb-1">
+                    <span className="text-[#202124]">Systems & Networking</span>
+                    <span className="text-[#1A73E8]">88%</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-accent h-full rounded-full" style={{ width: "88%" }} />
+                  <div className="w-full bg-[#E8EAED] h-2 rounded-full overflow-hidden">
+                    <div className="bg-[#1A73E8] h-full rounded-full" style={{ width: "88%" }} />
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">Windows, macOS, Linux, TCP/IP, DNS, DHCP</p>
+                  <p className="text-[11px] text-[#5F6368] mt-1.5">Windows, macOS, Linux, TCP/IP, DNS, DHCP</p>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span>Software Development</span>
-                    <span>85%</span>
+                  <div className="flex justify-between text-[13px] font-medium mb-1">
+                    <span className="text-[#202124]">Software Development</span>
+                    <span className="text-[#1A73E8]">85%</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-accent h-full rounded-full" style={{ width: "85%" }} />
+                  <div className="w-full bg-[#E8EAED] h-2 rounded-full overflow-hidden">
+                    <div className="bg-[#1A73E8] h-full rounded-full" style={{ width: "85%" }} />
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">JavaScript, TypeScript, PHP, React.js, Laravel</p>
+                  <p className="text-[11px] text-[#5F6368] mt-1.5">JavaScript, TypeScript, PHP, React.js, Laravel</p>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span>IT Configurations & Diagnostic</span>
-                    <span>90%</span>
+                  <div className="flex justify-between text-[13px] font-medium mb-1">
+                    <span className="text-[#202124]">IT Config & Diagnostic</span>
+                    <span className="text-[#1A73E8]">90%</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-accent h-full rounded-full" style={{ width: "90%" }} />
+                  <div className="w-full bg-[#E8EAED] h-2 rounded-full overflow-hidden">
+                    <div className="bg-[#1A73E8] h-full rounded-full" style={{ width: "90%" }} />
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">PC setup, diagnostic support, SSD/RAM upgrades</p>
+                  <p className="text-[11px] text-[#5F6368] mt-1.5">PC setup, diagnostic support, SSD/RAM upgrades</p>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span>Databases & Gateway</span>
-                    <span>82%</span>
+                  <div className="flex justify-between text-[13px] font-medium mb-1">
+                    <span className="text-[#202124]">Databases & Gateway</span>
+                    <span className="text-[#1A73E8]">82%</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-accent h-full rounded-full" style={{ width: "82%" }} />
+                  <div className="w-full bg-[#E8EAED] h-2 rounded-full overflow-hidden">
+                    <div className="bg-[#1A73E8] h-full rounded-full" style={{ width: "82%" }} />
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">MySQL, PostgreSQL, REST APIs integrations</p>
+                  <p className="text-[11px] text-[#5F6368] mt-1.5">MySQL, PostgreSQL, REST APIs integrations</p>
                 </div>
               </div>
             </div>
 
-            <div className="border border-gray-100 rounded-[20px] p-6 bg-white shadow-sm">
+            <div className="border border-[#FCE8E6] rounded-[24px] p-6 bg-[#FEF7F6] shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <Award size={16} className="text-accent" />
-                <h3 className="text-sm font-bold text-black tracking-widest uppercase">
+                <Award size={18} className="text-[#D93025]" />
+                <h3 className="text-[14px] font-medium text-[#C5221F] tracking-wide uppercase">
                   Honors & Awards
                 </h3>
               </div>
               <div className="flex flex-col gap-3">
                 {achievements.map((ach, i) => (
-                  <div key={i} className="text-xs text-gray-600 border-l-2 border-gray-200 pl-3 py-1 bg-gray-50/50 rounded-r-md">
+                  <div key={i} className="text-[13px] text-[#202124] border-l-2 border-[#D93025]/30 pl-3 py-1.5 bg-white/50 rounded-r-[8px]">
                     {ach}
                   </div>
                 ))}

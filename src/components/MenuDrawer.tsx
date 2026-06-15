@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X, Sparkles, Code2, FileText, Mail, PlusCircle, Github, Linkedin, ExternalLink } from "lucide-react";
+import { Menu, X, Sparkles, Code2, FileText, Mail, PlusCircle, Github, Linkedin } from "lucide-react";
 import appIcon from "../assets/app_icon.png";
 
 interface MenuDrawerProps {
@@ -11,71 +11,55 @@ interface MenuDrawerProps {
 
 export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }: MenuDrawerProps) {
   const menuItems = [
-    { id: "chat", label: "Kamo AI Agent Chat", icon: <Sparkles size={18} />, desc: "Ask the AI anything about my work" },
-    { id: "projects", label: "My Live Projects", icon: <Code2 size={18} />, desc: "Explore CallTrax and PortfoliAI" },
-    { id: "cv", label: "Interactive Resume / CV", icon: <FileText size={18} />, desc: "My career history and skill stack" },
-    { id: "contact", label: "Get In Touch", icon: <Mail size={18} />, desc: "Drop me an email directly" }
+    { id: "chat", label: "Chat Assistant", icon: <Sparkles size={20} />, desc: "Ask the AI anything" },
+    { id: "projects", label: "Projects", icon: <Code2 size={20} />, desc: "Explore Live Projects" },
+    { id: "cv", label: "Resume / CV", icon: <FileText size={20} />, desc: "Career history & skills" },
+    { id: "contact", label: "Contact", icon: <Mail size={20} />, desc: "Get in touch directly" }
   ] as const;
 
   return (
     <>
-      {/* Floating Menu Toggle Button - Top Right */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-        <button
-          onClick={onToggle}
-          className="bg-black hover:bg-gray-800 text-white flex items-center justify-center w-12 h-12 transition-all duration-300 shadow-md border-0 group cursor-pointer"
-          style={{ borderRadius: '100%' }}
-          title="Open Navigation Options"
-          aria-label="Toggle Menu"
-          id="global-menu-btn"
-        >
-          {isOpen ? (
-            <X size={24} className="transform transition-transform duration-300" />
-          ) : (
-            <Menu size={24} className="transition-transform duration-300 text-white" />
-          )}
-        </button>
-      </div>
-
       {/* Backdrop */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
+            animate={{ opacity: 0.4 }}
             exit={{ opacity: 0 }}
             onClick={onToggle}
-            className="fixed inset-0 bg-black z-40 cursor-pointer"
+            className="fixed inset-0 bg-[#202124] z-40 cursor-pointer"
           />
         )}
       </AnimatePresence>
 
-      {/* Slide-out Menu Panel from Right */}
+      {/* Slide-out Menu Panel from Left to act as standard Nav Drawer */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ x: "100%" }}
+            initial={{ x: "-100%" }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 220 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-white border-l border-gray-100 z-40 p-8 flex flex-col justify-between shadow-2xl overflow-y-auto"
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 260 }}
+            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-[#F8F9FA] rounded-r-3xl z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r border-gray-200"
           >
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-6 flex-1">
               {/* Header */}
-              <div className="flex flex-col">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 border border-gray-100 bg-white overflow-hidden shadow-sm">
-                  <img src={appIcon} alt="App Icon" className="w-full h-full object-cover" />
+              <div className="flex flex-col px-4 pt-2">
+                <div className="w-[48px] h-[48px] rounded-full flex items-center justify-center mb-5 border border-gray-200 bg-white shadow-sm">
+                  <img src={appIcon} alt="App Icon" className="w-[80%] h-[80%] object-contain" />
                 </div>
-                <h3 className="font-display font-bold text-2xl tracking-tight text-black">
-                  Navigate Portfolio
+                <h3 className="font-display font-medium text-[22px] tracking-normal text-[#202124] leading-tight mb-1">
+                  Kamogelo Mosia
                 </h3>
-                <p className="text-xs text-gray-400 mt-1 uppercase font-semibold font-display tracking-widest">
-                  Custom Options Drawer
+                <p className="text-[14px] text-[#5F6368] font-normal">
+                  Interaction & Dev
                 </p>
               </div>
 
+              <div className="h-px bg-gray-200 my-1 mx-2" />
+
               {/* Main Options List */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1 w-full">
                 {menuItems.map((item) => {
                   const isActive = currentTab === item.id;
                   return (
@@ -85,92 +69,74 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                         onTabChange(item.id);
                         onToggle();
                       }}
-                      className={`text-left p-4 rounded-xl border flex items-start gap-3.5 transition-all cursor-pointer ${
+                      className={`text-left px-5 py-4 w-full rounded-full flex items-center gap-4 transition-colors cursor-pointer border-0 ${
                         isActive
-                          ? "border-accent bg-accent/5"
-                          : "border-gray-50 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-100"
+                          ? "bg-[#E8F0FE] text-[#1A73E8]"
+                          : "bg-transparent hover:bg-gray-100 text-[#444746]"
                       }`}
                     >
-                      <div className={`p-2.5 rounded-lg shrink-0 ${
-                        isActive ? "bg-accent text-white" : "bg-white border border-gray-100 text-gray-600"
-                      }`}>
+                      <div className="shrink-0">
                         {item.icon}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold truncate ${isActive ? "text-accent" : "text-black"}`}>
+                      <div className="flex-1 flex flex-col">
+                        <span className="text-[14px] font-medium leading-tight mb-0.5">
                           {item.label}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate leading-relaxed">
-                          {item.desc}
-                        </p>
+                        </span>
+                        {!isActive && (
+                           <span className="text-[12px] text-[#5F6368] leading-tight">
+                             {item.desc}
+                           </span>
+                        )}
                       </div>
                     </button>
                   );
                 })}
 
-                {/* VISUAL SPOTLIGHT PREPARED FOR DYNAMIC PAGE / BUTTON EXTENSION */}
-                <div className="border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/20 mt-4 flex flex-col gap-3">
-                  <div className="flex items-center gap-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    <PlusCircle size={14} className="text-gray-300" />
-                    <span>Expandable Slot</span>
-                  </div>
-                  <p className="text-[11px] text-gray-400 leading-relaxed">
-                    Insert your downstream routes, dynamic templates or external deep links inside this slot:
-                  </p>
-                  
-                  <div className="flex flex-col gap-2">
-                    {/* Visual Placeholders user requested: "reveling more options that I will use to add more buttons that will lead to more pages" */}
-                    <button
-                      disabled
-                      className="text-[11px] font-semibold text-gray-400 text-left border border-dashed border-gray-150 py-2.5 px-3 rounded-lg bg-white cursor-not-allowed flex items-center justify-between"
-                    >
-                      <span>➕ Lead to Custom Page A</span>
-                      <span className="text-[9px] font-mono bg-gray-100 text-gray-400 px-1 py-0.5 rounded">Future Slot</span>
-                    </button>
-                    <button
-                      disabled
-                      className="text-[11px] font-semibold text-gray-400 text-left border border-dashed border-gray-150 py-2.5 px-3 rounded-lg bg-white cursor-not-allowed flex items-center justify-between"
-                    >
-                      <span>➕ Lead to Custom Page B</span>
-                      <span className="text-[9px] font-mono bg-gray-100 text-gray-400 px-1 py-0.5 rounded">Future Slot</span>
-                    </button>
-                  </div>
+                <div className="h-px bg-gray-200 my-4 mx-2" />
+                <span className="px-5 text-[12px] font-medium text-[#5F6368] mb-2">More options coming soon</span>
+                
+                {/* Visual expansion buttons requested by user earlier */}
+                <div className="flex flex-col px-3 gap-1">
+                  <button disabled className="text-left py-3 px-4 w-full rounded-full flex items-center justify-between text-[#1A73E8] bg-transparent border border-dashed border-[#1A73E8]/30 cursor-not-allowed opacity-70">
+                    <span className="text-[14px] font-medium flex items-center gap-2"><PlusCircle size={18}/> Custom Action A</span>
+                  </button>
+                  <button disabled className="text-left py-3 px-4 w-full rounded-full flex items-center justify-between text-[#1A73E8] bg-transparent border border-dashed border-[#1A73E8]/30 cursor-not-allowed opacity-70">
+                    <span className="text-[14px] font-medium flex items-center gap-2"><PlusCircle size={18}/> Custom Action B</span>
+                  </button>
                 </div>
+
               </div>
             </div>
 
             {/* Footer Connect links */}
-            <div className="pt-8 border-t border-gray-100 mt-8 flex flex-col gap-4">
-              <div className="flex items-center justify-around">
+            <div className="mt-auto pt-6 px-2 pb-2">
+              <div className="flex items-center gap-3">
                 <a
                   href="https://github.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="p-3 bg-gray-50 hover:bg-black text-gray-600 hover:text-white rounded-full transition-all shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[#5F6368] hover:text-[#202124] rounded-full transition-colors shrink-0 cursor-pointer"
                   title="GitHub Profile"
                 >
-                  <Github size={16} />
+                  <Github size={20} strokeWidth={2} />
                 </a>
                 <a
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="p-3 bg-gray-50 hover:bg-black text-gray-600 hover:text-white rounded-full transition-all shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[#5F6368] hover:text-[#202124] rounded-full transition-colors shrink-0 cursor-pointer"
                   title="LinkedIn Profile"
                 >
-                  <Linkedin size={16} />
+                  <Linkedin size={20} strokeWidth={2} />
                 </a>
                 <a
                   href="mailto:kamogelomosiah@gmail.com"
-                  className="p-3 bg-gray-50 hover:bg-black text-gray-600 hover:text-white rounded-full transition-all shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-[#E8F0FE] hover:bg-[#D2E3FC] text-[#1A73E8] rounded-full transition-colors shrink-0 cursor-pointer"
                   title="Direct Contact"
                 >
-                  <Mail size={16} />
+                  <Mail size={20} strokeWidth={2} />
                 </a>
               </div>
-              <p className="text-[10px] text-gray-400 text-center font-mono uppercase mt-2">
-                Designed & Built // Kamo portfolio
-              </p>
             </div>
           </motion.div>
         )}
