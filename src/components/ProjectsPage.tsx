@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { ExternalLink, Github, Code2, ArrowLeft, Menu } from "lucide-react";
+import { ExternalLink, Github, ArrowLeft, Server, Activity, Database, FileText, PenTool, Layers, Box, BarChart3, PackageSearch, MessageSquare, Zap, Users } from "lucide-react";
 
 interface ProjectsPageProps {
   onBackToChat: () => void;
@@ -17,8 +17,17 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
       github: "https://github.com/kamogelomosiah",
       live: "https://masterapi-main.onrender.com/",
       bgClass: "bg-white",
-      accent: "text-[#1A73E8] bg-[#E8F0FE]",
-      image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800&h=400"
+      accent: "text-accent bg-accent/10",
+      illustration: (
+        <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-gray-50/50">
+          <div className="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-40" style={{ background: "radial-gradient(circle at center, var(--color-accent) 0%, transparent 70%)" }} />
+          <div className="absolute top-10 left-10 w-24 h-24 rounded-full bg-accent/20 blur-2xl" />
+          <div className="absolute bottom-10 right-10 w-32 h-32 rounded-full bg-accent/10 blur-2xl" />
+          <Server size={64} className="text-accent relative z-10 drop-shadow-md transform transition-transform duration-700 group-hover:scale-110" strokeWidth={1.5} />
+          <Activity size={32} className="text-accent/60 absolute top-12 right-24 animate-pulse delay-75" strokeWidth={1.5} />
+          <Database size={40} className="text-accent/50 absolute bottom-12 left-24" strokeWidth={1.5} />
+        </div>
+      )
     },
     {
       title: "Interactive CV Maker",
@@ -29,8 +38,17 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
       github: "https://github.com/kamogelomosiah",
       live: "https://cvmaker-v371.onrender.com/",
       bgClass: "bg-white",
-      accent: "text-[#1A73E8] bg-[#E8F0FE]",
-      image: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&q=80&w=800&h=400"
+      accent: "text-accent bg-accent/10",
+      illustration: (
+        <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-gray-50/50">
+          <div className="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-40" style={{ background: "radial-gradient(circle at center, var(--color-accent) 0%, transparent 70%)" }} />
+          <div className="absolute -top-4 -right-4 w-32 h-32 bg-accent/20 rounded-full blur-2xl" />
+          <div className="absolute -bottom-8 -left-8 w-40 h-40 bg-accent/10 rounded-full blur-2xl" />
+          <FileText size={64} className="text-accent relative z-10 drop-shadow-md transform transition-transform duration-700 group-hover:scale-110" strokeWidth={1.5} />
+          <PenTool size={32} className="text-accent/60 absolute top-16 right-24" strokeWidth={1.5} />
+          <Layers size={40} className="text-accent/50 absolute bottom-16 left-24" strokeWidth={1.5} />
+        </div>
+      )
     },
     {
       title: "UJ Stock Manager",
@@ -41,8 +59,16 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
       github: "https://github.com/kamogelomosiah",
       live: "https://ujstockmanager.onrender.com/",
       bgClass: "bg-white",
-      accent: "text-[#1A73E8] bg-[#E8F0FE]",
-      image: "https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&q=80&w=800&h=400"
+      accent: "text-accent bg-accent/10",
+      illustration: (
+        <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-gray-50/50">
+          <div className="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-40" style={{ background: "radial-gradient(circle at center, var(--color-accent) 0%, transparent 70%)" }} />
+          <div className="absolute top-1/2 left-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl transform -translate-y-1/2" />
+          <Box size={64} className="text-accent relative z-10 drop-shadow-md transform transition-transform duration-700 group-hover:scale-110" strokeWidth={1.5} />
+          <BarChart3 size={36} className="text-accent/60 absolute top-12 left-1/4" strokeWidth={1.5} />
+          <PackageSearch size={40} className="text-accent/50 absolute bottom-12 right-1/4" strokeWidth={1.5} />
+        </div>
+      )
     },
     {
       title: "Real-time Chat App",
@@ -53,8 +79,18 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
       github: "https://github.com/kamogelomosiah",
       live: "https://s-c4nk.onrender.com/",
       bgClass: "bg-white",
-      accent: "text-[#1A73E8] bg-[#E8F0FE]",
-      image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800&h=400"
+      accent: "text-accent bg-accent/10",
+      illustration: (
+        <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-gray-50/50">
+          <div className="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-40" style={{ background: "radial-gradient(circle at center, var(--color-accent) 0%, transparent 70%)" }} />
+          <div className="absolute inset-0 flex items-center justify-center w-full h-full opacity-50">
+            <div className="w-[120%] h-[120%] border-[40px] border-accent/5 rounded-full blur-2xl" />
+          </div>
+          <MessageSquare size={64} className="text-accent relative z-10 drop-shadow-md transform transition-transform duration-700 group-hover:scale-110" strokeWidth={1.5} />
+          <Zap size={32} className="text-accent/60 absolute top-16 right-1/4 animate-pulse delay-150" strokeWidth={1.5} />
+          <Users size={40} className="text-accent/50 absolute bottom-16 left-1/4" strokeWidth={1.5} />
+        </div>
+      )
     }
   ];
 
@@ -99,19 +135,15 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                 key={project.title}
                 className={`group border border-gray-200 shadow-sm rounded-3xl transition-all relative overflow-hidden flex flex-col ${project.bgClass}`}
               >
-                {/* Image Thumbnail */}
+                {/* Image Thumbnail / Vector Illustration */}
                 <div className="w-full h-48 md:h-56 overflow-hidden relative border-b border-gray-200 shrink-0">
-                  <div className="absolute inset-0 bg-[#202124]/5 group-hover:bg-transparent transition-colors duration-500 z-10 pointer-events-none" />
-                  <img 
-                    src={project.image} 
-                    alt={project.title} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                  />
+                  <div className="absolute inset-0 bg-[#202124]/5 group-hover:bg-transparent transition-colors duration-500 z-20 pointer-events-none" />
+                  {project.illustration}
                 </div>
 
                 <div className="p-6 md:p-8 flex flex-col relative z-20 w-full text-left flex-1">
                   {/* Secondary accent highlight hover shimmer */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#E8F0FE]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-500" />
+                  <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-500" />
                   
                   <div className="flex-1 text-left relative z-10">
                     <span className={`text-[11px] font-medium tracking-wide px-3 py-1.5 rounded-full ${project.accent}`}>
@@ -152,7 +184,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                       href={project.live}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-center gap-2 bg-[#1A73E8] text-white px-6 py-2.5 rounded-full hover:bg-blue-700 transition-colors font-medium text-[14px] cursor-pointer shadow-sm no-underline border-0"
+                      className="flex items-center justify-center gap-2 bg-accent text-white px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity font-medium text-[14px] cursor-pointer shadow-sm no-underline border-0"
                     >
                       View Live <ExternalLink size={16} />
                     </a>
@@ -160,7 +192,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                       href={project.github}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-center gap-2 border border-gray-300 bg-white text-[#1A73E8] px-6 py-2.5 rounded-full hover:bg-[#F8F9FA] hover:text-blue-800 transition-colors font-medium text-[14px] cursor-pointer no-underline"
+                      className="flex items-center justify-center gap-2 border border-accent/20 bg-accent/5 text-accent px-6 py-2.5 rounded-full hover:bg-accent/10 transition-colors font-medium text-[14px] cursor-pointer no-underline"
                     >
                       Source <Github size={16} />
                     </a>
