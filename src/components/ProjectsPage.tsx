@@ -9,48 +9,52 @@ interface ProjectsPageProps {
 export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsPageProps) {
   const projects = [
     {
-      title: "CallTrax",
-      subtitle: "Client Tracking & Billing Platform",
-      description: "A robust client tracking and billing workspace designed and deployed completely from scratch for active, paying corporate service providers. Integrates direct account ledger controls and real-time state logging.",
-      tags: ["PHP", "Laravel", "React.js", "MySQL", "Tailwind CSS"],
-      stats: { "Deployment": "Active", "Data Base": "MySQL", "Framework": "Laravel" },
+      title: "Master API Service",
+      subtitle: "Central Orchestration Backend",
+      description: "A comprehensive API gateway and orchestration service acting as the central nervous system for various applications. Designed to handle robust data processing, secure routing, and streamlined external tool integration.",
+      tags: ["Node.js", "Express", "API Gateway", "Backend Architecture"],
+      stats: { "Deployment": "Active", "Host": "Render", "Architecture": "Microservices" },
       github: "https://github.com/kamogelomosiah",
-      live: "https://call-trax.co.za",
+      live: "https://masterapi-main.onrender.com/",
       bgClass: "bg-white",
-      accent: "text-[#1A73E8] bg-[#E8F0FE]"
+      accent: "text-[#1A73E8] bg-[#E8F0FE]",
+      image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800&h=400"
     },
     {
-      title: "kamocodes API",
-      subtitle: "Central API Gateway & Sandboxes",
-      description: "A live, self-maintained central API gateway running behind several independent web tools and personal developer sandboxes, handling request parsing and routing safely.",
-      tags: ["PHP", "Laravel", "REST API", "PostgreSQL"],
-      stats: { "Engine": "Laravel", "Queries": "RESTful", "Uptime": "99.9%" },
+      title: "Interactive CV Maker",
+      subtitle: "Dynamic Resume Generation Platform",
+      description: "A fully responsive CV builder allowing users to seamlessly generate, style, and structure professional resumes. It features dynamic template rendering and export functionality to streamline the job application process.",
+      tags: ["React.js", "TypeScript", "Tailwind CSS", "PDF Export"],
+      stats: { "Platform": "Web", "Status": "Live App", "UX Form": "Interactive" },
       github: "https://github.com/kamogelomosiah",
-      live: "https://api.kamocodes.xyz",
+      live: "https://cvmaker-v371.onrender.com/",
       bgClass: "bg-white",
-      accent: "text-[#1A73E8] bg-[#E8F0FE]"
+      accent: "text-[#1A73E8] bg-[#E8F0FE]",
+      image: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&q=80&w=800&h=400"
     },
     {
-      title: "kamocodes Library",
-      subtitle: "Academic Library Tracker",
-      description: "A live-deployed cataloging and library catalog system with full student membership logs, active borrowing indicators, and analytics trackers for tracking borrow history.",
-      tags: ["TypeScript", "React.js", "Laravel", "MySQL"],
-      stats: { "Platform": "TypeScript", "Status": "Live Work", "Clients": "Active" },
+      title: "UJ Stock Manager",
+      subtitle: "Enterprise Inventory Control System",
+      description: "A robust inventory and stock management solution custom-built for tracking academic resources, equipment lifecycles, and lab materials. Provides real-time dashboard analytics and administrative workflows.",
+      tags: ["Full-Stack", "Database Management", "Analytics Dashboard", "Asset Tracking"],
+      stats: { "Engine": "Enterprise", "Target": "UJ", "Tracking": "Real-time" },
       github: "https://github.com/kamogelomosiah",
-      live: "https://library.kamocodes.xyz",
+      live: "https://ujstockmanager.onrender.com/",
       bgClass: "bg-white",
-      accent: "text-[#1A73E8] bg-[#E8F0FE]"
+      accent: "text-[#1A73E8] bg-[#E8F0FE]",
+      image: "https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&q=80&w=800&h=400"
     },
     {
-      title: "Personal AI Portfolio App",
-      subtitle: "Voice Assistant & Resume Platform",
-      description: "Full-stack portfolio featuring automated voice command transcription, Firestore CMS, and real-time interactive sandboxes, powered by Gemini LLM reasoning capabilities.",
-      tags: ["TypeScript", "Firebase", "Gemini AI", "Vite", "Tailwind CSS"],
-      stats: { "AI Engine": "Gemini 3.5", "Data Store": "Firestore", "Build": "Vite/React" },
+      title: "Real-time Chat App",
+      subtitle: "Live Communication Platform",
+      description: "A streamlined, high-performance real-time chat application built for instant messaging, featuring live presence indicators, typing status, and persistent message history using WebSockets.",
+      tags: ["WebSockets", "React.js", "Real-time", "Chat App"],
+      stats: { "Status": "Deployed", "Engine": "WebSockets", "Latency": "<50ms" },
       github: "https://github.com/kamogelomosiah",
-      live: "#",
+      live: "https://s-c4nk.onrender.com/",
       bgClass: "bg-white",
-      accent: "text-[#1A73E8] bg-[#E8F0FE]"
+      accent: "text-[#1A73E8] bg-[#E8F0FE]",
+      image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800&h=400"
     }
   ];
 
@@ -93,13 +97,23 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
                 key={project.title}
-                className={`group border border-gray-200 shadow-sm rounded-3xl p-6 md:p-8 transition-all relative overflow-hidden ${project.bgClass}`}
+                className={`group border border-gray-200 shadow-sm rounded-3xl transition-all relative overflow-hidden flex flex-col ${project.bgClass}`}
               >
-                {/* Secondary accent highlight hover shimmer */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#E8F0FE]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-500" />
-                
-                <div className="flex flex-col gap-6 relative z-10 w-full text-left">
-                  <div className="flex-1 text-left">
+                {/* Image Thumbnail */}
+                <div className="w-full h-48 md:h-56 overflow-hidden relative border-b border-gray-200 shrink-0">
+                  <div className="absolute inset-0 bg-[#202124]/5 group-hover:bg-transparent transition-colors duration-500 z-10 pointer-events-none" />
+                  <img 
+                    src={project.image} 
+                    alt={project.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  />
+                </div>
+
+                <div className="p-6 md:p-8 flex flex-col relative z-20 w-full text-left flex-1">
+                  {/* Secondary accent highlight hover shimmer */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#E8F0FE]/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-500" />
+                  
+                  <div className="flex-1 text-left relative z-10">
                     <span className={`text-[11px] font-medium tracking-wide px-3 py-1.5 rounded-full ${project.accent}`}>
                       Live Sandbox
                     </span>
@@ -122,7 +136,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                     </div>
 
                     {/* Operational stats */}
-                    <div className="grid grid-cols-3 gap-4 border-t border-gray-200 pt-6 max-w-xl text-left">
+                    <div className="grid grid-cols-3 gap-4 border-t border-gray-200 pt-6 max-w-xl text-left mt-auto">
                       {Object.entries(project.stats).map(([key, val]) => (
                         <div key={key} className="text-left">
                           <p className="text-[11px] text-[#5F6368] font-medium">{key}</p>
@@ -133,7 +147,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                   </div>
 
                   {/* Buttons left aligned */}
-                  <div className="flex flex-wrap gap-3 mt-2 justify-start">
+                  <div className="flex flex-wrap gap-3 mt-8 justify-start relative z-10">
                     <a
                       href={project.live}
                       target="_blank"
