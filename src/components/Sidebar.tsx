@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Github, Linkedin, Mail, FileText, Code2, LayoutDashboard } from "lucide-react";
-import appIcon from "../assets/app_icon.png";
+import { WatermelonIcon } from "./WatermelonIcon";
 
 interface SidebarProps {
   currentTab: "chat" | "projects" | "cv" | "contact";
@@ -9,14 +9,14 @@ interface SidebarProps {
 
 const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps) {
   return (
-    <div className="hidden md:flex w-20 lg:w-[88px] h-screen border-r border-gray-200 flex-col items-center py-6 justify-between shrink-0 fixed left-0 bg-[#F8F9FA] z-20">
+    <div className="hidden md:flex w-20 lg:w-[88px] h-screen border-r border-[var(--border-light)] flex-col items-center py-6 justify-between shrink-0 fixed left-0 bg-[var(--bg-main)] z-20">
       <div className="flex flex-col gap-6 items-center w-full">
         {/* Logo Icon */}
         <div 
           onClick={() => onTabChange("chat")}
-          className="w-[42px] h-[42px] rounded-full flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors duration-300 bg-white border border-gray-200 overflow-hidden shadow-sm"
+          className="w-[42px] h-[42px] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity duration-300 text-accent"
         >
-          <img src={appIcon} alt="App Icon" className="w-[80%] h-[80%] object-contain" />
+          <WatermelonIcon className="w-8 h-8" />
         </div>
         
         {/* Navigation Section */}
@@ -25,8 +25,8 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             onClick={() => onTabChange("chat")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-2xl transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "chat" 
-                ? "bg-[#E8F0FE] text-[#1A73E8] font-medium" 
-                : "bg-transparent text-[#5F6368] hover:bg-black/5 hover:text-[#202124] font-normal"
+                ? "bg-[var(--color-accent-light)] text-accent font-medium" 
+                : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
             }`}
             title="Kamo AI Chatbot Agent"
           >
@@ -40,8 +40,8 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             onClick={() => onTabChange("projects")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-2xl transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "projects" 
-                ? "bg-[#E8F0FE] text-[#1A73E8] font-medium" 
-                : "bg-transparent text-[#5F6368] hover:bg-black/5 hover:text-[#202124] font-normal"
+                ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-medium" 
+                : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
             }`}
             title="My Live Projects"
           >
@@ -55,8 +55,8 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             onClick={() => onTabChange("cv")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-2xl transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "cv" 
-                ? "bg-[#E8F0FE] text-[#1A73E8] font-medium" 
-                : "bg-transparent text-[#5F6368] hover:bg-black/5 hover:text-[#202124] font-normal"
+                ? "bg-[var(--bg-accent-light)] text-[var(--color-accent)] font-medium" 
+                : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
             }`}
             title="Interactive CV / Resume"
           >
@@ -70,8 +70,8 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             onClick={() => onTabChange("contact")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-2xl transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "contact" 
-                ? "bg-[#E8F0FE] text-[#1A73E8] font-medium" 
-                : "bg-transparent text-[#5F6368] hover:bg-black/5 hover:text-[#202124] font-normal"
+                ? "bg-[var(--bg-accent-light)] text-[var(--color-accent)] font-medium" 
+                : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
             }`}
             title="Get In Touch"
           >
@@ -89,7 +89,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
           href="https://github.com" 
           target="_blank" 
           rel="noreferrer" 
-          className="w-10 h-10 flex items-center justify-center rounded-full text-[#5F6368] hover:text-[#202124] hover:bg-black/5 transition-colors shrink-0 cursor-pointer" 
+          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-black/5 transition-colors shrink-0 cursor-pointer" 
           title="GitHub Account"
         >
           <Github size={20} strokeWidth={2} />
@@ -98,7 +98,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
           href="https://linkedin.com" 
           target="_blank" 
           rel="noreferrer" 
-          className="w-10 h-10 flex items-center justify-center rounded-full text-[#5F6368] hover:text-[#202124] hover:bg-black/5 transition-colors shrink-0 cursor-pointer" 
+          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-black/5 transition-colors shrink-0 cursor-pointer" 
           title="LinkedIn Profile"
         >
           <Linkedin size={20} strokeWidth={2} />

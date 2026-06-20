@@ -61,19 +61,19 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4 }}
-      className="flex-1 h-full w-full bg-[#F8F9FA] text-[#202124] flex flex-col overflow-hidden relative"
+      className="flex-1 h-full w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden relative"
     >
       {/* Top Navbar with Back Button - Material 3 */}
-      <div className="w-full h-[64px] flex items-center justify-between px-2 sm:px-4 bg-white z-20 shrink-0 border-b border-gray-200 shadow-sm">
+      <div className="w-full h-[64px] flex items-center justify-between px-2 sm:px-4 bg-[var(--bg-card)] z-20 shrink-0 border-b border-[var(--border-light)] shadow-sm">
         <div className="flex items-center gap-2 m-0 p-0">
           <button 
             onClick={onBackToChat}
-            className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-black/5 text-[#5F6368] transition-colors cursor-pointer shrink-0 m-0 border-0 bg-transparent"
+            className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-black/5 text-[var(--text-muted)] transition-colors cursor-pointer shrink-0 m-0 border-0 bg-transparent"
             title="Back to conversational agent"
           >
             <ArrowLeft size={24} />
           </button>
-          <h1 className="font-medium text-[20px] text-[#202124] tracking-normal font-display m-0 p-0 ml-1">Curriculum Vitae</h1>
+          <h1 className="font-medium text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1">Curriculum Vitae</h1>
         </div>
       </div>
 
@@ -82,21 +82,21 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
         <div className="w-full max-w-4xl pt-8 sm:pt-10">
           
           {/* Header Block inline within the sheet */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-gray-200 mb-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-[var(--border-light)] mb-10">
             <div>
-              <h1 className="text-[32px] md:text-[40px] font-medium text-[#202124] tracking-normal font-display">
+              <h1 className="text-[32px] md:text-[40px] font-medium text-[var(--text-main)] tracking-normal font-display">
                 Kamogelo Mosia
               </h1>
-              <p className="text-[#5F6368] text-[18px] mt-1 font-medium tracking-wide">
+              <p className="text-[var(--text-muted)] text-[18px] mt-1 font-medium tracking-wide">
                 IT Intern | BSc Computer Science
               </p>
-              <div className="flex flex-wrap gap-4 text-[13px] font-medium text-[#5F6368] mt-4">
-                <span className="flex items-center gap-1.5"><Mail size={16} className="text-[#1A73E8]" /> kamogelomosiah@gmail.com</span>
-                <span className="flex items-center gap-1.5"><MapPin size={16} className="text-[#1A73E8]" /> Johannesburg, SA</span>
+              <div className="flex flex-wrap gap-4 text-[13px] font-medium text-[var(--text-muted)] mt-4">
+                <span className="flex items-center gap-1.5"><Mail size={16} className="text-accent" /> kamogelomosiah@gmail.com</span>
+                <span className="flex items-center gap-1.5"><MapPin size={16} className="text-[var(--color-accent)]" /> Johannesburg, SA</span>
               </div>
             </div>
 
-            <button className="flex items-center gap-2 bg-[#1A73E8] text-white px-6 py-3 rounded-full hover:bg-[#1557B0] transition-colors font-medium text-[14px] cursor-pointer shadow-sm border-0">
+            <button className="flex items-center gap-2 bg-[var(--color-accent)] text-white px-6 py-3 rounded-full hover:bg-[#1557B0] transition-colors font-medium text-[14px] cursor-pointer shadow-sm border-0">
               Download PDF <Download size={18} />
             </button>
           </div>
@@ -106,28 +106,28 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
           {/* Timeline and Details (Col-span 2) */}
           <div className="lg:col-span-2 flex flex-col gap-10">
             <div>
-              <h2 className="text-[20px] font-medium mb-6 text-[#1A73E8] border-l-4 border-[#1A73E8] pl-4 font-display">
+              <h2 className="text-[20px] font-medium mb-6 text-[var(--color-accent)] border-l-4 border-[var(--color-accent)] pl-4 font-display">
                 Work Experience
               </h2>
               <div className="flex flex-col gap-8 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-200">
                 {experiences.map((exp, i) => (
                   <div key={i} className="relative pl-10">
                     {/* Ring Indicator */}
-                    <div className="absolute left-[9px] top-1.5 w-4 h-4 rounded-full border border-[#1A73E8] bg-white flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 bg-[#1A73E8] rounded-full" />
+                    <div className="absolute left-[9px] top-1.5 w-4 h-4 rounded-full border border-[var(--color-accent)] bg-[var(--bg-card)] flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 bg-[var(--color-accent)] rounded-full" />
                     </div>
 
-                    <p className="flex items-center gap-2 text-[12px] font-mono text-[#1A73E8] uppercase font-medium">
+                    <p className="flex items-center gap-2 text-[12px] font-mono text-[var(--color-accent)] uppercase font-medium">
                       <Calendar size={14} /> {exp.period}
                     </p>
-                    <h3 className="text-[18px] font-medium text-[#202124] mt-1 font-display">
-                      {exp.role} <span className="text-[#5F6368] font-normal">at {exp.company}</span>
+                    <h3 className="text-[18px] font-medium text-[var(--text-main)] mt-1 font-display">
+                      {exp.role} <span className="text-[var(--text-muted)] font-normal">at {exp.company}</span>
                     </h3>
-                    <p className="text-[13px] text-[#5F6368] mt-0.5">{exp.location}</p>
+                    <p className="text-[13px] text-[var(--text-muted)] mt-0.5">{exp.location}</p>
 
                     <ul className="mt-4 flex flex-col gap-2.5">
                       {exp.bullets.map((bullet, idx) => (
-                        <li key={idx} className="text-[#444746] text-[14px] leading-relaxed relative pl-4 before:absolute before:left-0 before:top-2.5 before:w-1.5 before:h-1.5 before:bg-[#E8EAED] before:rounded-full">
+                        <li key={idx} className="text-[#444746] text-[14px] leading-relaxed relative pl-4 before:absolute before:left-0 before:top-2.5 before:w-1.5 before:h-1.5 before:bg-[var(--border-light)] before:rounded-full">
                           {bullet}
                         </li>
                       ))}
@@ -138,17 +138,17 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
             </div>
 
             <div>
-              <h2 className="text-[20px] font-medium mb-6 text-[#1A73E8] border-l-4 border-[#1A73E8] pl-4 font-display">
+              <h2 className="text-[20px] font-medium mb-6 text-[var(--color-accent)] border-l-4 border-[var(--color-accent)] pl-4 font-display">
                 Education
               </h2>
-              <div className="flex flex-col gap-8 pl-4 border-l border-gray-200">
+              <div className="flex flex-col gap-8 pl-4 border-l border-[var(--border-light)]">
                 {education.map((edu, i) => (
                   <div key={i} className="flex flex-col gap-1">
-                    <p className="text-[12px] font-mono text-[#5F6368]">{edu.period}</p>
-                    <h3 className="text-[16px] font-medium text-[#202124] font-display">
+                    <p className="text-[12px] font-mono text-[var(--text-muted)]">{edu.period}</p>
+                    <h3 className="text-[16px] font-medium text-[var(--text-main)] font-display">
                       {edu.degree}
                     </h3>
-                    <p className="text-[14px] font-medium text-[#1A73E8]">{edu.school} {edu.grade && `| ${edu.grade}`}</p>
+                    <p className="text-[14px] font-medium text-[var(--color-accent)]">{edu.school} {edu.grade && `| ${edu.grade}`}</p>
                     {edu.details && <p className="text-[14px] text-[#444746] mt-1 leading-relaxed">{edu.details}</p>}
                   </div>
                 ))}
@@ -158,53 +158,53 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
 
           {/* Core Technical skills, Sidebar layout (Col-span 1) */}
           <div className="flex flex-col gap-6">
-            <div className="border border-gray-200 rounded-[24px] p-6 bg-white shadow-sm">
-              <h3 className="text-[14px] font-medium text-[#5F6368] tracking-wide mb-5 uppercase">
+            <div className="border border-[var(--border-light)] rounded-[24px] p-6 bg-[var(--bg-card)] shadow-sm">
+              <h3 className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide mb-5 uppercase">
                 Technical Toolkit
               </h3>
               <div className="flex flex-col gap-5">
                 <div>
                   <div className="flex justify-between text-[13px] font-medium mb-1">
-                    <span className="text-[#202124]">Systems & Networking</span>
-                    <span className="text-[#1A73E8]">88%</span>
+                    <span className="text-[var(--text-main)]">Systems & Networking</span>
+                    <span className="text-[var(--color-accent)]">88%</span>
                   </div>
                   <div className="w-full bg-[#E8EAED] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#1A73E8] h-full rounded-full" style={{ width: "88%" }} />
+                    <div className="bg-[var(--color-accent)] h-full rounded-full" style={{ width: "88%" }} />
                   </div>
-                  <p className="text-[11px] text-[#5F6368] mt-1.5">Windows, macOS, Linux, TCP/IP, DNS, DHCP</p>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1.5">Windows, macOS, Linux, TCP/IP, DNS, DHCP</p>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-[13px] font-medium mb-1">
-                    <span className="text-[#202124]">Software Development</span>
-                    <span className="text-[#1A73E8]">85%</span>
+                    <span className="text-[var(--text-main)]">Software Development</span>
+                    <span className="text-[var(--color-accent)]">85%</span>
                   </div>
                   <div className="w-full bg-[#E8EAED] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#1A73E8] h-full rounded-full" style={{ width: "85%" }} />
+                    <div className="bg-[var(--color-accent)] h-full rounded-full" style={{ width: "85%" }} />
                   </div>
-                  <p className="text-[11px] text-[#5F6368] mt-1.5">JavaScript, TypeScript, PHP, React.js, Laravel</p>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1.5">JavaScript, TypeScript, PHP, React.js, Laravel</p>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-[13px] font-medium mb-1">
-                    <span className="text-[#202124]">IT Config & Diagnostic</span>
-                    <span className="text-[#1A73E8]">90%</span>
+                    <span className="text-[var(--text-main)]">IT Config & Diagnostic</span>
+                    <span className="text-[var(--color-accent)]">90%</span>
                   </div>
                   <div className="w-full bg-[#E8EAED] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#1A73E8] h-full rounded-full" style={{ width: "90%" }} />
+                    <div className="bg-[var(--color-accent)] h-full rounded-full" style={{ width: "90%" }} />
                   </div>
-                  <p className="text-[11px] text-[#5F6368] mt-1.5">PC setup, diagnostic support, SSD/RAM upgrades</p>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1.5">PC setup, diagnostic support, SSD/RAM upgrades</p>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-[13px] font-medium mb-1">
-                    <span className="text-[#202124]">Databases & Gateway</span>
-                    <span className="text-[#1A73E8]">82%</span>
+                    <span className="text-[var(--text-main)]">Databases & Gateway</span>
+                    <span className="text-[var(--color-accent)]">82%</span>
                   </div>
                   <div className="w-full bg-[#E8EAED] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#1A73E8] h-full rounded-full" style={{ width: "82%" }} />
+                    <div className="bg-[var(--color-accent)] h-full rounded-full" style={{ width: "82%" }} />
                   </div>
-                  <p className="text-[11px] text-[#5F6368] mt-1.5">MySQL, PostgreSQL, REST APIs integrations</p>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1.5">MySQL, PostgreSQL, REST APIs integrations</p>
                 </div>
               </div>
             </div>
@@ -218,7 +218,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
               </div>
               <div className="flex flex-col gap-3">
                 {achievements.map((ach, i) => (
-                  <div key={i} className="text-[13px] text-[#202124] border-l-2 border-[#D93025]/30 pl-3 py-1.5 bg-white/50 rounded-r-[8px]">
+                  <div key={i} className="text-[13px] text-[var(--text-main)] border-l-2 border-[#D93025]/30 pl-3 py-1.5 bg-[var(--bg-card)]/50 rounded-r-[8px]">
                     {ach}
                   </div>
                 ))}

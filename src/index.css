@@ -2,13 +2,30 @@
 @import "tailwindcss";
 
 @theme {
-  --color-accent: var(--accent-color, #1A73E8);
+  --color-accent: var(--accent-color, #1E8E3E);
+  --color-accent-light: color-mix(in srgb, var(--color-accent) 10%, transparent);
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
 }
 
+:root {
+  --bg-main: #F8F9FA;
+  --bg-card: #FFFFFF;
+  --text-main: #202124;
+  --text-muted: #5F6368;
+  --border-light: #E8EAED;
+}
+
+.dark {
+  --bg-main: #121212;
+  --bg-card: #1E1E1E;
+  --text-main: #E8EAED;
+  --text-muted: #9AA0A6;
+  --border-light: #3C4043;
+}
+
 body {
-  @apply bg-[#F8F9FA] text-[#202124];
+  @apply bg-[var(--bg-main)] text-[var(--text-main)];
 }
 
 /* Custom scrollbar for minimal look */
@@ -19,8 +36,14 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+  @apply bg-[#C5C7C9] rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+  @apply bg-[#A1A3A5];
+}
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-[#4A4C4E];
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-[#696C6E];
 }
