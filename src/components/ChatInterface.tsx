@@ -3,6 +3,7 @@ import { Send, Sparkles, Settings, Mic, Link as LinkIcon, User, Mail, Graduation
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
+import { TimeOfDayWidget } from "./TimeOfDayWidget";
 
 export type Message = {
   id: string;
@@ -168,8 +169,8 @@ export default function ChatInterface({
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[var(--bg-main)] w-full font-sans">
       {/* Top Header - Island on Scroll */}
-      <div className={`absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none ${isShrunk ? 'pt-3 px-3 sm:pt-4 sm:px-4' : 'pt-0 px-0'}`}>
-        <div className={`flex items-center justify-between w-full transition-all duration-200 pointer-events-auto ${isShrunk ? 'bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl' : 'h-[64px] px-2 sm:px-4 bg-[var(--bg-card)] border-b border-[var(--border-light)] shadow-sm'}`}>
+      <div className={`absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-3 sm:pt-5 ${isShrunk ? 'px-3 sm:px-4' : 'px-3 sm:px-5'}`}>
+        <div className={`flex items-center justify-between w-full transition-all duration-200 pointer-events-auto ${isShrunk ? 'bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl' : 'h-[64px] px-2 sm:px-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-light)] shadow-sm max-w-full'}`}>
           <div className="flex items-center gap-2">
             <button onClick={onToggleDrawer} className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-black/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent">
               <Menu size={24} />
@@ -206,7 +207,7 @@ export default function ChatInterface({
 
       {/* Main Content Area */}
       <div 
-        className={`flex-1 overflow-y-auto w-full flex flex-col relative pb-[140px] scroll-smooth ${isShrunk ? 'pt-[80px]' : 'pt-[64px]'}`}
+        className={`flex-1 overflow-y-auto w-full flex flex-col relative pb-[140px] scroll-smooth ${isShrunk ? 'pt-[88px]' : 'pt-[100px]'}`}
         onScroll={handleScroll}
       >
         <div className="w-full max-w-3xl mx-auto flex flex-col px-4 sm:px-6 pt-5 sm:pt-8 min-h-full">
@@ -219,16 +220,11 @@ export default function ChatInterface({
             {isInitialState && (
               <>
                 {/* Hero Section */}
-                <div className="w-full flex justify-center mb-8 sm:mb-12 pt-4 sm:pt-8">
-                  <div className="flex flex-col items-center justify-center text-center max-w-xl">
-                    <motion.div layoutId="watermelon-avatar" className="mb-6 text-[var(--color-accent)]">
-                      <WatermelonIcon className="w-16 h-16 sm:w-20 sm:h-20" />
-                    </motion.div>
-                    <h1 className="text-[28px] sm:text-[36px] font-bold tracking-normal text-[var(--text-main)] mb-4 font-display">
-                      How can I help you today?
-                    </h1>
-                    <p className="text-[var(--text-muted)] text-[15px] sm:text-[16px] font-normal leading-relaxed">
-                      I'm Kamogelo's automated assistant. Ask me anything about their background, skills, or download their CV directly from here.
+                <div className="w-full flex justify-center mb-8 sm:mb-12 pt-4">
+                  <div className="flex flex-col items-center justify-center text-center w-full max-w-2xl">
+                    <TimeOfDayWidget />
+                    <p className="text-[var(--text-muted)] text-[15px] sm:text-[16px] font-normal leading-relaxed mt-2 px-2">
+                      I'm Kamogelo's automated assistant. Ask me anything about his background, skills, or download his CV directly from here.
                     </p>
                   </div>
                 </div>

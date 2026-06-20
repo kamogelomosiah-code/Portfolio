@@ -48,23 +48,25 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
       transition={{ duration: 0.4 }}
       className="flex-1 h-full w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden relative"
     >
-      {/* Top Navbar with Back Button - Material 3 Top App Bar */}
-      <div className="w-full h-[64px] flex items-center justify-between px-2 sm:px-4 bg-[var(--bg-card)] z-20 shrink-0 border-b border-[var(--border-light)] shadow-sm">
-        <div className="flex items-center gap-2 m-0 p-0">
-          <button 
-            onClick={onBackToChat}
-            className="flex items-center justify-center w-12 h-12 rounded-full hover:bg-black/5 text-[var(--text-muted)] transition-colors cursor-pointer shrink-0 m-0 border-0"
-            title="Back to conversational agent"
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <h1 className="font-medium text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1">Get In Touch</h1>
+      {/* Top Navbar with Back Button - Island Style */}
+      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-3 sm:pt-5 px-3 sm:px-4">
+        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl">
+          <div className="flex items-center gap-2 m-0 p-0">
+            <button 
+              onClick={onBackToChat}
+              className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full hover:bg-black/5 text-[var(--text-muted)] transition-colors cursor-pointer shrink-0 m-0 border-0 bg-transparent"
+              title="Back to conversational agent"
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h1 className="font-medium text-[16px] sm:text-[18px] md:text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1">Get In Touch</h1>
+          </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6">
-        <div className="w-full max-w-4xl pt-8 sm:pt-10">
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6 pt-[88px]">
+        <div className="w-full max-w-4xl pt-4 sm:pt-8">
           
           {/* Header Block inline within the sheet */}
           <div className="mb-12">

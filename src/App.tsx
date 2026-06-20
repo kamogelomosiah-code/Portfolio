@@ -20,24 +20,42 @@ const FallbackLoader = () => (
   </div>
 );
 
+const getDefaultAccentColor = () => {
+  const currentHour = new Date().getHours();
+  if (currentHour >= 5 && currentHour < 12) return "#F9AB00"; // Morning (Yellow)
+  if (currentHour >= 12 && currentHour < 17) return "#1A73E8"; // Afternoon (Blue)
+  if (currentHour >= 17 && currentHour < 20) return "#D93025"; // Evening (Red)
+  return "#9333EA"; // Night (Purple)
+};
+
 export default function App() {
   const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [accentColor, setAccentColor] = useState("#1E8E3E");
+  const [accentColor, setAccentColor] = useState(getDefaultAccentColor());
   const [selectedModel, setSelectedModel] = useState("gemini-1.5-pro");
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--accent-color', accentColor);
-    
-    const currentHour = new Date().getHours();
-    if (currentHour < 7 || currentHour >= 18) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, [accentColor]);
+
+  useEffect(() => {
+    const updateTimeBasedTheme = () => {
+      const currentHour = new Date().getHours();
+      // Dark mode between 6 PM (18) and 7 AM (7)
+      if (currentHour < 7 || currentHour >= 18) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+    
+    updateTimeBasedTheme();
+    // Check every minute
+    const interval = setInterval(updateTimeBasedTheme, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex bg-[var(--bg-card)] h-dvh text-black w-full font-sans antialiased relative overflow-hidden">
