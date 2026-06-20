@@ -275,7 +275,7 @@ export default function ChatInterface({
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     {msg.role === "user" ? (
-                      <div className="bg-accent/10 text-[var(--text-main)] px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm max-w-[85%] sm:max-w-[75%] border border-accent/20 shadow-sm">
+                      <div className="text-[var(--text-main)] px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm max-w-[85%] sm:max-w-[75%] border shadow-sm" style={{ backgroundColor: "var(--color-accent-light)", borderColor: "var(--color-accent-light)" }}>
                         <p className="text-[15px] whitespace-pre-wrap font-normal leading-relaxed">{msg.text}</p>
                       </div>
                     ) : (
@@ -391,7 +391,9 @@ export default function ChatInterface({
                   >
                      <Sparkles size={14} className="text-[var(--color-accent)]" />
                      <span className="truncate max-w-[100px]">
-                       {selectedModel.includes("DeepSeek") ? "DeepSeek V4" : "Llama 3.1"}
+                       {selectedModel.includes("gemini-1.5-pro") ? "Gemini 1.5 Pro" :
+                        selectedModel.includes("gemini-1.5-flash") ? "Gemini 1.5 Flash" :
+                        selectedModel.includes("DeepSeek") ? "DeepSeek V4" : "Llama 3.1"}
                      </span>
                   </button>
                   <button
@@ -422,7 +424,10 @@ export default function ChatInterface({
                 onClick={() => setModelSelectorOpen(true)}
                 className="mt-1 sm:hidden flex items-center gap-1 text-[var(--color-accent)] font-medium text-[12px] border-0 bg-transparent cursor-pointer"
              >
-                <Sparkles size={12} /> {selectedModel.includes("DeepSeek") ? "DeepSeek V4" : "Llama 3.1"}
+                <Sparkles size={12} /> 
+                {selectedModel.includes("gemini-1.5-pro") ? "Gemini 1.5 Pro" :
+                 selectedModel.includes("gemini-1.5-flash") ? "Gemini 1.5 Flash" :
+                 selectedModel.includes("DeepSeek") ? "DeepSeek V4" : "Llama 3.1"}
              </button>
           </div>
         </div>
@@ -456,9 +461,10 @@ export default function ChatInterface({
               
               <div className="flex flex-col gap-2">
                 {[
+                  { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", desc: "Google's most capable model" },
+                  { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", desc: "Fast & versatile responses" },
                   { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro", desc: "Advanced reasoning & logic" },
                   { id: "meta-llama/Llama-3.1-8B-Instruct:novita", name: "Llama 3.1 8B Instruct", desc: "Fast conversational AI" },
-                  { id: "openai/gpt-oss-120b:groq", name: "GPT OSS 120B", desc: "High-performance answers" },
                 ].map((m) => (
                   <button
                     key={m.id}

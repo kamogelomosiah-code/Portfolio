@@ -25,7 +25,7 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accentColor, setAccentColor] = useState("#1E8E3E");
-  const [selectedModel, setSelectedModel] = useState("deepseek-ai/DeepSeek-V4-Pro:novita");
+  const [selectedModel, setSelectedModel] = useState("gemini-1.5-pro");
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {

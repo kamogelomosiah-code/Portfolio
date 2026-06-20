@@ -4,6 +4,7 @@ import { createServer as createViteServer } from 'vite';
 import OpenAI from 'openai';
 import multer from 'multer';
 import { InferenceClient } from "@huggingface/inference";
+import { GoogleGenAI } from '@google/genai';
 
 const client = new OpenAI({
 	baseURL: "https://router.huggingface.co/v1",
@@ -98,6 +99,34 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { history, message, model } = req.body;
     
+    if (model && model.startsWith('gemini-')) {
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(200).json({ text: "GEMINI_API_KEY is not configured yet. Please configure it in settings." });
+      }
+      try {
+        const genAI = new GoogleGenAI({}); 
+        const chatHistory = history.map((msg: any) => ({
+             role: msg.role === 'user' ? 'user' : 'model',
+             parts: [{ text: msg.text }]
+        }));
+        
+        const response = await genAI.models.generateContent({
+            model: model,
+            contents: [
+                ...chatHistory,
+                { role: "user", parts: [{ text: message }] }
+            ],
+            config: {
+                systemInstruction: PORTFOLIO_CONTEXT
+            }
+        });
+        return res.json({ text: response.text });
+      } catch (error: any) {
+        console.error("Gemini API Error:", error);
+        return res.status(200).json({ text: "I'm currently unable to connect to the Gemini reasoning engine. Please try again or switch models." });
+      }
+    }
+
     const formattedHistory = history.map((msg: any) => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.text
