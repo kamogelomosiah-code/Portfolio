@@ -324,7 +324,7 @@ export default function ChatInterface({
       </div>
 
       {/* Input Area */}
-      <div className="absolute bottom-0 left-0 right-0 pt-8 pb-4 sm:pb-6 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[#F8F9FA] via-[#F8F9FA] via-70% to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 pt-8 pb-4 sm:pb-6 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)] via-70% to-transparent">
         <div className="w-full max-w-3xl relative pointer-events-auto flex flex-col items-center">
           
           {/* Recording Overlay */}

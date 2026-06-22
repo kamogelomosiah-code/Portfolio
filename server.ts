@@ -5,6 +5,9 @@ import OpenAI from 'openai';
 import multer from 'multer';
 import { InferenceClient } from "@huggingface/inference";
 import { GoogleGenAI } from '@google/genai';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const client = new OpenAI({
 	baseURL: "https://router.huggingface.co/v1",
@@ -95,6 +98,28 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
+function getOfflineFallbackResponse(message: string): string {
+    const text = message.toLowerCase();
+    
+    if (text.includes("hello") || text.includes("hi") || text.includes("hey")) {
+        return "Hi there! I am currently in offline mode, but I can still answer simple requests. Would you like to see my [UI:PROJECTS], [UI:SKILLS], or [UI:CV]?";
+    }
+    if (text.includes("project") || text.includes("work")) {
+        return "The AI is offline for now, but here is a quick look at my projects! [UI:PROJECTS]";
+    }
+    if (text.includes("skill") || text.includes("tool")) {
+        return "I am currently offline, but here is my technical skillset: [UI:SKILLS]";
+    }
+    if (text.includes("cv") || text.includes("resume") || text.includes("contact")) {
+        return "Even though my AI engine is resting, you can still get my contact details or download my CV right here: [UI:CV]";
+    }
+    if (text.includes("about") || text.includes("background")) {
+        return "In my offline state, I can summarize: Kamogelo is an IT Solutions Engineer who graduated from UJ with a BSc in IT. I'm passionate about web apps and systems.";
+    }
+
+    return "I am currently offline and my reasoning engine is unavailable. My capabilities are restricted to simple answers. Try asking about my 'projects', 'skills', or 'cv'.";
+}
+
 app.post('/api/chat', async (req, res) => {
   try {
     const { history, message, model } = req.body;
@@ -123,7 +148,7 @@ app.post('/api/chat', async (req, res) => {
         return res.json({ text: response.text });
       } catch (error: any) {
         console.error("Gemini API Error:", error);
-        return res.status(200).json({ text: "I'm currently unable to connect to the Gemini reasoning engine. Please try again or switch models." });
+        return res.status(200).json({ text: getOfflineFallbackResponse(message) });
       }
     }
 
@@ -144,13 +169,7 @@ app.post('/api/chat', async (req, res) => {
     res.json({ text: completion.choices[0]?.message?.content || "" });
   } catch (error: any) {
     console.error("OpenAI API Error:", error);
-    
-    let fallbackText = "I'm currently unable to connect to the reasoning engine. Please try again later.";
-    if (error?.status === 503 || error?.message?.includes("503")) {
-        fallbackText = "I'm currently experiencing high demand and need a moment to catch my breath. Please try again in a few seconds!";
-    }
-    
-    res.status(200).json({ text: fallbackText });
+    res.status(200).json({ text: getOfflineFallbackResponse(message) });
   }
 });
 
