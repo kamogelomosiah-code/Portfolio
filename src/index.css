@@ -6,6 +6,12 @@
   --color-accent-light: color-mix(in srgb, var(--color-accent) 10%, transparent);
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-bg-main: var(--bg-main);
+  --color-bg-card: var(--bg-card);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-border-light: var(--border-light);
 }
 
 :root {
@@ -46,4 +52,8 @@ body {
 }
 .dark ::-webkit-scrollbar-thumb:hover {
   @apply bg-[#696C6E];
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
 }

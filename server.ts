@@ -41,6 +41,9 @@ Your real background details:
 - Technical Skills: React, Laravel, Express, Node.js, TypeScript, PHP, SQL (MySQL, PostgreSQL), Git, system and hardware configurations.
 - Direct Contact: kamogelomosiah@gmail.com
 
+Instructions for Response Style:
+KEEP YOUR ANSWERS VERY SHORT, CONCISE, AND SIMPLE. Do not talk a lot or provide long-winded explanations. Answer the question directly in 1-2 brief sentences if possible.
+
 Instructions for UI Rendering:
 If the user asks about your projects or what you have built, explain your live projects and append exactly "[UI:PROJECTS]" to the end of your message to render the interactive project grids.
 If the user asks about your skills or what you bring, introduce your skillset and append exactly "[UI:SKILLS]" to the end of your message to render the skills panel.
@@ -121,8 +124,8 @@ function getOfflineFallbackResponse(message: string): string {
 }
 
 app.post('/api/chat', async (req, res) => {
+  const { history, message, model } = req.body || {};
   try {
-    const { history, message, model } = req.body;
     
     if (model && model.startsWith('gemini-')) {
       if (!process.env.GEMINI_API_KEY) {
@@ -147,7 +150,34 @@ app.post('/api/chat', async (req, res) => {
         });
         return res.json({ text: response.text });
       } catch (error: any) {
-        console.error("Gemini API Error:", error);
+        console.log("Gemini API Error on main model:", error.message || error);
+        
+        // Auto-fallback to gemini-2.5-flash (confirmed working under high demand / rate limits)
+        if (model !== 'gemini-2.5-flash') {
+          console.log("Attempting fallback to gemini-2.5-flash...");
+          try {
+            const genAI = new GoogleGenAI({});
+            const chatHistory = history.map((msg: any) => ({
+                 role: msg.role === 'user' ? 'user' : 'model',
+                 parts: [{ text: msg.text }]
+            }));
+            const response = await genAI.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [
+                    ...chatHistory,
+                    { role: "user", parts: [{ text: message }] }
+                ],
+                config: {
+                    systemInstruction: PORTFOLIO_CONTEXT
+                }
+            });
+            console.log("Fallback to gemini-2.5-flash succeeded!");
+            return res.json({ text: response.text });
+          } catch (fallbackError: any) {
+            console.log("Fallback to gemini-2.5-flash also failed:", fallbackError.message || fallbackError);
+          }
+        }
+        
         return res.status(200).json({ text: getOfflineFallbackResponse(message) });
       }
     }
@@ -168,7 +198,7 @@ app.post('/api/chat', async (req, res) => {
 
     res.json({ text: completion.choices[0]?.message?.content || "" });
   } catch (error: any) {
-    console.error("OpenAI API Error:", error);
+    console.log("OpenAI API Error:", error.message || error);
     res.status(200).json({ text: getOfflineFallbackResponse(message) });
   }
 });

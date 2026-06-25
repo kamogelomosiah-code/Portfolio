@@ -64,7 +64,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
       className="flex-1 h-full w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden relative"
     >
       {/* Top Navbar with Back Button - Island Style */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-3 sm:pt-5 px-3 sm:px-4">
+      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
         <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl">
           <div className="flex items-center gap-2 m-0 p-0">
             <button 
@@ -80,7 +80,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6 pt-[88px]">
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6 pt-[calc(env(safe-area-inset-top)+88px)]">
         <div className="w-full max-w-4xl pt-4 sm:pt-8">
           
           {/* Header Block inline within the sheet */}

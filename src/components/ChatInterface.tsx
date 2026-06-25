@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, UIEvent } from "react";
+import React, { useState, useRef, useEffect, UIEvent } from "react";
 import { Send, Sparkles, Settings, Mic, Link as LinkIcon, User, Mail, GraduationCap, FileText, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
@@ -34,21 +34,27 @@ export default function ChatInterface({
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const lastScrollY = useRef(0);
 
+  // Auto-scroll when messages update
   useEffect(() => {
-    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
+    const timeoutId = setTimeout(() => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      }
+    }, 100);
+    return () => clearTimeout(timeoutId);
   }, [messages, isLoading, isTranscribing]);
 
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const currentScrollY = e.currentTarget.scrollTop;
-    if (currentScrollY > lastScrollY.current && currentScrollY > 20) {
-      // Scrolling down
+    if (currentScrollY > 20) {
       setIsScrolled(true);
-    } else if (currentScrollY < lastScrollY.current) {
-      // Scrolling up
+    } else {
       setIsScrolled(false);
     }
     lastScrollY.current = currentScrollY;
@@ -169,7 +175,7 @@ export default function ChatInterface({
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[var(--bg-main)] w-full font-sans">
       {/* Top Header - Island on Scroll */}
-      <div className={`absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-3 sm:pt-5 ${isShrunk ? 'px-3 sm:px-4' : 'px-3 sm:px-5'}`}>
+      <div className={`absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] ${isShrunk ? 'px-3 sm:px-4' : 'px-3 sm:px-5'}`}>
         <div className={`flex items-center justify-between w-full transition-all duration-200 pointer-events-auto ${isShrunk ? 'bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl' : 'h-[64px] px-2 sm:px-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-light)] shadow-sm max-w-full'}`}>
           <div className="flex items-center gap-2">
             <button onClick={onToggleDrawer} className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-black/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent">
@@ -207,7 +213,8 @@ export default function ChatInterface({
 
       {/* Main Content Area */}
       <div 
-        className={`flex-1 overflow-y-auto w-full flex flex-col relative pb-[140px] scroll-smooth ${isShrunk ? 'pt-[88px]' : 'pt-[100px]'}`}
+        ref={scrollContainerRef}
+        className={`flex-1 overflow-y-auto w-full flex flex-col relative pb-[240px] scroll-smooth pt-[calc(env(safe-area-inset-top)+100px)]`}
         onScroll={handleScroll}
       >
         <div className="w-full max-w-3xl mx-auto flex flex-col px-4 sm:px-6 pt-5 sm:pt-8 min-h-full">
@@ -324,7 +331,7 @@ export default function ChatInterface({
       </div>
 
       {/* Input Area */}
-      <div className="absolute bottom-0 left-0 right-0 pt-8 pb-4 sm:pb-6 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)] via-70% to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 pt-8 pb-4 sm:pb-6 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-bg-main via-bg-main via-70% to-transparent">
         <div className="w-full max-w-3xl relative pointer-events-auto flex flex-col items-center">
           
           {/* Recording Overlay */}
@@ -387,9 +394,8 @@ export default function ChatInterface({
                   >
                      <Sparkles size={14} className="text-[var(--color-accent)]" />
                      <span className="truncate max-w-[100px]">
-                       {selectedModel.includes("gemini-1.5-pro") ? "Gemini 1.5 Pro" :
-                        selectedModel.includes("gemini-1.5-flash") ? "Gemini 1.5 Flash" :
-                        selectedModel.includes("DeepSeek") ? "DeepSeek V4" : "Llama 3.1"}
+                       {selectedModel.includes("DeepSeek") ? "DeepSeek V4" :
+                        selectedModel.includes("gpt-oss") ? "GPT OSS 120B" : "Llama 3.1"}
                      </span>
                   </button>
                   <button
@@ -421,9 +427,8 @@ export default function ChatInterface({
                 className="mt-1 sm:hidden flex items-center gap-1 text-[var(--color-accent)] font-medium text-[12px] border-0 bg-transparent cursor-pointer"
              >
                 <Sparkles size={12} /> 
-                {selectedModel.includes("gemini-1.5-pro") ? "Gemini 1.5 Pro" :
-                 selectedModel.includes("gemini-1.5-flash") ? "Gemini 1.5 Flash" :
-                 selectedModel.includes("DeepSeek") ? "DeepSeek V4" : "Llama 3.1"}
+                {selectedModel.includes("DeepSeek") ? "DeepSeek V4" :
+                 selectedModel.includes("gpt-oss") ? "GPT OSS 120B" : "Llama 3.1"}
              </button>
           </div>
         </div>
@@ -457,10 +462,9 @@ export default function ChatInterface({
               
               <div className="flex flex-col gap-2">
                 {[
-                  { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", desc: "Google's most capable model" },
-                  { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", desc: "Fast & versatile responses" },
-                  { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro", desc: "Advanced reasoning & logic" },
-                  { id: "meta-llama/Llama-3.1-8B-Instruct:novita", name: "Llama 3.1 8B Instruct", desc: "Fast conversational AI" },
+                  { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro", desc: "Advanced reasoning & logic (Recommended)" },
+                  { id: "meta-llama/Llama-3.1-8B-Instruct:novita", name: "Llama 3.1 8B Instruct", desc: "Fast conversational AI & dialogue" },
+                  { id: "openai/gpt-oss-120b:groq", name: "GPT OSS 120B", desc: "High intelligence open source model" },
                 ].map((m) => (
                   <button
                     key={m.id}
