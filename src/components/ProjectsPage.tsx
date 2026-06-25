@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { ExternalLink, Github, ArrowLeft, Server, Activity, Database, FileText, PenTool, Layers, Box, BarChart3, PackageSearch, MessageSquare, Zap, Users, Network, Combine, ShieldCheck, TerminalSquare, AppWindow, MousePointerClick, Cpu, Workflow } from "lucide-react";
+import { ExternalLink, Github, ArrowLeft, Server, Activity, Database, FileText, PenTool, Layers, Box, BarChart3, PackageSearch, MessageSquare, Zap, Users, Network, Combine, ShieldCheck, TerminalSquare, AppWindow, MousePointerClick, Cpu, Workflow, Menu } from "lucide-react";
 
 interface ProjectsPageProps {
   onBackToChat: () => void;
@@ -238,7 +238,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
       className="flex-1 h-full w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden relative"
     >
       {/* Top Navbar with Back Button - Island Style */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
+      <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
         <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl">
           <div className="flex items-center gap-2 m-0 p-0">
             <button 
@@ -250,6 +250,15 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
             </button>
             <h1 className="font-medium text-[16px] sm:text-[18px] md:text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1">My Live Works</h1>
           </div>
+          {onToggleDrawer && (
+            <button 
+              onClick={onToggleDrawer}
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 text-[var(--text-muted)] transition-colors cursor-pointer shrink-0 border-0 bg-transparent"
+              title="Open Menu"
+            >
+              <Menu size={22} />
+            </button>
+          )}
         </div>
       </div>
 
