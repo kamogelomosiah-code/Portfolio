@@ -1,0 +1,61 @@
+{
+  "name": "Kamogelo Mosia",
+  "nickname": "Kamo",
+  "email": "kamogelomosiah@gmail.com",
+  "profession": "Software & IT Solutions Engineer",
+  "overview": "IT Intern and BSc IT Double Major Graduate from UJ. Passionate about software system configurations, hardware diagnostic troubleshooting, web applications development, and AI tools integration.",
+  "education": [
+    {
+      "degree": "BSc Information Technology: Informatics & Computer Science",
+      "years": "2019 - 2024",
+      "institution": "University of Johannesburg (UJ)",
+      "details": "Completed core modules in Algorithms, DBMS, Software Engineering, Networks, and System Design with a 60% average."
+    },
+    {
+      "degree": "National Senior Certificate with Bachelor's Pass",
+      "years": "2016",
+      "institution": "Hoërskool Birchleigh",
+      "details": "Achieved 71% in Information Technology (top of class)."
+    }
+  ],
+  "experience": [
+    {
+      "title": "Cashier and Customer Service Representative",
+      "year": "2021",
+      "company": "Dis-Chem Pharmacy",
+      "details": "Managed transactions on CRM/POS systems and helped resolve system problems."
+    },
+    {
+      "title": "Cashier and Sales Assistant",
+      "year": "2016",
+      "company": "F-Stop Photolab",
+      "details": "Handled cash bookkeeping and hardware/software queries."
+    }
+  ],
+  "projects": [
+    {
+      "name": "CallTrax",
+      "url": "call-trax.co.za",
+      "stack": "PHP, Laravel, React.js, MySQL",
+      "description": "Deployed a client tracking and billing platform for active corporate service providers."
+    },
+    {
+      "name": "kamocodes API",
+      "url": "api.kamocodes.xyz",
+      "stack": "PHP, Laravel, PostgreSQL, REST API",
+      "description": "A central API gateway managing distributed sandbox requests."
+    },
+    {
+      "name": "kamocodes Library",
+      "url": "library.kamocodes.xyz",
+      "stack": "TypeScript, React.js, Laravel, MySQL",
+      "description": "Active cataloging and library catalog system with borrowing analytics trackers."
+    },
+    {
+      "name": "Personal AI Portfolio App",
+      "stack": "TypeScript, Firebase, Gemini AI, Vite, Tailwind CSS",
+      "description": "A full-stack resume platform with voice transcription and interactive Firestore sandboxes."
+    }
+  ],
+  "skills": ["React", "Laravel", "Express", "Node.js", "TypeScript", "PHP", "SQL (MySQL, PostgreSQL)", "Git", "System and hardware configurations"]
+}

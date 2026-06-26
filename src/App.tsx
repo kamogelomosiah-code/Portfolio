@@ -33,12 +33,66 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accentColor, setAccentColor] = useState(getDefaultAccentColor());
-  const [selectedModel, setSelectedModel] = useState("deepseek-ai/DeepSeek-V4-Pro:novita");
+  const [selectedModel, setSelectedModel] = useState("zai-org/GLM-5.2:novita");
   const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    const testModels = async () => {
+      const models = [
+        "zai-org/GLM-5.2:novita",
+        "microsoft/FastContext-1.0-4B-SFT:featherless-ai",
+        "WeiboAI/VibeThinker-3B:featherless-ai",
+        "deepseek-ai/DeepSeek-V4-Flash:novita",
+        "deepseek-ai/DeepSeek-V4-Pro:novita"
+      ];
+      for (const m of models) {
+        try {
+          const res = await fetch('/api/ping-model', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: m })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setSelectedModel(m);
+            break;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+    };
+    testModels();
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--accent-color', accentColor);
   }, [accentColor]);
+
+  useEffect(() => {
+    const updateScale = () => {
+      const width = window.innerWidth;
+      // Base mobile width around 375px
+      let scale = 1;
+      
+      if (width < 380) {
+        // scale down slightly for very small devices
+        scale = Math.max(0.85, width / 400); 
+      } else if (width >= 380 && width < 768) {
+        // smooth scale for typical mobile
+        scale = Math.min(1, width / 390);
+      } else if (width >= 2000) {
+        // scale up for very large screens
+        scale = 1.1;
+      }
+      
+      document.documentElement.style.fontSize = `${16 * scale}px`;
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
 
   useEffect(() => {
     const updateTimeBasedTheme = () => {

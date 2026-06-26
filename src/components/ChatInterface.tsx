@@ -14,7 +14,7 @@ export type Message = {
 
 export default function ChatInterface({ 
   onOpenSettings, 
-  selectedModel = "deepseek-ai/DeepSeek-V4-Pro:novita",
+  selectedModel = "gemini-2.5-flash",
   setSelectedModel,
   onToggleDrawer,
   messages,
@@ -35,6 +35,7 @@ export default function ChatInterface({
   const [isScrolled, setIsScrolled] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const lastScrollY = useRef(0);
@@ -42,13 +43,23 @@ export default function ChatInterface({
   // Auto-scroll when messages update
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (scrollContainerRef.current) {
+      if (endOfMessagesRef.current) {
+        endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      } else if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       }
     }, 100);
     return () => clearTimeout(timeoutId);
   }, [messages, isLoading, isTranscribing]);
+
+  // Auto-resize textarea as content changes to show all new text being entered
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [input]);
 
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const currentScrollY = e.currentTarget.scrollTop;
@@ -118,6 +129,17 @@ export default function ChatInterface({
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
+
+    if (!navigator.onLine) {
+      const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim() };
+      setMessages(prev => [...prev, userMsg, {
+        id: (Date.now() + 1).toString(),
+        role: "agent",
+        text: "It seems you are offline. Please check your internet connection to continue our conversation."
+      }]);
+      setInput("");
+      return;
+    }
     
     const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim() };
     setMessages(prev => [...prev, userMsg]);
@@ -279,7 +301,7 @@ export default function ChatInterface({
                   <div key={msg.id} className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     {msg.role === "user" ? (
                       <div className="text-[var(--text-main)] px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm max-w-[85%] sm:max-w-[75%] border shadow-sm" style={{ backgroundColor: "var(--color-accent-light)", borderColor: "var(--color-accent-light)" }}>
-                        <p className="text-[15px] whitespace-pre-wrap font-normal leading-relaxed">{msg.text}</p>
+                        <p className="text-[15px] whitespace-pre-wrap font-normal leading-relaxed break-words">{msg.text}</p>
                       </div>
                     ) : (
                       <div className="flex items-start gap-4 w-full max-w-full sm:max-w-4xl px-1 sm:px-4">
@@ -289,7 +311,7 @@ export default function ChatInterface({
                         <div className="flex-1 flex flex-col items-start w-full">
                           <span className="font-medium text-[13px] text-[var(--text-muted)] mb-1">Kamogelo's GPT</span>
                           <div className="text-[var(--text-main)] bg-transparent pb-4 w-full text-left">
-                            <p className="text-[16px] leading-[1.7] whitespace-pre-wrap font-normal w-full max-w-3xl">
+                            <p className="text-[16px] leading-[1.7] whitespace-pre-wrap font-normal w-full max-w-3xl break-words">
                               {msg.text}
                             </p>
                             <div className="mt-4 flex flex-col gap-3 w-full max-w-3xl">
@@ -380,8 +402,8 @@ export default function ChatInterface({
                        handleSend(input);
                     }
                  }}
-                 placeholder="Reply to Kamogelo..."
-                 className="flex-1 bg-transparent text-[var(--text-main)] py-3 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[16px] leading-[24px] max-h-[160px] self-center"
+                 placeholder="Reply to Kamogelo..." ref={textareaRef}
+                 className="flex-1 bg-transparent text-[var(--text-main)] py-3 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[16px] leading-[24px] max-h-[160px] self-center overflow-y-auto"
                  disabled={isLoading || isTranscribing}
                  rows={1}
                />
@@ -394,8 +416,11 @@ export default function ChatInterface({
                   >
                      <Sparkles size={14} className="text-[var(--color-accent)]" />
                      <span className="truncate max-w-[100px]">
-                       {selectedModel.includes("DeepSeek") ? "DeepSeek V4" :
-                        selectedModel.includes("gpt-oss") ? "GPT OSS 120B" : "Llama 3.1"}
+                       {selectedModel.includes("GLM") ? "GLM 5.2" :
+                        selectedModel.includes("FastContext") ? "FastContext 4B" :
+                        selectedModel.includes("VibeThinker") ? "VibeThinker 3B" : 
+                        selectedModel.includes("DeepSeek-V4-Flash") ? "DeepSeek V4 Flash" :
+                        selectedModel.includes("DeepSeek-V4-Pro") ? "DeepSeek V4 Pro" : "Model"}
                      </span>
                   </button>
                   <button
@@ -427,8 +452,11 @@ export default function ChatInterface({
                 className="mt-1 sm:hidden flex items-center gap-1 text-[var(--color-accent)] font-medium text-[12px] border-0 bg-transparent cursor-pointer"
              >
                 <Sparkles size={12} /> 
-                {selectedModel.includes("DeepSeek") ? "DeepSeek V4" :
-                 selectedModel.includes("gpt-oss") ? "GPT OSS 120B" : "Llama 3.1"}
+                {selectedModel.includes("GLM") ? "GLM 5.2" :
+                 selectedModel.includes("FastContext") ? "FastContext 4B" :
+                 selectedModel.includes("VibeThinker") ? "VibeThinker 3B" : 
+                 selectedModel.includes("DeepSeek-V4-Flash") ? "DeepSeek V4 Flash" :
+                 selectedModel.includes("DeepSeek-V4-Pro") ? "DeepSeek V4 Pro" : "Model"}
              </button>
           </div>
         </div>
@@ -462,9 +490,11 @@ export default function ChatInterface({
               
               <div className="flex flex-col gap-2">
                 {[
-                  { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro", desc: "Advanced reasoning & logic (Recommended)" },
-                  { id: "meta-llama/Llama-3.1-8B-Instruct:novita", name: "Llama 3.1 8B Instruct", desc: "Fast conversational AI & dialogue" },
-                  { id: "openai/gpt-oss-120b:groq", name: "GPT OSS 120B", desc: "High intelligence open source model" },
+                  { id: "zai-org/GLM-5.2:novita", name: "GLM 5.2", desc: "Advanced GLM model" },
+                  { id: "microsoft/FastContext-1.0-4B-SFT:featherless-ai", name: "FastContext 4B", desc: "Fast Context Model" },
+                  { id: "WeiboAI/VibeThinker-3B:featherless-ai", name: "VibeThinker 3B", desc: "Open weights Thinker model" },
+                  { id: "deepseek-ai/DeepSeek-V4-Flash:novita", name: "DeepSeek V4 Flash", desc: "Fast DeepSeek reasoning" },
+                  { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro", desc: "Advanced DeepSeek reasoning" }
                 ].map((m) => (
                   <button
                     key={m.id}

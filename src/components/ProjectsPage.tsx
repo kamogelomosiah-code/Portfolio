@@ -239,26 +239,10 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
     >
       {/* Top Navbar with Back Button - Island Style */}
       <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
-        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl">
+        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-xl shadow-md border border-[var(--border-light)]/60 px-4 py-2 max-w-3xl">
           <div className="flex items-center gap-2 m-0 p-0">
-            <button 
-              onClick={onBackToChat}
-              className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full hover:bg-black/5 text-[var(--text-muted)] transition-colors cursor-pointer shrink-0 m-0 border-0 bg-transparent"
-              title="Back to conversational agent"
-            >
-              <ArrowLeft size={24} />
-            </button>
-            <h1 className="font-medium text-[16px] sm:text-[18px] md:text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1">My Live Works</h1>
+            <h1 className="font-medium text-[16px] sm:text-[18px] md:text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1 py-1">My Live Works</h1>
           </div>
-          {onToggleDrawer && (
-            <button 
-              onClick={onToggleDrawer}
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 text-[var(--text-muted)] transition-colors cursor-pointer shrink-0 border-0 bg-transparent"
-              title="Open Menu"
-            >
-              <Menu size={22} />
-            </button>
-          )}
         </div>
       </div>
 
@@ -347,6 +331,29 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
               </motion.div>
             ))}
           </div>
+        </div>
+      </div>
+      
+      {/* Floating Bottom Navigation */}
+      <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
+        <div className="flex items-center gap-2 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-lg border border-[var(--border-light)]/60 px-2 py-2">
+          {onToggleDrawer && (
+            <button 
+              onClick={onToggleDrawer}
+              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-main)] transition-colors cursor-pointer border-0 bg-transparent"
+              title="Menu"
+            >
+              <Menu size={24} />
+            </button>
+          )}
+          <button 
+            onClick={onBackToChat}
+            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-main)] transition-colors cursor-pointer border-0 bg-transparent"
+            title="Back to Chat"
+          >
+            <ArrowLeft size={20} />
+            <span className="font-medium text-[15px]">Back to Chat</span>
+          </button>
         </div>
       </div>
     </motion.div>

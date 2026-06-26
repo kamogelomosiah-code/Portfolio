@@ -71,9 +71,11 @@ export default function SettingsModal({ isOpen, onClose, accentColor, setAccentC
                   <h3 className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide uppercase">AI Model</h3>
                   <div className="flex flex-col gap-2">
                     {[
-                      { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro" },
-                      { id: "meta-llama/Llama-3.1-8B-Instruct:novita", name: "Llama 3.1 8B Instruct" },
-                      { id: "openai/gpt-oss-120b:groq", name: "GPT OSS 120B" },
+                      { id: "zai-org/GLM-5.2:novita", name: "GLM 5.2" },
+                      { id: "microsoft/FastContext-1.0-4B-SFT:featherless-ai", name: "FastContext 4B" },
+                      { id: "WeiboAI/VibeThinker-3B:featherless-ai", name: "VibeThinker 3B" },
+                      { id: "deepseek-ai/DeepSeek-V4-Flash:novita", name: "DeepSeek V4 Flash" },
+                      { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro" }
                     ].map((model) => (
                       <label key={model.id} className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-colors bg-[var(--bg-card)] hover:bg-[#F1F3F4] border border-[var(--border-light)]">
                         <input

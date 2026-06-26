@@ -19,20 +19,21 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
       return;
     }
     setStatus("submitting");
+    
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
-      const result = await response.json();
-      if (response.ok && result.success) {
-        setStatus("success");
-        setFormData({ name: "", email: "", subject: "", message: "" });
-      } else {
-        setStatus("error");
-        setTimeout(() => setStatus("idle"), 5000);
-      }
+      // Format message
+      const waText = `Hi Kamogelo,\n\nI am ${formData.name} (${formData.email}).\n\nSubject: ${formData.subject || 'Opportunity'}\n\n${formData.message}`;
+      const emailBody = `Hi Kamogelo,\n\nI am ${formData.name} (${formData.email}).\n\n${formData.message}`;
+      
+      // Open WhatsApp
+      window.open(`https://wa.me/27677426447?text=${encodeURIComponent(waText)}`, '_blank');
+      
+      // Open Mailto in the same window
+      window.location.href = `mailto:kamogelomosiah@gmail.com?subject=${encodeURIComponent(formData.subject || 'Opportunity')}&body=${encodeURIComponent(emailBody)}`;
+      
+      setStatus("success");
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      setTimeout(() => setStatus("idle"), 5000);
     } catch (error) {
       console.error("Submission failed:", error);
       setStatus("error");
@@ -50,26 +51,10 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
     >
       {/* Top Navbar with Back Button - Island Style */}
       <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
-        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl">
+        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-xl shadow-md border border-[var(--border-light)]/60 px-4 py-2 max-w-3xl">
           <div className="flex items-center gap-2 m-0 p-0">
-            <button 
-              onClick={onBackToChat}
-              className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full hover:bg-black/5 text-[var(--text-muted)] transition-colors cursor-pointer shrink-0 m-0 border-0 bg-transparent"
-              title="Back to conversational agent"
-            >
-              <ArrowLeft size={24} />
-            </button>
-            <h1 className="font-medium text-[16px] sm:text-[18px] md:text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1">Get In Touch</h1>
+            <h1 className="font-medium text-[16px] sm:text-[18px] md:text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1 py-1">Get In Touch</h1>
           </div>
-          {onToggleDrawer && (
-            <button 
-              onClick={onToggleDrawer}
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 text-[var(--text-muted)] transition-colors cursor-pointer shrink-0 border-0 bg-transparent"
-              title="Open Menu"
-            >
-              <Menu size={22} />
-            </button>
-          )}
         </div>
       </div>
 
@@ -242,6 +227,29 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
           </div>
         </div>
       </div>
+      </div>
+      
+      {/* Floating Bottom Navigation */}
+      <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
+        <div className="flex items-center gap-2 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-lg border border-[var(--border-light)]/60 px-2 py-2">
+          {onToggleDrawer && (
+            <button 
+              onClick={onToggleDrawer}
+              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-main)] transition-colors cursor-pointer border-0 bg-transparent"
+              title="Menu"
+            >
+              <Menu size={24} />
+            </button>
+          )}
+          <button 
+            onClick={onBackToChat}
+            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-main)] transition-colors cursor-pointer border-0 bg-transparent"
+            title="Back to Chat"
+          >
+            <ArrowLeft size={20} />
+            <span className="font-medium text-[15px]">Back to Chat</span>
+          </button>
+        </div>
       </div>
     </motion.div>
   );
