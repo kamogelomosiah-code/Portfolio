@@ -9,6 +9,7 @@ import Sidebar from "./components/Sidebar";
 import ChatInterface, { Message } from "./components/ChatInterface";
 import MenuDrawer from "./components/MenuDrawer";
 import SettingsModal from "./components/SettingsModal";
+import MobileApp from "./components/MobileApp";
 
 const ProjectsPage = lazy(() => import("./components/ProjectsPage"));
 const CvPage = lazy(() => import("./components/CvPage"));
@@ -35,6 +36,16 @@ export default function App() {
   const [accentColor, setAccentColor] = useState(getDefaultAccentColor());
   const [selectedModel, setSelectedModel] = useState("zai-org/GLM-5.2:novita");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const testModels = async () => {
@@ -110,6 +121,19 @@ export default function App() {
     const interval = setInterval(updateTimeBasedTheme, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  if (isMobile) {
+    return (
+      <MobileApp
+        accentColor={accentColor}
+        setAccentColor={setAccentColor}
+        selectedModel={selectedModel}
+        setSelectedModel={setSelectedModel}
+        messages={messages}
+        setMessages={setMessages}
+      />
+    );
+  }
 
   return (
     <div className="flex bg-[var(--bg-card)] h-dvh text-black w-full font-sans antialiased relative overflow-hidden">
