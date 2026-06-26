@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { 
   Send, Sparkles, Settings, Mic, User, Mail, 
   GraduationCap, FileText, MessageSquare, AlertCircle, 
-  Code2, Download, Phone, MapPin, Globe, ExternalLink, Github, Menu
+  Code2, Download, Phone, MapPin, Globe, ExternalLink, Github, Menu,
+  Cpu, RotateCw, List, ChevronDown, Image as ImageIcon, Database, Layers, Linkedin, Paperclip
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
@@ -26,6 +27,54 @@ interface MobileAppProps {
 const TABS = ["chat", "projects", "cv", "contact"] as const;
 type TabType = typeof TABS[number];
 
+const PROMPT_SETS = [
+  [
+    { text: "Write a to-do list for a personal project or task", icon: "list" },
+    { text: "Generate an email reply to a job offer", icon: "mail" },
+    { text: "Summarise this article or text for me in one paragraph", icon: "text" },
+    { text: "How does AI work in a technical capacity", icon: "cpu" }
+  ],
+  [
+    { text: "What are Kamogelo's top technical skills?", icon: "sparkles" },
+    { text: "Tell me about Kamogelo's software engineering projects", icon: "code" },
+    { text: "How can I contact Kamogelo or get his CV?", icon: "user" },
+    { text: "What academic qualification does Kamogelo hold?", icon: "cap" }
+  ],
+  [
+    { text: "Explain the architecture of Kamogelo's portfolio", icon: "layers" },
+    { text: "What technologies did Kamogelo use for the frontend?", icon: "code" },
+    { text: "Can you provide a summary of Kamogelo's professional experience?", icon: "text" },
+    { text: "What databases is Kamogelo experienced with?", icon: "database" }
+  ]
+];
+
+function renderPromptIcon(iconName: string) {
+  switch (iconName) {
+    case "list":
+      return <List size={16} className="text-[var(--color-accent)]" />;
+    case "mail":
+      return <Mail size={16} className="text-[var(--color-accent)]" />;
+    case "text":
+      return <FileText size={16} className="text-[var(--color-accent)]" />;
+    case "cpu":
+      return <Cpu size={16} className="text-[var(--color-accent)]" />;
+    case "sparkles":
+      return <Sparkles size={16} className="text-[var(--color-accent)]" />;
+    case "code":
+      return <Code2 size={16} className="text-[var(--color-accent)]" />;
+    case "user":
+      return <User size={16} className="text-[var(--color-accent)]" />;
+    case "cap":
+      return <GraduationCap size={16} className="text-[var(--color-accent)]" />;
+    case "layers":
+      return <Layers size={16} className="text-[var(--color-accent)]" />;
+    case "database":
+      return <Database size={16} className="text-[var(--color-accent)]" />;
+    default:
+      return <MessageSquare size={16} className="text-[var(--color-accent)]" />;
+  }
+}
+
 export default function MobileApp({
   accentColor,
   setAccentColor,
@@ -39,6 +88,115 @@ export default function MobileApp({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [promptSetIndex, setPromptSetIndex] = useState(0);
+
+  const renderComposer = (isFixed: boolean) => {
+    return (
+      <div className={`${isFixed ? 'w-full' : 'w-full mt-4'} relative flex flex-col items-center pointer-events-auto`}>
+        {/* Audio recording Layout */}
+        <AnimatePresence>
+          {isRecording && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="absolute inset-x-0 bottom-full mb-3 z-20 bg-[var(--bg-card)] border border-[var(--color-accent)]/30 rounded-none flex items-center justify-center p-5 shadow-lg overflow-hidden touch-none select-none text-[var(--text-main)]"
+              onPointerUp={stopRecording}
+              onTouchEnd={stopRecording}
+            >
+              <div className="absolute inset-0 bg-[var(--color-accent-light)] animate-pulse"></div>
+              <div className="flex flex-col items-center justify-center gap-2 z-10">
+                <div className="w-12 h-12 bg-[var(--color-accent)] rounded-none flex items-center justify-center animate-bounce shadow-sm">
+                  <Mic size={22} className="text-white" />
+                </div>
+                <span className="font-semibold text-[12px]">Listening... Release to transcribe</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Input box */}
+        <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_2px_12px_rgba(26,115,232,0.15)]' : 'border-gray-300 dark:border-neutral-700 shadow-sm'} rounded-none focus-within:shadow-[0_2px_8px_rgba(0,0,0,0.08)] focus-within:border-gray-400 dark:focus-within:border-neutral-500 transition-all flex flex-col p-4.5 relative`}>
+          {isTranscribing && (
+            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-none flex items-center justify-center gap-3">
+               <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+               </svg>
+               <span className="font-semibold text-[13.5px] text-[var(--color-accent)]">Transcribing audio...</span>
+            </div>
+          )}
+
+          {/* Top Row: text area & Mode Select */}
+          <div className="flex items-start justify-between gap-2.5 w-full min-h-[46px]">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onFocus={handleInputFocus}
+              placeholder="Ask whatever you want...." 
+              className="flex-1 bg-transparent text-[var(--text-main)] py-1.5 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[14.5px] leading-relaxed max-h-[100px] overflow-y-auto border-0"
+              disabled={isLoading || isTranscribing}
+              rows={2}
+            />
+
+            <button 
+              onClick={() => setSettingsOpen(true)}
+              type="button"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-[11px] font-semibold text-[var(--text-muted)] border border-[var(--border-light)] rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer shrink-0"
+              title="Select AI Mode"
+            >
+              <Globe size={11} className="text-[var(--color-accent)]" />
+              <span className="truncate max-w-[60px]">
+                {selectedModel === "swift" ? "Swift" : "Fusion"}
+              </span>
+              <ChevronDown size={9} className="text-neutral-400" />
+            </button>
+          </div>
+
+          {/* Separator line */}
+          <div className="h-px bg-gray-100 dark:bg-neutral-800 my-2.5 w-full" />
+
+          {/* Bottom Row: Actions & Send */}
+          <div className="flex items-center justify-between w-full">
+            {/* Left actions */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className="flex items-center gap-1 px-2 py-1.5 text-[11.5px] font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors border-0 bg-transparent cursor-pointer rounded-none"
+              >
+                <Paperclip size={13} className="text-neutral-400" />
+                <span className="hidden xs:inline">Attach</span>
+              </button>
+
+              <button
+                type="button"
+                className="flex items-center gap-1 px-2 py-1.5 text-[11.5px] font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors border-0 bg-transparent cursor-pointer rounded-none"
+              >
+                <ImageIcon size={13} className="text-neutral-400" />
+                <span className="hidden xs:inline">Image</span>
+              </button>
+            </div>
+
+            {/* Right counter & Send */}
+            <div className="flex items-center gap-2.5">
+              <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                {input.length}/1000
+              </span>
+              <button
+                onClick={() => handleSend(input)}
+                disabled={!input.trim() || isLoading || isTranscribing}
+                className="flex items-center justify-center w-8 h-8 rounded-full disabled:text-gray-300 disabled:bg-transparent bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 transition-all cursor-pointer border-0 shadow-sm"
+                title="Send message"
+              >
+                <Send size={13} className="-ml-0.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -267,42 +425,52 @@ export default function MobileApp({
                   className="flex-1 overflow-y-auto w-full px-4 pt-3 pb-[140px] scroll-smooth"
                 >
                   {isInitialState ? (
-                    <div className="flex flex-col items-center justify-center text-center py-10 px-4">
-                      <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-main)] mb-2 leading-tight">
-                        Kamogelo's Assistant
-                      </h1>
-                      <p className="text-[var(--text-muted)] text-[14px] leading-relaxed max-w-sm">
-                        Hello! Ask me anything about his qualifications, projects, or background.
-                      </p>
+                    <div className="flex flex-col text-left w-full py-6 px-1">
+                      {/* Greeting Hero */}
+                      <div className="mb-5">
+                        <h1 className="text-[30px] font-bold tracking-tight text-[var(--text-main)] mb-0.5 leading-none font-display">
+                          Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
+                        </h1>
+                        <h2 className="text-[30px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-3 leading-none font-display">
+                          What would you like to know?
+                        </h2>
+                        <p className="text-[var(--text-muted)] text-[14px] font-normal leading-relaxed">
+                          Use one of the most common prompts below or use your own to begin
+                        </p>
+                      </div>
 
-                      {/* Touch Friendly Action Buttons */}
-                      <div className="flex flex-col gap-2.5 w-full max-w-xs mt-8">
-                        <button 
-                          onClick={() => handleSend("Can you tell me about yourself?")} 
-                          className="flex items-center gap-3 bg-[var(--bg-card)] border border-[var(--border-light)] p-3.5 rounded-xl hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-white/5 dark:active:bg-white/10 transition-all text-left border-0 cursor-pointer text-[13.5px] font-medium"
-                          style={{ minHeight: "48px" }}
-                        >
-                          <User size={16} className="text-[var(--color-accent)] shrink-0" />
-                          <span className="flex-1">Tell me about Kamogelo</span>
-                        </button>
+                      {/* 4 Card Prompt Grid (2x2 on mobile, extremely thumb friendly) */}
+                      <div className="grid grid-cols-2 gap-3 w-full mt-2">
+                        {PROMPT_SETS[promptSetIndex].map((prompt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleSend(prompt.text)}
+                            className="flex flex-col justify-between p-4 bg-[var(--bg-card)] border border-[var(--border-light)] hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200 active:scale-[0.98] cursor-pointer text-left h-[120px] rounded-none shadow-sm"
+                          >
+                            <span className="text-[12.5px] text-[var(--text-main)] font-medium leading-snug line-clamp-3">
+                              {prompt.text}
+                            </span>
+                            <div className="shrink-0 mt-1.5">
+                              {renderPromptIcon(prompt.icon)}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
 
-                        <button 
-                          onClick={() => handleSend("Show me some of your live projects!")} 
-                          className="flex items-center gap-3 bg-[var(--bg-card)] border border-[var(--border-light)] p-3.5 rounded-xl hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-white/5 dark:active:bg-white/10 transition-all text-left border-0 cursor-pointer text-[13.5px] font-medium"
-                          style={{ minHeight: "48px" }}
+                      {/* Refresh Prompts left-aligned */}
+                      <div className="mt-3.5 flex justify-start mb-6">
+                        <button
+                          onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
+                          className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-medium transition-colors bg-transparent border-0 cursor-pointer p-1"
                         >
-                          <Code2 size={16} className="text-[var(--color-accent)] shrink-0" />
-                          <span className="flex-1">Show his live projects</span>
+                          <RotateCw size={12} />
+                          <span>Refresh Prompts</span>
                         </button>
+                      </div>
 
-                        <button 
-                          onClick={() => handleSend("How can I contact you?")} 
-                          className="flex items-center gap-3 bg-[var(--bg-card)] border border-[var(--border-light)] p-3.5 rounded-xl hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-white/5 dark:active:bg-white/10 transition-all text-left border-0 cursor-pointer text-[13.5px] font-medium"
-                          style={{ minHeight: "48px" }}
-                        >
-                          <Mail size={16} className="text-[var(--color-accent)] shrink-0" />
-                          <span className="flex-1">How can I contact him?</span>
-                        </button>
+                      {/* Inline Composer on Landing Page */}
+                      <div className="w-full">
+                        {renderComposer(false)}
                       </div>
                     </div>
                   ) : (
@@ -387,67 +555,12 @@ export default function MobileApp({
                   )}
                 </div>
 
-                {/* Keyboard-Aware Pinned Composer bar */}
-                <div className="absolute bottom-0 inset-x-0 pt-3 pb-4 px-4 bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 to-transparent z-10">
-                  <div className="w-full relative flex flex-col items-center">
-                    
-                    {/* Audio recording Overlay */}
-                    <AnimatePresence>
-                      {isRecording && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 15 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 15 }}
-                          className="absolute inset-x-0 bottom-full mb-3 z-20 bg-[var(--bg-card)] border border-[var(--color-accent)]/30 rounded-2xl flex items-center justify-center p-5 shadow-lg"
-                          onPointerUp={stopRecording}
-                          onTouchEnd={stopRecording}
-                        >
-                          <div className="absolute inset-0 bg-[var(--color-accent-light)] animate-pulse rounded-2xl"></div>
-                          <div className="flex flex-col items-center gap-2 z-10">
-                            <div className="w-12 h-12 bg-[var(--color-accent)] rounded-full flex items-center justify-center animate-bounce">
-                              <Mic size={22} className="text-white" />
-                            </div>
-                            <span className="font-semibold text-[12px]">Listening... Release to transcribe</span>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Chat Input Field */}
-                    <div className="w-full bg-[var(--bg-card)] border border-gray-300 dark:border-neutral-700 rounded-2xl flex items-center pl-3.5 pr-1.5 py-1.5 shadow-sm">
-                      {isTranscribing ? (
-                        <div className="flex-1 py-2 flex items-center gap-2 text-[var(--color-accent)] text-[13.5px] font-semibold">
-                          <svg className="animate-spin h-4 w-4 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                          </svg>
-                          <span>Transcribing audio...</span>
-                        </div>
-                      ) : (
-                        <textarea
-                          ref={textareaRef}
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          onFocus={handleInputFocus}
-                          placeholder="Type a message..."
-                          rows={1}
-                          className="flex-1 bg-transparent text-[var(--text-main)] focus:outline-none resize-none placeholder:text-[var(--text-muted)] text-[14.5px] leading-relaxed max-h-[100px] py-1.5 overflow-y-auto"
-                        />
-                      )}
-
-                      <div className="flex items-center ml-1">
-                        <button
-                          onClick={() => handleSend(input)}
-                          disabled={!input.trim() || isLoading || isTranscribing}
-                          className="flex items-center justify-center w-11 h-11 rounded-full disabled:bg-transparent bg-[var(--color-accent)] text-white hover:opacity-90 disabled:text-gray-300 transition-all cursor-pointer border-0 shrink-0 shadow-sm ml-1 active:scale-95"
-                          style={{ minWidth: "44px", minHeight: "44px" }}
-                        >
-                          <Send size={16} />
-                        </button>
-                      </div>
-                    </div>
+                {/* Keyboard-Aware Pinned Composer bar - displayed only when messages exist */}
+                {!isInitialState && (
+                  <div className="absolute bottom-0 inset-x-0 pt-3 pb-4 px-4 bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 to-transparent z-10 animate-fade-in">
+                    {renderComposer(true)}
                   </div>
-                </div>
+                )}
               </div>
             )}
 

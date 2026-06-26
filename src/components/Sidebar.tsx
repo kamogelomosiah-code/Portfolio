@@ -23,14 +23,14 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
         <div className="flex flex-col gap-3 items-center w-full px-3">
           <button 
             onClick={() => onTabChange("chat")}
-            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-2xl transition-all duration-300 group cursor-pointer border-0 ${
+            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "chat" 
                 ? "bg-[var(--color-accent-light)] text-accent font-medium" 
                 : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
             }`}
             title="Kamo AI Chatbot Agent"
           >
-            <div className={`px-4 py-1 rounded-full ${currentTab === "chat" ? "bg-[#d2e3fc]" : ""}`}>
+            <div className={`px-4 py-1 rounded-none ${currentTab === "chat" ? "bg-[#d2e3fc]" : ""}`}>
                <LayoutDashboard size={22} className="stroke-[2px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Chat</span>
@@ -38,14 +38,14 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
 
           <button 
             onClick={() => onTabChange("projects")}
-            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-2xl transition-all duration-300 group cursor-pointer border-0 ${
+            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "projects" 
                 ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-medium" 
                 : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
             }`}
             title="My Live Projects"
           >
-            <div className={`px-4 py-1 rounded-full ${currentTab === "projects" ? "bg-[#d2e3fc]" : ""}`}>
+            <div className={`px-4 py-1 rounded-none ${currentTab === "projects" ? "bg-[#d2e3fc]" : ""}`}>
                <Code2 size={22} className="stroke-[2px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Projects</span>
@@ -53,14 +53,14 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
 
           <button 
             onClick={() => onTabChange("cv")}
-            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-2xl transition-all duration-300 group cursor-pointer border-0 ${
+            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "cv" 
                 ? "bg-[var(--bg-accent-light)] text-[var(--color-accent)] font-medium" 
                 : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
             }`}
             title="Interactive CV / Resume"
           >
-            <div className={`px-4 py-1 rounded-full ${currentTab === "cv" ? "bg-[#d2e3fc]" : ""}`}>
+            <div className={`px-4 py-1 rounded-none ${currentTab === "cv" ? "bg-[#d2e3fc]" : ""}`}>
                <FileText size={22} className="stroke-[2px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">CV</span>
@@ -68,14 +68,14 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
 
           <button 
             onClick={() => onTabChange("contact")}
-            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-2xl transition-all duration-300 group cursor-pointer border-0 ${
+            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "contact" 
                 ? "bg-[var(--bg-accent-light)] text-[var(--color-accent)] font-medium" 
                 : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
             }`}
             title="Get In Touch"
           >
-            <div className={`px-4 py-1 rounded-full ${currentTab === "contact" ? "bg-[#d2e3fc]" : ""}`}>
+            <div className={`px-4 py-1 rounded-none ${currentTab === "contact" ? "bg-[#d2e3fc]" : ""}`}>
                <Mail size={22} className="stroke-[2px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Contact</span>

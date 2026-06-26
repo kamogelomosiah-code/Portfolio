@@ -102,7 +102,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://github.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-full transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="GitHub Profile"
                 >
                   <Github size={20} strokeWidth={2} />
@@ -111,14 +111,14 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-full transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="LinkedIn Profile"
                 >
                   <Linkedin size={20} strokeWidth={2} />
                 </a>
                 <a
                   href="mailto:kamogelomosiah@gmail.com"
-                  className="w-10 h-10 flex items-center justify-center bg-[var(--color-accent-light)] hover:bg-[#D2E3FC] text-[var(--color-accent)] rounded-full transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-[var(--color-accent-light)] hover:bg-[#D2E3FC] text-[var(--color-accent)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="Direct Contact"
                 >
                   <Mail size={20} strokeWidth={2} />
