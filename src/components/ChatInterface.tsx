@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect, UIEvent } from "react";
-import { Send, Sparkles, Settings, Mic, Link as LinkIcon, User, Mail, GraduationCap, FileText, Menu } from "lucide-react";
+import { 
+  Send, Sparkles, Settings, Mic, Link as LinkIcon, User, Mail, 
+  GraduationCap, FileText, Menu, MessageSquare, PlusCircle, X, 
+  AlertCircle, ChevronRight, CornerDownLeft, Plus
+} from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
@@ -10,6 +14,7 @@ export type Message = {
   role: "user" | "agent";
   text: string;
   uiBlock?: "projects" | "skills" | "cv" | null;
+  status?: "sending" | "sent" | "error";
 };
 
 export default function ChatInterface({ 
@@ -33,6 +38,11 @@ export default function ChatInterface({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Client side typing stream states
+  const [streamedTexts, setStreamedTexts] = useState<Record<string, string>>({});
+  const [currentlyStreamingId, setCurrentlyStreamingId] = useState<string | null>(null);
+
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
@@ -51,62 +61,83 @@ export default function ChatInterface({
     }
   };
 
-  // Unified, high-reliability scrolling to show new text immediately
+  // High-reliability scrolling on message shifts
   useEffect(() => {
-    // Instant jump to snap text into view first
     scrollToBottom('auto');
-
-    // Staggered animations to ensure dynamic content and layout changes are captured
     const t1 = setTimeout(() => scrollToBottom('smooth'), 40);
-    const t2 = setTimeout(() => scrollToBottom('smooth'), 120);
-    const t3 = setTimeout(() => scrollToBottom('smooth'), 280);
-    const t4 = setTimeout(() => scrollToBottom('smooth'), 600);
+    const t2 = setTimeout(() => scrollToBottom('smooth'), 150);
+    const t3 = setTimeout(() => scrollToBottom('smooth'), 300);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      clearTimeout(t4);
     };
   }, [messages, isLoading, isTranscribing, input]);
 
-  // Resize observer to auto-scroll when content size changes (e.g., dynamic elements render, message bubble height increases)
+  // Resize observer to scroll when bubble height increases dynamically
   useEffect(() => {
     if (!scrollContentRef.current) return;
 
     const resizeObserver = new ResizeObserver(() => {
       if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
-        // Always scroll if loading/assistant is replying, or user is near bottom
         const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 500;
-        if (isNearBottom || isLoading) {
+        if (isNearBottom || isLoading || currentlyStreamingId) {
           scrollToBottom('smooth');
         }
       }
     });
 
     resizeObserver.observe(scrollContentRef.current);
+    return () => resizeObserver.disconnect();
+  }, [isLoading, currentlyStreamingId]);
 
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [isLoading]);
+  // Progressive Token/Word streaming effect
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === "agent" && !streamedTexts[lastMsg.id] && currentlyStreamingId !== lastMsg.id) {
+      setCurrentlyStreamingId(lastMsg.id);
+      
+      const fullText = lastMsg.text;
+      const words = fullText.split(/(\s+)/); // keep spaces
+      let currentWordIndex = 0;
+      let currentText = "";
+      
+      const interval = setInterval(() => {
+        if (currentWordIndex < words.length) {
+          currentText += words[currentWordIndex];
+          currentWordIndex++;
+          setStreamedTexts(prev => ({
+            ...prev,
+            [lastMsg.id]: currentText
+          }));
+          scrollToBottom('smooth');
+        } else {
+          clearInterval(interval);
+          setCurrentlyStreamingId(null);
+          setStreamedTexts(prev => ({
+            ...prev,
+            [lastMsg.id]: fullText
+          }));
+        }
+      }, 15); // lightning fast word streaming
 
-  // Auto-resize textarea as content changes to show all new text being entered
+      return () => clearInterval(interval);
+    }
+  }, [messages]);
+
+  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
     }
   }, [input]);
 
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const currentScrollY = e.currentTarget.scrollTop;
-    if (currentScrollY > 20) {
-      setIsScrolled(true);
-    } else {
-      setIsScrolled(false);
-    }
+    setIsScrolled(currentScrollY > 20);
     lastScrollY.current = currentScrollY;
   };
 
@@ -118,14 +149,11 @@ export default function ChatInterface({
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        
         setIsTranscribing(true);
         const formData = new FormData();
         formData.append('audio', audioBlob, 'record.webm');
@@ -137,25 +165,22 @@ export default function ChatInterface({
           });
           const data = await res.json();
           if (res.ok && data.text) {
-             setInput((prev) => prev + (prev.length > 0 ? " " : "") + data.text);
+            setInput((prev) => prev + (prev.length > 0 ? " " : "") + data.text);
           } else if (data.error) {
-             alert(data.error);
+            alert(data.error);
           }
         } catch (error) {
           console.error("Transcription failed", error);
-          alert("Transcription failed. Please check the connection and try again.");
         } finally {
           setIsTranscribing(false);
         }
-        
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error("Microphone access denied or error:", error);
-      alert("Could not access microphone.");
+      console.error("Microphone access error:", error);
     }
   };
 
@@ -169,19 +194,11 @@ export default function ChatInterface({
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
 
-    if (!navigator.onLine) {
-      const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim() };
-      setMessages(prev => [...prev, userMsg, {
-        id: (Date.now() + 1).toString(),
-        role: "agent",
-        text: "It seems you are offline. Please check your internet connection to continue our conversation."
-      }]);
-      setInput("");
-      return;
-    }
+    const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim(), status: "sending" };
+    const updatedMessages = [...messages, userMsg];
     
-    const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim() };
-    setMessages(prev => [...prev, userMsg]);
+    // Set UI to loading immediately
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
 
@@ -196,8 +213,8 @@ export default function ChatInterface({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ history, message: text.trim(), model: selectedModel }),
       });
-      const data = await res.json();
       
+      const data = await res.json();
       let replyText = data.text || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
 
@@ -212,19 +229,23 @@ export default function ChatInterface({
         replyText = replyText.replace("[UI:CV]", "").trim();
       }
 
-      setMessages(prev => [...prev, {
+      const agentMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
         text: replyText,
-        uiBlock
-      }]);
+        uiBlock,
+        status: "sent"
+      };
+
+      setMessages(prev => {
+        const updated = prev.map(m => m.id === userMsg.id ? { ...m, status: "sent" as const } : m);
+        return [...updated, agentMsg];
+      });
 
     } catch (error) {
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: "agent",
-        text: "I seem to be offline right now. You can email me at kamogelomosiah@gmail.com in the meantime!"
-      }]);
+      console.error("Chat Error:", error);
+      // Optimistic failure feedback
+      setMessages(prev => prev.map(m => m.id === userMsg.id ? { ...m, status: "error" as const } : m));
     } finally {
       setIsLoading(false);
     }
@@ -234,274 +255,323 @@ export default function ChatInterface({
   const isShrunk = isScrolled || !isInitialState;
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[var(--bg-main)] w-full font-sans">
-      {/* Top Header - Island on Scroll */}
-      <div className={`absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] ${isShrunk ? 'px-3 sm:px-4' : 'px-3 sm:px-5'}`}>
-        <div className={`flex items-center justify-between w-full transition-all duration-200 pointer-events-auto ${isShrunk ? 'bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl' : 'h-[64px] px-2 sm:px-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-light)] shadow-sm max-w-full'}`}>
-          <div className="flex items-center gap-2">
-            <button onClick={onToggleDrawer} className="md:hidden flex items-center justify-center w-[44px] h-[44px] rounded-full hover:bg-black/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent">
-              <Menu size={24} />
+    <div className="flex-1 flex h-full overflow-hidden relative bg-[var(--bg-main)] w-full font-sans antialiased">
+      
+      {/* Main Conversation Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
+        
+        {/* Top Sticky Header */}
+        <div className="sticky top-0 z-30 w-full flex items-center justify-between h-[64px] border-b border-[var(--border-light)] bg-[var(--bg-card)]/95 backdrop-blur-md px-4 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <button 
+              onClick={onToggleDrawer} 
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+              title="Navigation Menu"
+            >
+              <Menu size={20} />
             </button>
             
-            <div className={`relative flex items-center gap-3 ${isShrunk ? 'ml-1' : 'ml-1 md:ml-4'}`}>
-               <motion.div layoutId="watermelon-avatar" className={`flex items-center justify-center transition-all duration-200 ${isShrunk ? 'w-6 h-6' : 'w-8 h-8'}`}>
-                 <WatermelonIcon className="w-full h-full text-[var(--color-accent)]" />
-               </motion.div>
-               <div className="flex flex-col items-start justify-center">
-                 <h1 className={`font-medium text-[var(--text-main)] tracking-normal font-display m-0 p-0 transition-all duration-200 ${isShrunk ? 'text-[15px]' : 'text-[18px] md:text-[20px]'}`}>Kamogelo's GPT</h1>
-                 <div className={`flex items-center gap-1.5 text-[var(--text-muted)] transition-all duration-200 ${isShrunk ? 'hidden' : 'mt-0.5'}`}>
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <span className="text-[12px] font-normal leading-none">Online Assistant</span>
-                 </div>
-               </div>
+            <div className="flex items-center gap-2">
+              <WatermelonIcon className="w-5 h-5 text-[var(--color-accent)] shrink-0" />
+              <span className="font-semibold text-[15px] sm:text-[16px] text-[var(--text-main)] font-display tracking-tight">
+                Kamogelo's GPT
+              </span>
             </div>
           </div>
           
-          <div className={`flex items-center gap-1 text-[var(--text-muted)] relative transition-all duration-200 ${isShrunk ? 'pr-0' : 'pr-1 md:pr-4'}`}>
+          <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
             <button 
               onClick={() => onOpenSettings?.()}
-              className={`flex items-center justify-center rounded-full hover:bg-black/5 transition-colors cursor-pointer border-0 bg-transparent ${isShrunk ? 'w-[44px] h-[44px]' : 'w-[44px] h-[44px] md:w-12 md:h-12'}`}
+              className="flex items-center justify-center w-[38px] h-[38px] rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer border-0 bg-transparent"
               title="Configuration"
             >
-              <Settings size={isShrunk ? 20 : 22} />
+              <Settings size={18} />
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Main Content Area */}
-      <div 
-        ref={scrollContainerRef}
-        className={`flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth pt-[calc(env(safe-area-inset-top)+100px)]`}
-        onScroll={handleScroll}
-      >
-        <div ref={scrollContentRef} className="w-full max-w-3xl mx-auto flex flex-col px-4 sm:px-6 pt-5 sm:pt-8 pb-[180px] min-h-full">
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col text-left w-full transition-all duration-200"
-          >
-            {isInitialState && (
-              <>
-                {/* Hero Section */}
-                <div className="w-full flex justify-center mb-6 sm:mb-12 pt-0 sm:pt-4">
-                  <div className="flex flex-col items-center justify-center text-center w-full max-w-2xl">
-                    <TimeOfDayWidget />
-                    <p className="text-[var(--text-muted)] text-[14px] sm:text-[16px] font-normal leading-relaxed mt-2 px-2">
-                      I'm Kamogelo's automated assistant. Ask me anything about his background, skills, or download his CV directly from here.
-                    </p>
+        {/* Scrollable chat body */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth pt-2"
+          onScroll={handleScroll}
+        >
+          <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-4 pb-[130px] min-h-full">
+              
+              {isInitialState && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col text-left w-full"
+                >
+                  {/* Greeting Hero */}
+                  <div className="w-full flex justify-center mb-6 sm:mb-10 pt-4">
+                    <div className="flex flex-col items-center justify-center text-center w-full max-w-xl">
+                      <TimeOfDayWidget />
+                      <p className="text-[var(--text-muted)] text-[14px] sm:text-[15.5px] font-normal leading-relaxed mt-2.5 px-4">
+                        I'm Kamogelo's automated assistant. Ask me anything about his background, projects, academic qualifications, or download his materials.
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Quick Action Chips */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mx-auto">
-                   <a href="/Kamogelo_Mosia_Transcript.pdf" download className="flex flex-col items-start bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-3.5 sm:p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline group">
-                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-2.5 sm:mb-3 text-[var(--color-accent)]">
-                         <GraduationCap size={18} />
+                  {/* Material Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full max-w-2xl mx-auto">
+                    <a href="/Kamogelo_Mosia_Transcript.pdf" download className="flex flex-col items-start bg-[var(--bg-card)] border border-[var(--border-light)] p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.99] transition-all w-full cursor-pointer no-underline group shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                        <GraduationCap size={16} />
                       </div>
-                      <span className="font-medium text-[var(--text-main)] text-[14px] sm:text-[15px] mb-0.5 sm:mb-1">Academic Transcript</span>
-                      <span className="text-[13px] sm:text-sm text-[var(--text-muted)]">View academic record</span>
-                   </a>
-                   
-                   <a href="/Kamogelo_Mosia_CV.pdf" download className="flex flex-col items-start bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-3.5 sm:p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline group">
-                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-2.5 sm:mb-3 text-[var(--color-accent)]">
-                         <FileText size={18} />
+                      <span className="font-medium text-[var(--text-main)] text-[14.5px] mb-0.5">Academic Transcript</span>
+                      <span className="text-[12.5px] text-[var(--text-muted)]">View formal educational record</span>
+                    </a>
+                    
+                    <a href="/Kamogelo_Mosia_CV.pdf" download className="flex flex-col items-start bg-[var(--bg-card)] border border-[var(--border-light)] p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.99] transition-all w-full cursor-pointer no-underline group shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                        <FileText size={16} />
                       </div>
-                      <span className="font-medium text-[var(--text-main)] text-[14px] sm:text-[15px] mb-0.5 sm:mb-1">CV / Resume</span>
-                      <span className="text-[13px] sm:text-sm text-[var(--text-muted)]">Download formal CV</span>
-                   </a>
+                      <span className="font-medium text-[var(--text-main)] text-[14.5px] mb-0.5">CV / Resume</span>
+                      <span className="text-[12.5px] text-[var(--text-muted)]">Download complete resume PDF</span>
+                    </a>
 
-                   <button onClick={() => handleSend("Can you tell me about yourself?")} className="flex flex-col items-start text-left bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-3.5 sm:p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline border-0">
-                      <div className="w-8 h-8 rounded-full bg-[var(--bg-accent-light)] flex items-center justify-center mb-2.5 sm:mb-3 text-[var(--color-accent)]">
-                         <User size={18} />
+                    <button onClick={() => handleSend("Can you tell me about yourself?")} className="flex flex-col items-start text-left bg-[var(--bg-card)] border border-[var(--border-light)] p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.99] transition-all w-full cursor-pointer no-underline border-0 shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                        <User size={16} />
                       </div>
-                      <span className="font-medium text-[var(--text-main)] text-[14px] sm:text-[15px] mb-0.5 sm:mb-1">About Me</span>
-                      <span className="text-[13px] sm:text-sm text-[var(--text-muted)]">Background & skills</span>
-                   </button>
-                   
-                   <button onClick={() => handleSend("How can I contact you?")} className="flex flex-col items-start text-left bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-3.5 sm:p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline border-0">
-                      <div className="w-8 h-8 rounded-full bg-[var(--bg-accent-light)] flex items-center justify-center mb-2.5 sm:mb-3 text-[var(--color-accent)]">
-                         <Mail size={18} />
+                      <span className="font-medium text-[var(--text-main)] text-[14.5px] mb-0.5">About Me</span>
+                      <span className="text-[12.5px] text-[var(--text-muted)]">Read background & journey</span>
+                    </button>
+                    
+                    <button onClick={() => handleSend("How can I contact you?")} className="flex flex-col items-start text-left bg-[var(--bg-card)] border border-[var(--border-light)] p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.99] transition-all w-full cursor-pointer no-underline border-0 shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                        <Mail size={16} />
                       </div>
-                      <span className="font-medium text-[var(--text-main)] text-[14px] sm:text-[15px] mb-0.5 sm:mb-1">Contact Details</span>
-                      <span className="text-[13px] sm:text-sm text-[var(--text-muted)]">Get in touch</span>
-                   </button>
-                </div>
-              </>
-            )}
-            
-            {messages.length > 0 && (
-              <div className="flex flex-col gap-6 w-full relative">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {msg.role === "user" ? (
-                      <div className="text-[var(--text-main)] px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm max-w-[85%] sm:max-w-[75%] border shadow-sm" style={{ backgroundColor: "var(--color-accent-light)", borderColor: "var(--color-accent-light)" }}>
-                        <p className="text-[15px] whitespace-pre-wrap font-normal leading-relaxed break-words">{msg.text}</p>
+                      <span className="font-medium text-[var(--text-main)] text-[14.5px] mb-0.5">Contact Details</span>
+                      <span className="text-[12.5px] text-[var(--text-muted)]">Get in touch directly</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+              
+              {messages.length > 0 && (
+                <div className="flex flex-col w-full relative">
+                  {messages.map((msg, index) => {
+                    const isUser = msg.role === "user";
+                    const isFirstInGroup = index === 0 || messages[index - 1].role !== msg.role;
+                    const isLastInGroup = index === messages.length - 1 || messages[index + 1].role !== msg.role;
+                    
+                    const isStreaming = currentlyStreamingId === msg.id;
+                    const textToShow = isStreaming ? (streamedTexts[msg.id] || "") : msg.text;
+
+                    return (
+                      <div 
+                        key={msg.id} 
+                        className={`flex w-full ${isUser ? "justify-end" : "justify-start"} ${isFirstInGroup ? "mt-6" : "mt-2"}`}
+                      >
+                        {isUser ? (
+                          /* 5 & 6. User: Rounded bubble, right-aligned, accent-colored background */
+                          <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%]">
+                            <div 
+                              className="text-[var(--text-main)] px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-[20px] rounded-tr-[4px] border shadow-sm"
+                              style={{ 
+                                backgroundColor: "var(--color-accent-light)", 
+                                borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
+                              }}
+                            >
+                              <p className="text-[14.5px] sm:text-[15px] whitespace-pre-wrap font-normal leading-relaxed break-words">
+                                {msg.text}
+                              </p>
+                            </div>
+                            {msg.status === "error" && (
+                              <button 
+                                onClick={() => handleSend(msg.text)} 
+                                className="mt-1.5 text-red-500 hover:text-red-600 flex items-center gap-1.5 text-[12px] font-medium bg-transparent border-0 cursor-pointer"
+                              >
+                                <AlertCircle size={13} />
+                                <span>Failed to send. Click to retry</span>
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          /* 5 & 6. Assistant: Plain text on bg, avatar on left, shown once per group */
+                          <div className="flex items-start gap-4 w-full max-w-full px-1">
+                            <div className="w-8 h-8 shrink-0 mt-1 flex items-center justify-center">
+                              {isFirstInGroup ? (
+                                <div className="flex items-center justify-center rounded-full bg-[var(--bg-card)] border border-[var(--border-light)] w-8 h-8 shadow-sm">
+                                  <WatermelonIcon className="w-4.5 h-4.5 text-[var(--color-accent)] animate-pulse" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8" />
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 flex flex-col items-start w-full min-w-0">
+                              {isFirstInGroup && (
+                                <span className="font-semibold text-[13px] text-[var(--text-muted)] mb-1">
+                                  Kamogelo's GPT
+                                </span>
+                              )}
+                              <div className="text-[var(--text-main)] bg-transparent pb-1 w-full text-left">
+                                <p className="text-[15.5px] sm:text-[16px] leading-[1.65] whitespace-pre-wrap font-normal w-full max-w-3xl break-words">
+                                  {textToShow}
+                                  {isStreaming && (
+                                    <span className="inline-block animate-pulse font-bold ml-0.5 text-[var(--color-accent)] text-lg leading-none select-none">▍</span>
+                                  )}
+                                </p>
+                                
+                                {/* Rich Visual UI widgets, rendered only once completed */}
+                                {!isStreaming && msg.uiBlock && (
+                                  <div className="mt-4 flex flex-col gap-3 w-full max-w-3xl">
+                                    {msg.uiBlock === "projects" && <ProjectCards />}
+                                    {msg.uiBlock === "skills" && <SkillChips />}
+                                    {msg.uiBlock === "cv" && <DownloadCV />}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex items-start gap-4 w-full max-w-full sm:max-w-4xl px-1 sm:px-4">
-                        <div className="flex items-center justify-center rounded-full w-8 h-8 shrink-0 mt-1">
-                           <WatermelonIcon className="w-6 h-6" />
+                    );
+                  })}
+                  
+                  {/* While AI is responding status indicator */}
+                  {isLoading && (
+                    <div className="flex items-start w-full justify-start mt-6 px-1">
+                      <div className="flex items-start gap-4 w-full max-w-full">
+                        <div className="flex items-center justify-center rounded-full bg-[var(--bg-card)] border border-[var(--border-light)] w-8 h-8 shrink-0 mt-1 shadow-sm">
+                          <WatermelonIcon className="w-4.5 h-4.5 text-[var(--color-accent)] animate-pulse" />
                         </div>
                         <div className="flex-1 flex flex-col items-start w-full">
-                          <span className="font-medium text-[13px] text-[var(--text-muted)] mb-1">Kamogelo's GPT</span>
-                          <div className="text-[var(--text-main)] bg-transparent pb-4 w-full text-left">
-                            <p className="text-[16px] leading-[1.7] whitespace-pre-wrap font-normal w-full max-w-3xl break-words">
-                              {msg.text}
-                            </p>
-                            <div className="mt-4 flex flex-col gap-3 w-full max-w-3xl">
-                              {msg.uiBlock === "projects" && <ProjectCards />}
-                              {msg.uiBlock === "skills" && <SkillChips />}
-                              {msg.uiBlock === "cv" && <DownloadCV />}
-                            </div>
+                          <span className="font-semibold text-[13px] text-[var(--text-muted)] mb-1">
+                            Kamogelo's GPT
+                          </span>
+                          <div className="py-2 flex items-center gap-1.5 text-[var(--text-muted)]">
+                            <span className="text-[14px] font-normal italic">Thinking</span>
+                            <span className="inline-block animate-pulse font-bold text-[var(--color-accent)] select-none">▍</span>
                           </div>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-                
-                {isLoading && (
-                  <div className="flex items-start w-full justify-start mt-2">
-                    <div className="flex items-start gap-4 w-full max-w-full sm:max-w-4xl px-1 sm:px-4">
-                      <div className="flex items-center justify-center rounded-full w-8 h-8 shrink-0 mt-1">
-                          <WatermelonIcon className="w-6 h-6" />
-                      </div>
-                      <div className="flex-1 flex flex-col items-start w-full">
-                        <span className="font-medium text-[13px] text-[var(--text-muted)] mb-1">Kamogelo's GPT</span>
-                        <div className="py-2 flex items-center gap-3 w-fit">
-                          <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          <span className="text-[14px] font-normal text-[var(--text-muted)]">Just a sec...</span>
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                )}
-                <div ref={endOfMessagesRef} className="h-4" />
-              </div>
-            )}
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Input Area */}
-      <div className="absolute bottom-0 left-0 right-0 pt-4 pb-2 sm:pb-3 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 via-40% to-transparent">
-        <div className="w-full max-w-3xl relative pointer-events-auto flex flex-col items-center">
-          
-          {/* Recording Overlay */}
-          <AnimatePresence>
-            {isRecording && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="absolute inset-x-0 bottom-full mb-4 z-20 bg-[var(--bg-card)] border border-[var(--color-accent)]/30 rounded-[28px] flex items-center justify-center p-6 cursor-pointer shadow-xl overflow-hidden touch-none select-none text-[var(--text-main)]"
-                onPointerUp={stopRecording}
-                onPointerLeave={stopRecording}
-                onTouchEnd={stopRecording}
-                onContextMenu={(e) => e.preventDefault()}
-              >
-                <div className="absolute inset-0 bg-[var(--bg-accent-light)]/50 animate-pulse"></div>
-                <div className="flex flex-col items-center justify-center gap-3 z-10">
-                  <div className="w-16 h-16 bg-[var(--color-accent)] rounded-full flex items-center justify-center animate-bounce shadow-md">
-                    <Mic size={32} className="text-white" />
-                  </div>
-                  <span className="font-medium tracking-wide text-sm">Listening... Release to send</span>
+                  )}
+                  <div ref={endOfMessagesRef} className="h-4" />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              )}
+            </div>
+        </div>
 
-          {/* Search/Input Bar - Compact Material 3 Pill Input */}
-          <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_2px_12px_rgba(26,115,232,0.15)]' : 'border-gray-300 shadow-sm'} rounded-[24px] focus-within:shadow-[0_2px_8px_rgba(0,0,0,0.08)] focus-within:border-gray-400 transition-all flex flex-col pt-0.5 pb-0.5 pr-1.5 relative`}>
-            {isTranscribing && (
-              <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[24px] flex items-center justify-center gap-3">
-                 <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                 </svg>
-                 <span className="font-medium text-[15px] text-[var(--color-accent)]">Transcribing audio...</span>
-              </div>
-            )}
+        {/* Custom Composer fixed at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 via-45% to-transparent">
+          <div className="w-full max-w-3xl relative pointer-events-auto flex flex-col items-center">
             
-            <div className="flex items-center pl-4 w-full min-h-[42px]">
-               <textarea
-                 value={input}
-                 onChange={(e) => setInput(e.target.value)}
-                 onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                       e.preventDefault();
-                       handleSend(input);
-                    }
-                 }}
-                 placeholder="Reply to Kamogelo..." ref={textareaRef}
-                 className="flex-1 bg-transparent text-[var(--text-main)] py-2 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[15px] sm:text-[16px] leading-[20px] max-h-[72px] self-center overflow-y-auto"
-                 disabled={isLoading || isTranscribing}
-                 rows={1}
-               />
-               
-               <div className="flex items-center gap-1 shrink-0 ml-2 self-end pb-[6px]">
-                  <button 
-                     onClick={() => setModelSelectorOpen(true)}
-                     className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border-light)] text-[var(--text-muted)] hover:bg-gray-100 font-medium text-[12px] transition-colors cursor-pointer mr-1"
-                     title="Select AI Model"
-                  >
-                     <Sparkles size={14} className="text-[var(--color-accent)]" />
-                     <span className="truncate max-w-[100px]">
-                       {selectedModel.includes("GLM") ? "GLM 5.2" :
-                        selectedModel.includes("FastContext") ? "FastContext 4B" :
-                        selectedModel.includes("VibeThinker") ? "VibeThinker 3B" : 
-                        selectedModel.includes("DeepSeek-V4-Flash") ? "DeepSeek V4 Flash" :
-                        selectedModel.includes("DeepSeek-V4-Pro") ? "DeepSeek V4 Pro" : "Model"}
-                     </span>
-                  </button>
-                  <button
-                     onPointerDown={(e) => { e.preventDefault(); startRecording(); }}
-                     onContextMenu={(e) => e.preventDefault()}
-                     className="flex items-center justify-center w-11 h-11 rounded-full text-[var(--text-muted)] hover:bg-gray-100 transition-colors cursor-pointer select-none touch-none border-0 bg-transparent"
-                     title="Hold to Speak"
-                  >
-                     <Mic size={22} className="pointer-events-none" />
-                  </button>
-                  <button
-                     onClick={() => handleSend(input)}
-                     disabled={!input.trim() || isLoading || isTranscribing}
-                     className="flex items-center justify-center w-11 h-11 rounded-full disabled:text-gray-300 disabled:bg-transparent bg-[var(--color-accent)] text-white hover:bg-blue-700 transition-colors cursor-pointer select-none touch-none border-0 ml-1 shadow-sm"
-                     title="Send message"
-                  >
-                     <Send size={18} className="pointer-events-none -ml-0.5" />
-                  </button>
-               </div>
+            {/* Audio recording layout overlay */}
+            <AnimatePresence>
+              {isRecording && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  className="absolute inset-x-0 bottom-full mb-4 z-20 bg-[var(--bg-card)] border border-[var(--color-accent)]/30 rounded-[24px] flex items-center justify-center p-6 cursor-pointer shadow-xl overflow-hidden touch-none select-none text-[var(--text-main)]"
+                  onPointerUp={stopRecording}
+                  onPointerLeave={stopRecording}
+                  onTouchEnd={stopRecording}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  <div className="absolute inset-0 bg-[var(--color-accent-light)] animate-pulse"></div>
+                  <div className="flex flex-col items-center justify-center gap-3 z-10">
+                    <div className="w-16 h-16 bg-[var(--color-accent)] rounded-full flex items-center justify-center animate-bounce shadow-md">
+                      <Mic size={30} className="text-white" />
+                    </div>
+                    <span className="font-semibold text-[13.5px] tracking-wide">Listening... Release to transcribe</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Pill Composer Input */}
+            <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_2px_12px_rgba(26,115,232,0.15)]' : 'border-gray-300 dark:border-neutral-700 shadow-sm'} rounded-[24px] focus-within:shadow-[0_2px_8px_rgba(0,0,0,0.08)] focus-within:border-gray-400 dark:focus-within:border-neutral-500 transition-all flex flex-col pt-1 pb-1 pr-1.5 relative`}>
+              {isTranscribing && (
+                <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[24px] flex items-center justify-center gap-3">
+                   <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                   </svg>
+                   <span className="font-semibold text-[14px] text-[var(--color-accent)]">Transcribing voice input...</span>
+                </div>
+              )}
+              
+              <div className="flex items-center pl-4.5 w-full min-h-[46px]">
+                 <textarea
+                   value={input}
+                   onChange={(e) => setInput(e.target.value)}
+                   onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                         e.preventDefault();
+                         handleSend(input);
+                      }
+                   }}
+                   placeholder="Ask anything..." 
+                   ref={textareaRef}
+                   className="flex-1 bg-transparent text-[var(--text-main)] py-2.5 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[15px] sm:text-[16px] leading-[22px] max-h-[180px] self-center overflow-y-auto"
+                   disabled={isLoading || isTranscribing}
+                   rows={1}
+                 />
+                 
+                 <div className="flex items-center gap-1 shrink-0 ml-2 self-end pb-[4px]">
+                    <button 
+                       onClick={() => setModelSelectorOpen(true)}
+                       className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border-light)] text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-neutral-800 font-semibold text-[12px] transition-colors cursor-pointer mr-1"
+                       title="Select AI Model"
+                    >
+                       <Sparkles size={13} className="text-[var(--color-accent)]" />
+                       <span className="truncate max-w-[100px]">
+                         {selectedModel.includes("GLM") ? "GLM 5.2" :
+                          selectedModel.includes("FastContext") ? "FastContext 4B" :
+                          selectedModel.includes("VibeThinker") ? "VibeThinker 3B" : 
+                          selectedModel.includes("DeepSeek-V4-Flash") ? "DeepSeek V4 Flash" :
+                          selectedModel.includes("DeepSeek-V4-Pro") ? "DeepSeek V4 Pro" : "Model"}
+                       </span>
+                    </button>
+                    <button
+                       onPointerDown={(e) => { e.preventDefault(); startRecording(); }}
+                       onContextMenu={(e) => e.preventDefault()}
+                       className="flex items-center justify-center w-11 h-11 rounded-full text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer select-none touch-none border-0 bg-transparent"
+                       title="Hold to Speak"
+                    >
+                       <Mic size={20} className="pointer-events-none" />
+                    </button>
+                    <button
+                       onClick={() => handleSend(input)}
+                       disabled={!input.trim() || isLoading || isTranscribing}
+                       className="flex items-center justify-center w-11 h-11 rounded-full disabled:text-gray-300 disabled:bg-transparent bg-[var(--color-accent)] text-white hover:bg-emerald-700 transition-all cursor-pointer select-none touch-none border-0 ml-1 shadow-sm active:scale-95"
+                       title="Send message"
+                    >
+                       <Send size={18} className="pointer-events-none -ml-0.5" />
+                    </button>
+                 </div>
+              </div>
+            </div>
+            
+            <div className="text-center mt-2.5 w-full flex flex-col items-center">
+               <span className="text-[11px] text-[var(--text-muted)] font-normal">
+                  Assistant can make mistakes. Please check important details.
+               </span>
+               <button 
+                  onClick={() => setModelSelectorOpen(true)}
+                  className="mt-1 sm:hidden flex items-center gap-1 text-[var(--color-accent)] font-semibold text-[11px] border-0 bg-transparent cursor-pointer"
+               >
+                  <Sparkles size={11} /> 
+                  {selectedModel.includes("GLM") ? "GLM 5.2" :
+                   selectedModel.includes("FastContext") ? "FastContext 4B" :
+                   selectedModel.includes("VibeThinker") ? "VibeThinker 3B" : 
+                   selectedModel.includes("DeepSeek-V4-Flash") ? "DeepSeek V4 Flash" :
+                   selectedModel.includes("DeepSeek-V4-Pro") ? "DeepSeek V4 Pro" : "Model"}
+               </button>
             </div>
           </div>
-          
-          <div className="text-center mt-3 w-full flex flex-col items-center">
-             <span className="text-[12px] text-[var(--text-muted)] font-normal">
-                Models can make mistakes. Please check important info.
-             </span>
-             <button 
-                onClick={() => setModelSelectorOpen(true)}
-                className="mt-1 sm:hidden flex items-center gap-1 text-[var(--color-accent)] font-medium text-[12px] border-0 bg-transparent cursor-pointer"
-             >
-                <Sparkles size={12} /> 
-                {selectedModel.includes("GLM") ? "GLM 5.2" :
-                 selectedModel.includes("FastContext") ? "FastContext 4B" :
-                 selectedModel.includes("VibeThinker") ? "VibeThinker 3B" : 
-                 selectedModel.includes("DeepSeek-V4-Flash") ? "DeepSeek V4 Flash" :
-                 selectedModel.includes("DeepSeek-V4-Pro") ? "DeepSeek V4 Pro" : "Model"}
-             </button>
-          </div>
         </div>
+
       </div>
 
-      {/* Model Selection Modal Popup */}
+      {/* Model Selection Modal Panel */}
       <AnimatePresence>
         {modelSelectorOpen && (
           <>
@@ -517,15 +587,15 @@ export default function ChatInterface({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.2 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-[var(--bg-card)] rounded-3xl shadow-xl z-50 overflow-hidden flex flex-col p-6 text-[var(--text-main)] pointer-events-auto border border-gray-100"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm bg-[var(--bg-card)] rounded-3xl shadow-xl z-50 overflow-hidden flex flex-col p-6 text-[var(--text-main)] pointer-events-auto border border-gray-100 dark:border-neutral-800"
             >
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium text-[20px] text-[var(--text-main)] flex items-center gap-2 m-0 mt-1 mb-2">
-                  <Sparkles size={20} className="text-[var(--color-accent)]" />
+                <h3 className="font-semibold text-[19px] text-[var(--text-main)] flex items-center gap-2 m-0">
+                  <Sparkles size={18} className="text-[var(--color-accent)]" />
                   Select Model
                 </h3>
               </div>
-              <p className="text-[14px] text-[var(--text-muted)] mb-5">Choose the AI engine powering this chat session.</p>
+              <p className="text-[13.5px] text-[var(--text-muted)] mb-5">Choose the AI engine powering this chat session.</p>
               
               <div className="flex flex-col gap-2">
                 {[
@@ -541,19 +611,19 @@ export default function ChatInterface({
                       setSelectedModel?.(m.id);
                       setModelSelectorOpen(false);
                     }}
-                    className={`flex items-start text-left gap-3 p-4 rounded-xl border transition-all cursor-pointer bg-transparent w-full ${
+                    className={`flex items-start text-left gap-3 p-3.5 rounded-xl border transition-all cursor-pointer bg-transparent w-full ${
                       selectedModel === m.id
                         ? "border-[var(--color-accent)] bg-[var(--bg-accent-light)]"
-                        : "border-[var(--border-light)] hover:bg-gray-50"
+                        : "border-[var(--border-light)] hover:bg-gray-50 dark:hover:bg-neutral-800"
                     }`}
                   >
                     <div className="flex flex-col flex-1 min-w-0 font-sans">
-                      <span className="text-[15px] font-medium text-[var(--text-main)] leading-snug">{m.name}</span>
-                      <span className="text-[13px] text-[var(--text-muted)] font-normal truncate mt-0.5">{m.desc}</span>
+                      <span className="text-[14.5px] font-semibold text-[var(--text-main)] leading-snug">{m.name}</span>
+                      <span className="text-[12.5px] text-[var(--text-muted)] font-normal truncate mt-0.5">{m.desc}</span>
                     </div>
                     {selectedModel === m.id && (
                       <div className="w-5 h-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-white shrink-0 mt-1">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       </div>
                     )}
                   </button>
@@ -562,7 +632,7 @@ export default function ChatInterface({
               <div className="mt-6 flex justify-end">
                  <button
                    onClick={() => setModelSelectorOpen(false)}
-                   className="px-6 py-2.5 rounded-full bg-transparent text-[var(--color-accent)] hover:bg-[var(--bg-accent-light)] font-medium text-[15px] transition-colors cursor-pointer border-0"
+                   className="px-6 py-2.5 rounded-full bg-transparent text-[var(--color-accent)] hover:bg-[var(--bg-accent-light)] font-semibold text-[14.5px] transition-colors cursor-pointer border-0"
                  >
                    Done
                  </button>
@@ -571,6 +641,7 @@ export default function ChatInterface({
           </>
         )}
       </AnimatePresence>
+
     </div>
   );
 }
