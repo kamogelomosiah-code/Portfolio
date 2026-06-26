@@ -3,7 +3,7 @@ import {
   Send, Sparkles, Settings, Mic, Link as LinkIcon, User, Mail, 
   GraduationCap, FileText, Menu, MessageSquare, PlusCircle, X, 
   AlertCircle, ChevronRight, CornerDownLeft, Plus,
-  List, Cpu, RotateCw, Globe, Paperclip, ChevronDown, 
+  List, Cpu, RotateCw, Globe, Paperclip, ChevronDown, Zap,
   Image as ImageIcon, Database, Layers, Code2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -381,7 +381,11 @@ export default function ChatInterface({
               className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-[12px] font-semibold text-[var(--text-muted)] border border-[var(--border-light)] rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer shrink-0"
               title="Select AI Mode"
             >
-              <Globe size={13} className="text-[var(--color-accent)]" />
+              {selectedModel === "swift" ? (
+                <Zap size={13} className="text-amber-500 fill-amber-500/10" />
+              ) : (
+                <Cpu size={13} className="text-[var(--color-accent)]" />
+              )}
               <span className="truncate max-w-[100px]">
                 {selectedModel === "swift" ? "Swift" : "Fusion"}
               </span>
@@ -698,32 +702,39 @@ export default function ChatInterface({
               
               <div className="flex flex-col gap-2">
                 {[
-                  { id: "swift", name: "⚡ Swift", desc: "Fast responses for everyday use." },
-                  { id: "fusion", name: "🧠 Fusion", desc: "Uses multiple AI models to reason and verify answers for maximum accuracy." }
-                ].map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      setSelectedModel?.(m.id);
-                      setModelSelectorOpen(false);
-                    }}
-                    className={`flex items-start text-left gap-3 p-3.5 rounded-none border transition-all cursor-pointer bg-transparent w-full ${
-                      selectedModel === m.id
-                        ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
-                        : "border-[var(--border-light)] hover:bg-gray-50 dark:hover:bg-neutral-800"
-                    }`}
-                  >
-                    <div className="flex flex-col flex-1 min-w-0 font-sans">
-                      <span className="text-[14.5px] font-semibold text-[var(--text-main)] leading-snug">{m.name}</span>
-                      <span className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed mt-0.5 whitespace-normal">{m.desc}</span>
-                    </div>
-                    {selectedModel === m.id && (
-                      <div className="w-5 h-5 rounded-none bg-[var(--color-accent)] flex items-center justify-center text-white shrink-0 mt-1">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  { id: "swift", name: "Swift", icon: Zap, desc: "Fast responses for everyday use.", color: "text-amber-500 bg-amber-500/10 dark:bg-amber-500/20" },
+                  { id: "fusion", name: "Fusion", icon: Cpu, desc: "Uses multiple AI models to reason and verify answers for maximum accuracy.", color: "text-[var(--color-accent)] bg-[var(--color-accent-light)]" }
+                ].map((m) => {
+                  const Icon = m.icon;
+                  const isSelected = selectedModel === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        setSelectedModel?.(m.id);
+                        setModelSelectorOpen(false);
+                      }}
+                      className={`flex items-start text-left gap-3.5 p-3.5 rounded-none border transition-all cursor-pointer bg-transparent w-full ${
+                        isSelected
+                          ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]/40 shadow-sm"
+                          : "border-[var(--border-light)] hover:bg-gray-50 dark:hover:bg-neutral-800"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-none shrink-0 ${m.color} mt-0.5`}>
+                        <Icon size={15} className="stroke-[2.5]" />
                       </div>
-                    )}
-                  </button>
-                ))}
+                      <div className="flex flex-col flex-1 min-w-0 font-sans">
+                        <span className="text-[14.5px] font-semibold text-[var(--text-main)] leading-snug">{m.name}</span>
+                        <span className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed mt-0.5 whitespace-normal">{m.desc}</span>
+                      </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-none bg-[var(--color-accent)] flex items-center justify-center text-white shrink-0 mt-1">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               <div className="mt-6 flex justify-end">
                  <button

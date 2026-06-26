@@ -3,7 +3,7 @@ import {
   Send, Sparkles, Settings, Mic, User, Mail, 
   GraduationCap, FileText, MessageSquare, AlertCircle, 
   Code2, Download, Phone, MapPin, Globe, ExternalLink, Github, Menu,
-  Cpu, RotateCw, List, ChevronDown, Image as ImageIcon, Database, Layers, Linkedin, Paperclip
+  Cpu, RotateCw, List, ChevronDown, Image as ImageIcon, Database, Layers, Linkedin, Paperclip, Zap
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
@@ -160,7 +160,11 @@ export default function MobileApp({
               className="flex items-center gap-1 px-2.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-[11px] font-semibold text-[var(--text-muted)] border border-[var(--border-light)] rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer shrink-0"
               title="Select AI Mode"
             >
-              <Globe size={11} className="text-[var(--color-accent)]" />
+              {selectedModel === "swift" ? (
+                <Zap size={11} className="text-amber-500 fill-amber-500/10" />
+              ) : (
+                <Cpu size={11} className="text-[var(--color-accent)]" />
+              )}
               <span className="truncate max-w-[60px]">
                 {selectedModel === "swift" ? "Swift" : "Fusion"}
               </span>

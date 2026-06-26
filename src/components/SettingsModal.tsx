@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, Zap, Cpu } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 const COLORS = [
@@ -71,24 +71,40 @@ export default function SettingsModal({ isOpen, onClose, accentColor, setAccentC
                   <h3 className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide uppercase">AI Mode</h3>
                   <div className="flex flex-col gap-2">
                     {[
-                      { id: "swift", name: "⚡ Swift", desc: "Fast responses for everyday use." },
-                      { id: "fusion", name: "🧠 Fusion", desc: "Uses multiple AI models to reason and verify answers for maximum accuracy." }
-                    ].map((model) => (
-                      <label key={model.id} className="flex flex-col gap-1 p-4 rounded-none cursor-pointer transition-colors bg-[var(--bg-card)] hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-[var(--border-light)]">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="ai-model"
-                            value={model.id}
-                            checked={selectedModel === model.id}
-                            onChange={(e) => setSelectedModel(e.target.value)}
-                            className="w-5 h-5 text-[var(--color-accent)] focus:ring-[var(--color-accent)] border-gray-300 cursor-pointer"
-                          />
-                          <span className="text-[15px] font-bold text-[var(--text-main)]">{model.name}</span>
-                        </div>
-                        <span className="text-[13px] text-[var(--text-muted)] pl-8 font-normal leading-relaxed">{model.desc}</span>
-                      </label>
-                    ))}
+                      { id: "swift", name: "Swift", icon: Zap, desc: "Fast responses for everyday use.", color: "text-amber-500 bg-amber-500/10 dark:bg-amber-500/20" },
+                      { id: "fusion", name: "Fusion", icon: Cpu, desc: "Uses multiple AI models to reason and verify answers for maximum accuracy.", color: "text-[var(--color-accent)] bg-[var(--color-accent-light)]" }
+                    ].map((model) => {
+                      const Icon = model.icon;
+                      const isSelected = selectedModel === model.id;
+                      return (
+                        <label 
+                          key={model.id} 
+                          className={`flex flex-col gap-1 p-4 rounded-none cursor-pointer transition-all border ${
+                            isSelected 
+                              ? "border-[var(--color-accent)] bg-[var(--bg-card)] shadow-sm" 
+                              : "border-[var(--border-light)] bg-[var(--bg-card)] hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="radio"
+                                name="ai-model"
+                                value={model.id}
+                                checked={isSelected}
+                                onChange={(e) => setSelectedModel(e.target.value)}
+                                className="w-5 h-5 text-[var(--color-accent)] focus:ring-[var(--color-accent)] border-gray-300 cursor-pointer"
+                              />
+                              <div className={`w-7 h-7 flex items-center justify-center rounded-none shrink-0 ${model.color}`}>
+                                <Icon size={14} className="stroke-[2.5]" />
+                              </div>
+                              <span className="text-[15px] font-bold text-[var(--text-main)]">{model.name}</span>
+                            </div>
+                          </div>
+                          <span className="text-[13px] text-[var(--text-muted)] pl-8 font-normal leading-relaxed mt-1">{model.desc}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
