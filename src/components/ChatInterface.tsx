@@ -20,22 +20,22 @@ export type Message = {
 
 const PROMPT_SETS = [
   [
-    { text: "Write a to-do list for a personal project or task", icon: "list" },
-    { text: "Generate an email reply to a job offer", icon: "mail" },
-    { text: "Summarise this article or text for me in one paragraph", icon: "text" },
-    { text: "How does AI work in a technical capacity", icon: "cpu" }
-  ],
-  [
     { text: "What are Kamogelo's top technical skills?", icon: "sparkles" },
     { text: "Tell me about Kamogelo's software engineering projects", icon: "code" },
-    { text: "How can I contact Kamogelo or get his CV?", icon: "user" },
-    { text: "What academic qualification does Kamogelo hold?", icon: "cap" }
+    { text: "How can I contact Kamogelo or download his CV?", icon: "user" },
+    { text: "What academic qualifications does Kamogelo hold?", icon: "cap" }
   ],
   [
-    { text: "Explain the architecture of Kamogelo's portfolio", icon: "layers" },
-    { text: "What technologies did Kamogelo use for the frontend?", icon: "code" },
-    { text: "Can you provide a summary of Kamogelo's professional experience?", icon: "text" },
-    { text: "What databases is Kamogelo experienced with?", icon: "database" }
+    { text: "What is Kamo's professional IT and customer experience?", icon: "user" },
+    { text: "Explain his 'CallTrax' billing platform project", icon: "layers" },
+    { text: "Tell me about the 'kamocodes Library' system", icon: "list" },
+    { text: "Does Kamo have experience with PHP and Laravel?", icon: "code" }
+  ],
+  [
+    { text: "What is Kamo's main focus or career objective?", icon: "sparkles" },
+    { text: "Explain the architecture of Kamo's AI Portfolio app", icon: "cpu" },
+    { text: "Tell me about the 'kamocodes API' gateway project", icon: "database" },
+    { text: "What databases is Kamo experienced with?", icon: "database" }
   ]
 ];
 
@@ -518,10 +518,7 @@ export default function ChatInterface({
                     </button>
                   </div>
 
-                  {/* Inline Composer on Landing Page */}
-                  <div className="w-full">
-                    {renderComposer(false)}
-                  </div>
+                  {/* Inline Composer removed from here so it is always sticky at the bottom */}
                 </motion.div>
               )}
               
@@ -632,12 +629,10 @@ export default function ChatInterface({
             </div>
         </div>
 
-        {/* Custom Composer fixed at bottom - displayed only when messages exist */}
-        {!isInitialState && (
-          <div className="absolute bottom-0 left-0 right-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 via-45% to-transparent">
-            {renderComposer(true)}
-          </div>
-        )}
+        {/* Custom Composer fixed at bottom - always displayed to be sticky bottom and always visible */}
+        <div className="absolute bottom-0 left-0 right-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 via-45% to-transparent">
+          {renderComposer(true)}
+        </div>
 
       </div>
 
