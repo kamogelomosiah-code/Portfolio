@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
+import { MarkdownRenderer } from "./MarkdownRenderer";
 
 export type Message = {
   id: string;
@@ -72,14 +73,16 @@ export default function ChatInterface({
   setSelectedModel,
   onToggleDrawer,
   messages,
-  setMessages
+  setMessages,
+  onViewCv
 }: { 
   onOpenSettings?: () => void, 
   selectedModel?: string,
   setSelectedModel?: (model: string) => void,
   onToggleDrawer?: () => void,
   messages: Message[],
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  onViewCv?: () => void
 }) {
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
@@ -482,7 +485,7 @@ export default function ChatInterface({
           className="flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth pt-2"
           onScroll={handleScroll}
         >
-          <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-4 pb-[130px] min-h-full">
+          <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-4 pb-[190px] min-h-full">
               
               {isInitialState && (
                 <div className="flex flex-col text-left w-full max-w-3xl mx-auto pt-6 min-h-[300px] justify-center">
@@ -616,20 +619,15 @@ export default function ChatInterface({
                                   Kamogelo's GPT
                                 </span>
                               )}
-                              <div className="text-[var(--text-main)] bg-transparent pb-1 w-full text-left">
-                                <p className="text-[15.5px] sm:text-[16px] leading-[1.65] whitespace-pre-wrap font-normal w-full max-w-3xl break-words">
-                                  {textToShow}
-                                  {isStreaming && (
-                                    <span className="inline-block animate-pulse font-bold ml-0.5 text-[var(--color-accent)] text-lg leading-none select-none">▍</span>
-                                  )}
-                                </p>
+                              <div className="text-[var(--text-main)] bg-transparent pb-1 w-full text-left max-w-3xl">
+                                <MarkdownRenderer content={textToShow} isStreaming={isStreaming} />
                                 
                                 {/* Rich Visual UI widgets, rendered only once completed */}
                                 {!isStreaming && msg.uiBlock && (
                                   <div className="mt-4 flex flex-col gap-3 w-full max-w-3xl">
                                     {msg.uiBlock === "projects" && <ProjectCards />}
                                     {msg.uiBlock === "skills" && <SkillChips />}
-                                    {msg.uiBlock === "cv" && <DownloadCV />}
+                                    {msg.uiBlock === "cv" && <DownloadCV onViewCv={onViewCv} />}
                                   </div>
                                 )}
                               </div>

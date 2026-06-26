@@ -146,6 +146,7 @@ export default function App() {
                 onToggleDrawer={() => setDrawerOpen(!drawerOpen)}
                 messages={messages}
                 setMessages={setMessages}
+                onViewCv={() => setCurrentTab("cv")}
               />
             </motion.div>
           )}

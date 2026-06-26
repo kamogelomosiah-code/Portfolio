@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
 import { Message } from "./ChatInterface";
+import { MarkdownRenderer } from "./MarkdownRenderer";
 import SettingsModal from "./SettingsModal";
 import ProjectsPage from "./ProjectsPage";
 import CvPage from "./CvPage";
@@ -373,7 +374,7 @@ export default function MobileApp({
       x: 0,
       opacity: 1,
       transition: {
-        x: { type: "spring", stiffness: 350, damping: 32 },
+        x: { type: "spring" as const, stiffness: 350, damping: 32 },
         opacity: { duration: 0.15 }
       }
     },
@@ -381,7 +382,7 @@ export default function MobileApp({
       x: dir > 0 ? "-100%" : "100%",
       opacity: 0,
       transition: {
-        x: { type: "spring", stiffness: 350, damping: 32 },
+        x: { type: "spring" as const, stiffness: 350, damping: 32 },
         opacity: { duration: 0.15 }
       }
     })
@@ -438,7 +439,7 @@ export default function MobileApp({
                 {/* Scrollable Conversation Block */}
                 <div 
                   ref={scrollContainerRef}
-                  className="flex-1 overflow-y-auto w-full px-4 pt-3 pb-[140px] scroll-smooth"
+                  className="flex-1 overflow-y-auto w-full px-4 pt-3 pb-[170px] scroll-smooth"
                 >
                   {isInitialState ? (
                     <div className="flex flex-col text-left w-full py-6 px-1 min-h-[280px] justify-center">
@@ -556,15 +557,15 @@ export default function MobileApp({
                                       Kamogelo's GPT
                                     </span>
                                   )}
-                                  <div className="text-[14px] leading-relaxed whitespace-pre-wrap break-words text-[var(--text-main)]">
-                                    {msg.text}
+                                  <div className="text-[14px] leading-relaxed text-[var(--text-main)] w-full">
+                                    <MarkdownRenderer content={msg.text} />
                                   </div>
                                   
                                   {msg.uiBlock && (
                                     <div className="mt-3 w-full">
                                       {msg.uiBlock === "projects" && <ProjectCards />}
                                       {msg.uiBlock === "skills" && <SkillChips />}
-                                      {msg.uiBlock === "cv" && <DownloadCV />}
+                                      {msg.uiBlock === "cv" && <DownloadCV onViewCv={() => handleTabChange("cv")} />}
                                     </div>
                                   )}
                                 </div>

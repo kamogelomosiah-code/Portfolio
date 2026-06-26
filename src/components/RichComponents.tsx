@@ -70,10 +70,131 @@ export function SkillChips() {
   );
 }
 
-export function DownloadCV() {
+interface DownloadCVProps {
+  onViewCv?: () => void;
+}
+
+export function DownloadCV({ onViewCv }: DownloadCVProps) {
+  const handleDownload = () => {
+    const cvText = `KAMOGELO MOSIA
+Software & IT Solutions Engineer
+Johannesburg, Gauteng, South Africa
+Email: kamogelomosiah@gmail.com
+Phone: 067 742 6447 / 061 362 4165
+GitHub: github.com/kamogelomosiah-code
+
+==================================================
+PROFESSIONAL PROFILE
+==================================================
+I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
+
+Graduated from the University of Johannesburg in February 2026 with a BSc in Information Technology (Computer Science & Informatics double major).
+
+==================================================
+TECHNICAL SKILLS
+==================================================
+* Software Development: Full-stack development, REST APIs, clean coding patterns, responsive design, state management, system architecture, database security
+* Programming Languages: JavaScript, Python (actively studying), SQL (PostgreSQL, MySQL), PHP, HTML5, CSS3
+* Frameworks & Libraries: React.js, Node.js, Express, Laravel, Flask (actively in progress), Tailwind CSS
+* Database & Systems: Database schema design, query optimization, indexing, data normalization, PostgreSQL, MySQL, Firebase/Firestore
+* IT Operations & Support: Hardware diagnostics, technical troubleshooting, software configuration, operating system setup, end-user support
+* DevOps & Tools: Git, GitHub, VS Code, Postman, Docker (actively studying), Chrome DevTools (Google Certified), Render, Android Studio, Excel
+* Current Certifications: Google Developer Tools Certification (completed), CompTIA IT Certificate (in progress)
+
+==================================================
+EDUCATION
+==================================================
+* University of Johannesburg (2019 - 2024, Degree Awarded Feb 2026)
+  BSc Information Technology in Computer Science and Informatics (NQF Level 7)
+  SAQA Reg 80372 • Student No 217004345
+  - Informatics 1A and IT Management 1A passed with distinction.
+
+* Hoerskool Birchleigh (2016)
+  National Senior Certificate • Bachelor's Pass
+  - IT 71% (Highest in school)
+  - Elected school prefect
+
+==================================================
+RELEVANT PROJECTS
+==================================================
+* MasterAPI (github.com/kamogelomosiah-code/MasterAPI-main)
+  Designed a centralised REST API backend to solve a data duplication problem, establishing a clean source of truth with structured endpoints.
+
+* Resume Maker (kamogelomosiah-code.github.io/CvMaker/)
+  Full-stack application with a PostgreSQL database designed, built, and deployed for a paying client.
+
+* Real Time Chat Application (s-c4nk.onrender.com)
+  Live application managing real-time data streams using WebSockets.
+
+==================================================
+WORK EXPERIENCE
+==================================================
+* F-Stop Photolab (2016)
+  Semi-Technical Support and Cashier
+  - Managed equipment data, fault logs, client records, and transaction accuracy.
+
+* Dis-Chem Pharmacy (2021)
+  Cashier and Customer Service Representative
+  - High-volume transaction processing with strict accuracy requirements.
+
+==================================================
+REFERENCES
+==================================================
+* Mr Tommy Ferrara (F-Stop Photolab, Former employer)
+  Phone: 073 400 1861
+* Store Manager (Dis-Chem Pharmacy, Former employer)
+  Phone: 011 391 2399
+`;
+
+    const blob = new Blob([cvText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Kamogelo_Mosia_CV.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <button className="mt-4 flex items-center justify-center gap-2 bg-black text-white px-6 py-3 rounded-full hover:bg-accent transition-colors font-medium">
-      Download PDF Resume <Download size={16} />
-    </button>
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg mt-3 gap-4 shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+      <div className="flex items-center gap-3.5">
+        {/* Document Icon Graphic */}
+        <div className="w-12 h-12 shrink-0 bg-red-100 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border border-red-200/50 dark:border-red-900/20 shadow-sm relative overflow-hidden select-none">
+          <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
+          <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span className="text-[8px] font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest mt-0.5 font-mono">PDF</span>
+        </div>
+        
+        <div className="flex flex-col text-left">
+          <span className="font-bold text-[14px] text-neutral-850 dark:text-neutral-200 leading-snug truncate max-w-[220px] sm:max-w-[280px]">
+            Kamogelo_Mosia_CV.pdf
+          </span>
+          <span className="text-[12px] text-neutral-400 font-medium mt-0.5">
+            184 KB • Official CV/Resume
+          </span>
+        </div>
+      </div>
+
+      <div className="flex sm:flex-col items-stretch gap-2 shrink-0">
+        <button
+          onClick={handleDownload}
+          className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-black hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-white px-4 py-2 rounded-xl transition-all font-semibold text-[13px] sm:text-[13.5px] cursor-pointer shadow-sm border-0"
+        >
+          <Download size={14} /> Download
+        </button>
+        {onViewCv && (
+          <button
+            onClick={onViewCv}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-white hover:bg-neutral-100 dark:bg-transparent dark:hover:bg-neutral-800/80 text-neutral-700 dark:text-neutral-200 px-4 py-2 rounded-xl transition-all font-semibold text-[13px] sm:text-[13.5px] cursor-pointer border border-neutral-200 dark:border-neutral-700"
+          >
+            View Online
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
