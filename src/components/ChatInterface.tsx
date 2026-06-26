@@ -35,23 +35,62 @@ export default function ChatInterface({
   const [isScrolled, setIsScrolled] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollContentRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const lastScrollY = useRef(0);
 
-  // Auto-scroll when messages update
+  // Dedicated helper to trigger precise scroll-to-bottom on the chat container
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior
+      });
+    }
+  };
+
+  // Unified, high-reliability scrolling to show new text immediately
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (endOfMessagesRef.current) {
-        endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      } else if (scrollContainerRef.current) {
+    // Instant jump to snap text into view first
+    scrollToBottom('auto');
+
+    // Staggered animations to ensure dynamic content and layout changes are captured
+    const t1 = setTimeout(() => scrollToBottom('smooth'), 40);
+    const t2 = setTimeout(() => scrollToBottom('smooth'), 120);
+    const t3 = setTimeout(() => scrollToBottom('smooth'), 280);
+    const t4 = setTimeout(() => scrollToBottom('smooth'), 600);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
+  }, [messages, isLoading, isTranscribing, input]);
+
+  // Resize observer to auto-scroll when content size changes (e.g., dynamic elements render, message bubble height increases)
+  useEffect(() => {
+    if (!scrollContentRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        // Always scroll if loading/assistant is replying, or user is near bottom
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 500;
+        if (isNearBottom || isLoading) {
+          scrollToBottom('smooth');
+        }
       }
-    }, 100);
-    return () => clearTimeout(timeoutId);
-  }, [messages, isLoading, isTranscribing]);
+    });
+
+    resizeObserver.observe(scrollContentRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [isLoading]);
 
   // Auto-resize textarea as content changes to show all new text being entered
   useEffect(() => {
@@ -200,7 +239,7 @@ export default function ChatInterface({
       <div className={`absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] ${isShrunk ? 'px-3 sm:px-4' : 'px-3 sm:px-5'}`}>
         <div className={`flex items-center justify-between w-full transition-all duration-200 pointer-events-auto ${isShrunk ? 'bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-md border border-[var(--border-light)]/60 px-3 py-1.5 max-w-3xl' : 'h-[64px] px-2 sm:px-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-light)] shadow-sm max-w-full'}`}>
           <div className="flex items-center gap-2">
-            <button onClick={onToggleDrawer} className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-black/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent">
+            <button onClick={onToggleDrawer} className="md:hidden flex items-center justify-center w-[44px] h-[44px] rounded-full hover:bg-black/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent">
               <Menu size={24} />
             </button>
             
@@ -224,7 +263,7 @@ export default function ChatInterface({
           <div className={`flex items-center gap-1 text-[var(--text-muted)] relative transition-all duration-200 ${isShrunk ? 'pr-0' : 'pr-1 md:pr-4'}`}>
             <button 
               onClick={() => onOpenSettings?.()}
-              className={`flex items-center justify-center rounded-full hover:bg-black/5 transition-colors cursor-pointer border-0 bg-transparent ${isShrunk ? 'w-10 h-10' : 'w-12 h-12'}`}
+              className={`flex items-center justify-center rounded-full hover:bg-black/5 transition-colors cursor-pointer border-0 bg-transparent ${isShrunk ? 'w-[44px] h-[44px]' : 'w-[44px] h-[44px] md:w-12 md:h-12'}`}
               title="Configuration"
             >
               <Settings size={isShrunk ? 20 : 22} />
@@ -236,10 +275,10 @@ export default function ChatInterface({
       {/* Main Content Area */}
       <div 
         ref={scrollContainerRef}
-        className={`flex-1 overflow-y-auto w-full flex flex-col relative pb-[240px] scroll-smooth pt-[calc(env(safe-area-inset-top)+100px)]`}
+        className={`flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth pt-[calc(env(safe-area-inset-top)+100px)]`}
         onScroll={handleScroll}
       >
-        <div className="w-full max-w-3xl mx-auto flex flex-col px-4 sm:px-6 pt-5 sm:pt-8 min-h-full">
+        <div ref={scrollContentRef} className="w-full max-w-3xl mx-auto flex flex-col px-4 sm:px-6 pt-5 sm:pt-8 pb-[180px] min-h-full">
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -249,10 +288,10 @@ export default function ChatInterface({
             {isInitialState && (
               <>
                 {/* Hero Section */}
-                <div className="w-full flex justify-center mb-8 sm:mb-12 pt-4">
+                <div className="w-full flex justify-center mb-6 sm:mb-12 pt-0 sm:pt-4">
                   <div className="flex flex-col items-center justify-center text-center w-full max-w-2xl">
                     <TimeOfDayWidget />
-                    <p className="text-[var(--text-muted)] text-[15px] sm:text-[16px] font-normal leading-relaxed mt-2 px-2">
+                    <p className="text-[var(--text-muted)] text-[14px] sm:text-[16px] font-normal leading-relaxed mt-2 px-2">
                       I'm Kamogelo's automated assistant. Ask me anything about his background, skills, or download his CV directly from here.
                     </p>
                   </div>
@@ -260,36 +299,36 @@ export default function ChatInterface({
 
                 {/* Quick Action Chips */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mx-auto">
-                   <a href="/Kamogelo_Mosia_Transcript.pdf" download className="flex flex-col items-start bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline group">
-                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-3 text-accent">
+                   <a href="/Kamogelo_Mosia_Transcript.pdf" download className="flex flex-col items-start bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-3.5 sm:p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline group">
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-2.5 sm:mb-3 text-[var(--color-accent)]">
                          <GraduationCap size={18} />
                       </div>
-                      <span className="font-medium text-[var(--text-main)] text-[15px] mb-1">Academic Transcript</span>
-                      <span className="text-sm text-[var(--text-muted)]">View academic record</span>
+                      <span className="font-medium text-[var(--text-main)] text-[14px] sm:text-[15px] mb-0.5 sm:mb-1">Academic Transcript</span>
+                      <span className="text-[13px] sm:text-sm text-[var(--text-muted)]">View academic record</span>
                    </a>
                    
-                   <a href="/Kamogelo_Mosia_CV.pdf" download className="flex flex-col items-start bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline group">
-                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                   <a href="/Kamogelo_Mosia_CV.pdf" download className="flex flex-col items-start bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-3.5 sm:p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline group">
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-accent-light)] flex items-center justify-center mb-2.5 sm:mb-3 text-[var(--color-accent)]">
                          <FileText size={18} />
                       </div>
-                      <span className="font-medium text-[var(--text-main)] text-[15px] mb-1">CV / Resume</span>
-                      <span className="text-sm text-[var(--text-muted)]">Download formal CV</span>
+                      <span className="font-medium text-[var(--text-main)] text-[14px] sm:text-[15px] mb-0.5 sm:mb-1">CV / Resume</span>
+                      <span className="text-[13px] sm:text-sm text-[var(--text-muted)]">Download formal CV</span>
                    </a>
 
-                   <button onClick={() => handleSend("Can you tell me about yourself?")} className="flex flex-col items-start text-left bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline border-0">
-                      <div className="w-8 h-8 rounded-full bg-[var(--bg-accent-light)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                   <button onClick={() => handleSend("Can you tell me about yourself?")} className="flex flex-col items-start text-left bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-3.5 sm:p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline border-0">
+                      <div className="w-8 h-8 rounded-full bg-[var(--bg-accent-light)] flex items-center justify-center mb-2.5 sm:mb-3 text-[var(--color-accent)]">
                          <User size={18} />
                       </div>
-                      <span className="font-medium text-[var(--text-main)] text-[15px] mb-1">About Me</span>
-                      <span className="text-sm text-[var(--text-muted)]">Background & skills</span>
+                      <span className="font-medium text-[var(--text-main)] text-[14px] sm:text-[15px] mb-0.5 sm:mb-1">About Me</span>
+                      <span className="text-[13px] sm:text-sm text-[var(--text-muted)]">Background & skills</span>
                    </button>
                    
-                   <button onClick={() => handleSend("How can I contact you?")} className="flex flex-col items-start text-left bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline border-0">
-                      <div className="w-8 h-8 rounded-full bg-[var(--bg-accent-light)] flex items-center justify-center mb-3 text-[var(--color-accent)]">
+                   <button onClick={() => handleSend("How can I contact you?")} className="flex flex-col items-start text-left bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm p-3.5 sm:p-4 rounded-2xl hover:bg-gray-50 active:bg-gray-100 transition-colors w-full cursor-pointer no-underline border-0">
+                      <div className="w-8 h-8 rounded-full bg-[var(--bg-accent-light)] flex items-center justify-center mb-2.5 sm:mb-3 text-[var(--color-accent)]">
                          <Mail size={18} />
                       </div>
-                      <span className="font-medium text-[var(--text-main)] text-[15px] mb-1">Contact Details</span>
-                      <span className="text-sm text-[var(--text-muted)]">Get in touch</span>
+                      <span className="font-medium text-[var(--text-main)] text-[14px] sm:text-[15px] mb-0.5 sm:mb-1">Contact Details</span>
+                      <span className="text-[13px] sm:text-sm text-[var(--text-muted)]">Get in touch</span>
                    </button>
                 </div>
               </>
@@ -353,7 +392,7 @@ export default function ChatInterface({
       </div>
 
       {/* Input Area */}
-      <div className="absolute bottom-0 left-0 right-0 pt-8 pb-4 sm:pb-6 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-bg-main via-bg-main via-70% to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 pt-4 pb-2 sm:pb-3 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 via-40% to-transparent">
         <div className="w-full max-w-3xl relative pointer-events-auto flex flex-col items-center">
           
           {/* Recording Overlay */}
@@ -380,10 +419,10 @@ export default function ChatInterface({
             )}
           </AnimatePresence>
 
-          {/* Search/Input Bar - Material 3 Pill Input */}
-          <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_2px_12px_rgba(26,115,232,0.2)]' : 'border-gray-300 shadow-sm'} rounded-[28px] focus-within:shadow-[0_2px_8px_rgba(0,0,0,0.1)] focus-within:border-gray-400 transition-all flex flex-col pt-1 pb-1 pr-2 relative`}>
+          {/* Search/Input Bar - Compact Material 3 Pill Input */}
+          <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_2px_12px_rgba(26,115,232,0.15)]' : 'border-gray-300 shadow-sm'} rounded-[24px] focus-within:shadow-[0_2px_8px_rgba(0,0,0,0.08)] focus-within:border-gray-400 transition-all flex flex-col pt-0.5 pb-0.5 pr-1.5 relative`}>
             {isTranscribing && (
-              <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[28px] flex items-center justify-center gap-3">
+              <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[24px] flex items-center justify-center gap-3">
                  <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -392,7 +431,7 @@ export default function ChatInterface({
               </div>
             )}
             
-            <div className="flex items-center pl-4 w-full min-h-[52px]">
+            <div className="flex items-center pl-4 w-full min-h-[42px]">
                <textarea
                  value={input}
                  onChange={(e) => setInput(e.target.value)}
@@ -403,7 +442,7 @@ export default function ChatInterface({
                     }
                  }}
                  placeholder="Reply to Kamogelo..." ref={textareaRef}
-                 className="flex-1 bg-transparent text-[var(--text-main)] py-3 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[16px] leading-[24px] max-h-[160px] self-center overflow-y-auto"
+                 className="flex-1 bg-transparent text-[var(--text-main)] py-2 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[15px] sm:text-[16px] leading-[20px] max-h-[72px] self-center overflow-y-auto"
                  disabled={isLoading || isTranscribing}
                  rows={1}
                />
@@ -426,7 +465,7 @@ export default function ChatInterface({
                   <button
                      onPointerDown={(e) => { e.preventDefault(); startRecording(); }}
                      onContextMenu={(e) => e.preventDefault()}
-                     className="flex items-center justify-center w-10 h-10 rounded-full text-[var(--text-muted)] hover:bg-gray-100 transition-colors cursor-pointer select-none touch-none border-0 bg-transparent"
+                     className="flex items-center justify-center w-11 h-11 rounded-full text-[var(--text-muted)] hover:bg-gray-100 transition-colors cursor-pointer select-none touch-none border-0 bg-transparent"
                      title="Hold to Speak"
                   >
                      <Mic size={22} className="pointer-events-none" />
@@ -434,7 +473,7 @@ export default function ChatInterface({
                   <button
                      onClick={() => handleSend(input)}
                      disabled={!input.trim() || isLoading || isTranscribing}
-                     className="flex items-center justify-center w-10 h-10 rounded-full disabled:text-gray-300 disabled:bg-transparent bg-[var(--color-accent)] text-white hover:bg-blue-700 transition-colors cursor-pointer select-none touch-none border-0 ml-1 shadow-sm"
+                     className="flex items-center justify-center w-11 h-11 rounded-full disabled:text-gray-300 disabled:bg-transparent bg-[var(--color-accent)] text-white hover:bg-blue-700 transition-colors cursor-pointer select-none touch-none border-0 ml-1 shadow-sm"
                      title="Send message"
                   >
                      <Send size={18} className="pointer-events-none -ml-0.5" />
