@@ -40,7 +40,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-[var(--bg-main)] rounded-r-3xl z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r border-[var(--border-light)]"
+            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-[var(--bg-main)] rounded-none z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r border-[var(--border-light)]"
           >
             <div className="flex flex-col gap-6 flex-1">
               {/* Header */}
@@ -69,7 +69,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                         onTabChange(item.id);
                         onToggle();
                       }}
-                      className={`text-left px-5 py-4 w-full rounded-full flex items-center gap-4 transition-colors cursor-pointer border-0 ${
+                      className={`text-left px-5 py-4 w-full rounded-none flex items-center gap-4 transition-colors cursor-pointer border-0 ${
                         isActive
                           ? "bg-[var(--color-accent-light)] text-accent"
                           : "bg-transparent hover:bg-gray-100 text-[#444746]"
@@ -91,19 +91,6 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                     </button>
                   );
                 })}
-
-                <div className="h-px bg-gray-200 my-4 mx-2" />
-                <span className="px-5 text-[12px] font-medium text-[var(--text-muted)] mb-2">More options coming soon</span>
-                
-                {/* Visual expansion buttons requested by user earlier */}
-                <div className="flex flex-col px-3 gap-1">
-                  <button disabled className="text-left py-3 px-4 w-full rounded-full flex items-center justify-between text-[var(--color-accent)] bg-transparent border border-dashed border-[var(--color-accent)]/30 cursor-not-allowed opacity-70">
-                    <span className="text-[14px] font-medium flex items-center gap-2"><PlusCircle size={18}/> Custom Action A</span>
-                  </button>
-                  <button disabled className="text-left py-3 px-4 w-full rounded-full flex items-center justify-between text-[var(--color-accent)] bg-transparent border border-dashed border-[var(--color-accent)]/30 cursor-not-allowed opacity-70">
-                    <span className="text-[14px] font-medium flex items-center gap-2"><PlusCircle size={18}/> Custom Action B</span>
-                  </button>
-                </div>
 
               </div>
             </div>

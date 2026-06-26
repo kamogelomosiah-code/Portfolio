@@ -519,25 +519,14 @@ export default function ChatInterface({
                  <div className="flex items-center gap-1 shrink-0 ml-2 self-end pb-[4px]">
                     <button 
                        onClick={() => setModelSelectorOpen(true)}
-                       className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border-light)] text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-neutral-800 font-semibold text-[12px] transition-colors cursor-pointer mr-1"
-                       title="Select AI Model"
+                       className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-none border border-[var(--border-light)] text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-neutral-800 font-semibold text-[12px] transition-colors cursor-pointer mr-1"
+                       title="Select AI Mode"
                     >
                        <Sparkles size={13} className="text-[var(--color-accent)]" />
                        <span className="truncate max-w-[100px]">
-                         {selectedModel.includes("GLM") ? "GLM 5.2" :
-                          selectedModel.includes("FastContext") ? "FastContext 4B" :
-                          selectedModel.includes("VibeThinker") ? "VibeThinker 3B" : 
-                          selectedModel.includes("DeepSeek-V4-Flash") ? "DeepSeek V4 Flash" :
-                          selectedModel.includes("DeepSeek-V4-Pro") ? "DeepSeek V4 Pro" : "Model"}
+                         {selectedModel === "swift" ? "Swift" :
+                          selectedModel === "fusion" ? "Fusion" : "AI Mode"}
                        </span>
-                    </button>
-                    <button
-                       onPointerDown={(e) => { e.preventDefault(); startRecording(); }}
-                       onContextMenu={(e) => e.preventDefault()}
-                       className="flex items-center justify-center w-11 h-11 rounded-full text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer select-none touch-none border-0 bg-transparent"
-                       title="Hold to Speak"
-                    >
-                       <Mic size={20} className="pointer-events-none" />
                     </button>
                     <button
                        onClick={() => handleSend(input)}
@@ -560,11 +549,8 @@ export default function ChatInterface({
                   className="mt-1 sm:hidden flex items-center gap-1 text-[var(--color-accent)] font-semibold text-[11px] border-0 bg-transparent cursor-pointer"
                >
                   <Sparkles size={11} /> 
-                  {selectedModel.includes("GLM") ? "GLM 5.2" :
-                   selectedModel.includes("FastContext") ? "FastContext 4B" :
-                   selectedModel.includes("VibeThinker") ? "VibeThinker 3B" : 
-                   selectedModel.includes("DeepSeek-V4-Flash") ? "DeepSeek V4 Flash" :
-                   selectedModel.includes("DeepSeek-V4-Pro") ? "DeepSeek V4 Pro" : "Model"}
+                  {selectedModel === "swift" ? "Swift" :
+                   selectedModel === "fusion" ? "Fusion" : "AI Mode"}
                </button>
             </div>
           </div>
@@ -588,23 +574,20 @@ export default function ChatInterface({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", duration: 0.2 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm bg-[var(--bg-card)] rounded-3xl shadow-xl z-50 overflow-hidden flex flex-col p-6 text-[var(--text-main)] pointer-events-auto border border-gray-100 dark:border-neutral-800"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm bg-[var(--bg-card)] rounded-none shadow-xl z-50 overflow-hidden flex flex-col p-6 text-[var(--text-main)] pointer-events-auto border border-gray-100 dark:border-neutral-800"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold text-[19px] text-[var(--text-main)] flex items-center gap-2 m-0">
                   <Sparkles size={18} className="text-[var(--color-accent)]" />
-                  Select Model
+                  Select Mode
                 </h3>
               </div>
-              <p className="text-[13.5px] text-[var(--text-muted)] mb-5">Choose the AI engine powering this chat session.</p>
+              <p className="text-[13.5px] text-[var(--text-muted)] mb-5">Choose the AI mode powering this chat session.</p>
               
               <div className="flex flex-col gap-2">
                 {[
-                  { id: "zai-org/GLM-5.2:novita", name: "GLM 5.2", desc: "Advanced GLM model" },
-                  { id: "microsoft/FastContext-1.0-4B-SFT:featherless-ai", name: "FastContext 4B", desc: "Fast Context Model" },
-                  { id: "WeiboAI/VibeThinker-3B:featherless-ai", name: "VibeThinker 3B", desc: "Open weights Thinker model" },
-                  { id: "deepseek-ai/DeepSeek-V4-Flash:novita", name: "DeepSeek V4 Flash", desc: "Fast DeepSeek reasoning" },
-                  { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro", desc: "Advanced DeepSeek reasoning" }
+                  { id: "swift", name: "⚡ Swift", desc: "Fast responses for everyday use." },
+                  { id: "fusion", name: "🧠 Fusion", desc: "Uses multiple AI models to reason and verify answers for maximum accuracy." }
                 ].map((m) => (
                   <button
                     key={m.id}
@@ -612,18 +595,18 @@ export default function ChatInterface({
                       setSelectedModel?.(m.id);
                       setModelSelectorOpen(false);
                     }}
-                    className={`flex items-start text-left gap-3 p-3.5 rounded-xl border transition-all cursor-pointer bg-transparent w-full ${
+                    className={`flex items-start text-left gap-3 p-3.5 rounded-none border transition-all cursor-pointer bg-transparent w-full ${
                       selectedModel === m.id
-                        ? "border-[var(--color-accent)] bg-[var(--bg-accent-light)]"
+                        ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
                         : "border-[var(--border-light)] hover:bg-gray-50 dark:hover:bg-neutral-800"
                     }`}
                   >
                     <div className="flex flex-col flex-1 min-w-0 font-sans">
                       <span className="text-[14.5px] font-semibold text-[var(--text-main)] leading-snug">{m.name}</span>
-                      <span className="text-[12.5px] text-[var(--text-muted)] font-normal truncate mt-0.5">{m.desc}</span>
+                      <span className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed mt-0.5 whitespace-normal">{m.desc}</span>
                     </div>
                     {selectedModel === m.id && (
-                      <div className="w-5 h-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-white shrink-0 mt-1">
+                      <div className="w-5 h-5 rounded-none bg-[var(--color-accent)] flex items-center justify-center text-white shrink-0 mt-1">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       </div>
                     )}
@@ -633,7 +616,7 @@ export default function ChatInterface({
               <div className="mt-6 flex justify-end">
                  <button
                    onClick={() => setModelSelectorOpen(false)}
-                   className="px-6 py-2.5 rounded-full bg-transparent text-[var(--color-accent)] hover:bg-[var(--bg-accent-light)] font-semibold text-[14.5px] transition-colors cursor-pointer border-0"
+                   className="px-6 py-2.5 rounded-none bg-transparent text-[var(--color-accent)] hover:bg-[var(--bg-accent-light)] font-semibold text-[14.5px] transition-colors cursor-pointer border-0"
                  >
                    Done
                  </button>

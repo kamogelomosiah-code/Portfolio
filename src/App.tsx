@@ -34,7 +34,7 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accentColor, setAccentColor] = useState(getDefaultAccentColor());
-  const [selectedModel, setSelectedModel] = useState("zai-org/GLM-5.2:novita");
+  const [selectedModel, setSelectedModel] = useState("swift");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -49,13 +49,7 @@ export default function App() {
 
   useEffect(() => {
     const testModels = async () => {
-      const models = [
-        "zai-org/GLM-5.2:novita",
-        "microsoft/FastContext-1.0-4B-SFT:featherless-ai",
-        "WeiboAI/VibeThinker-3B:featherless-ai",
-        "deepseek-ai/DeepSeek-V4-Flash:novita",
-        "deepseek-ai/DeepSeek-V4-Pro:novita"
-      ];
+      const models = ["swift", "fusion"];
       for (const m of models) {
         try {
           const res = await fetch('/api/ping-model', {

@@ -125,7 +125,15 @@ function getOfflineFallbackResponse(message: string): string {
 app.post('/api/chat', async (req, res) => {
   const { history, message, model } = req.body || {};
   try {
-    const targetModel = model || 'zai-org/GLM-5.2:novita';
+    let resolvedModel = model || 'swift';
+    if (resolvedModel === 'swift') {
+      resolvedModel = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+    } else if (resolvedModel === 'fusion') {
+      resolvedModel = 'deepseek-ai/DeepSeek-V4-Pro:novita';
+    } else if (resolvedModel === 'zai-org/GLM-5.2:novita') {
+      resolvedModel = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+    }
+    const targetModel = resolvedModel;
     
     const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
     if (!currentToken) {
@@ -181,18 +189,24 @@ app.post('/api/chat', async (req, res) => {
 app.post('/api/ping-model', async (req, res) => {
   const { model } = req.body;
   try {
-    const isHfInference = model.includes("VibeThinker") || model.includes("DeepSeek-V4-Pro");
+    let resolvedModel = model || 'swift';
+    if (resolvedModel === 'swift') {
+      resolvedModel = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+    } else if (resolvedModel === 'fusion') {
+      resolvedModel = 'deepseek-ai/DeepSeek-V4-Pro:novita';
+    }
+    const isHfInference = resolvedModel.includes("VibeThinker") || resolvedModel.includes("DeepSeek-V4-Pro");
     if (isHfInference) {
       const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
       const hfClient = new InferenceClient(currentToken);
       await hfClient.chatCompletion({
-        model: model,
+        model: resolvedModel,
         messages: [{ role: "user", content: "ping" }],
         max_tokens: 1
       });
     } else {
       await client.chat.completions.create({
-        model: model,
+        model: resolvedModel,
         messages: [{ role: "user", content: "ping" }],
         max_tokens: 1
       });

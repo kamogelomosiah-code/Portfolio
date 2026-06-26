@@ -38,11 +38,11 @@ export default function SettingsModal({ isOpen, onClose, accentColor, setAccentC
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[var(--bg-main)] rounded-[28px] shadow-2xl max-w-[400px] w-full relative overflow-hidden flex flex-col"
+              className="bg-[var(--bg-main)] rounded-none shadow-2xl max-w-[400px] w-full relative overflow-hidden flex flex-col border border-[var(--border-light)]"
             >
               <div className="flex items-center justify-between px-6 pt-6 pb-2">
                 <h2 className="text-[24px] font-medium text-[var(--text-main)] tracking-normal font-display">Settings</h2>
-                <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent">
+                <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-none transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent">
                   <X size={24} />
                 </button>
               </div>
@@ -55,7 +55,7 @@ export default function SettingsModal({ isOpen, onClose, accentColor, setAccentC
                       <button
                         key={color.value}
                         onClick={() => setAccentColor(color.value)}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer hover:opacity-90 ${
+                        className={`w-12 h-12 rounded-none flex items-center justify-center border-2 transition-all cursor-pointer hover:opacity-90 ${
                           accentColor === color.value ? "border-[var(--text-main)] scale-110" : "border-transparent"
                         }`}
                         style={{ backgroundColor: color.value }}
@@ -68,25 +68,25 @@ export default function SettingsModal({ isOpen, onClose, accentColor, setAccentC
                 </div>
                 
                 <div className="flex flex-col gap-4">
-                  <h3 className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide uppercase">AI Model</h3>
+                  <h3 className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide uppercase">AI Mode</h3>
                   <div className="flex flex-col gap-2">
                     {[
-                      { id: "zai-org/GLM-5.2:novita", name: "GLM 5.2" },
-                      { id: "microsoft/FastContext-1.0-4B-SFT:featherless-ai", name: "FastContext 4B" },
-                      { id: "WeiboAI/VibeThinker-3B:featherless-ai", name: "VibeThinker 3B" },
-                      { id: "deepseek-ai/DeepSeek-V4-Flash:novita", name: "DeepSeek V4 Flash" },
-                      { id: "deepseek-ai/DeepSeek-V4-Pro:novita", name: "DeepSeek V4 Pro" }
+                      { id: "swift", name: "⚡ Swift", desc: "Fast responses for everyday use." },
+                      { id: "fusion", name: "🧠 Fusion", desc: "Uses multiple AI models to reason and verify answers for maximum accuracy." }
                     ].map((model) => (
-                      <label key={model.id} className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-colors bg-[var(--bg-card)] hover:bg-[#F1F3F4] border border-[var(--border-light)]">
-                        <input
-                          type="radio"
-                          name="ai-model"
-                          value={model.id}
-                          checked={selectedModel === model.id}
-                          onChange={(e) => setSelectedModel(e.target.value)}
-                          className="w-5 h-5 text-[var(--color-accent)] focus:ring-[var(--color-accent)] border-gray-300 cursor-pointer"
-                        />
-                        <span className="text-[15px] font-medium text-[var(--text-main)]">{model.name}</span>
+                      <label key={model.id} className="flex flex-col gap-1 p-4 rounded-none cursor-pointer transition-colors bg-[var(--bg-card)] hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-[var(--border-light)]">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="ai-model"
+                            value={model.id}
+                            checked={selectedModel === model.id}
+                            onChange={(e) => setSelectedModel(e.target.value)}
+                            className="w-5 h-5 text-[var(--color-accent)] focus:ring-[var(--color-accent)] border-gray-300 cursor-pointer"
+                          />
+                          <span className="text-[15px] font-bold text-[var(--text-main)]">{model.name}</span>
+                        </div>
+                        <span className="text-[13px] text-[var(--text-muted)] pl-8 font-normal leading-relaxed">{model.desc}</span>
                       </label>
                     ))}
                   </div>
@@ -96,7 +96,7 @@ export default function SettingsModal({ isOpen, onClose, accentColor, setAccentC
               <div className="px-6 py-4 flex justify-end">
                 <button 
                   onClick={onClose}
-                  className="px-6 py-2.5 bg-transparent text-[var(--color-accent)] hover:bg-[var(--color-accent-light)] rounded-full font-medium text-[14px] transition-colors cursor-pointer border-0"
+                  className="px-6 py-2.5 bg-transparent text-[var(--color-accent)] hover:bg-[var(--color-accent-light)] rounded-none font-medium text-[14px] transition-colors cursor-pointer border-0"
                 >
                   Close
                 </button>

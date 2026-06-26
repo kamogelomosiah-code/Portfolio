@@ -437,14 +437,6 @@ export default function MobileApp({
 
                       <div className="flex items-center ml-1">
                         <button
-                          onPointerDown={(e) => { e.preventDefault(); startRecording(); }}
-                          className="flex items-center justify-center w-11 h-11 rounded-full text-[var(--text-muted)] hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer select-none border-0 bg-transparent shrink-0"
-                          style={{ minWidth: "44px", minHeight: "44px" }}
-                        >
-                          <Mic size={18} />
-                        </button>
-
-                        <button
                           onClick={() => handleSend(input)}
                           disabled={!input.trim() || isLoading || isTranscribing}
                           className="flex items-center justify-center w-11 h-11 rounded-full disabled:bg-transparent bg-[var(--color-accent)] text-white hover:opacity-90 disabled:text-gray-300 transition-all cursor-pointer border-0 shrink-0 shadow-sm ml-1 active:scale-95"
