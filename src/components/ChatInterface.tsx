@@ -111,7 +111,7 @@ export default function ChatInterface({
             ...prev,
             [lastMsg.id]: currentText
           }));
-          scrollToBottom('smooth');
+          scrollToBottom('auto');
         } else {
           clearInterval(interval);
           setCurrentlyStreamingId(null);
