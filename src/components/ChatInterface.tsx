@@ -88,6 +88,19 @@ export default function ChatInterface({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      setIntroStage("initial");
+      const timer = setTimeout(() => {
+        setIntroStage("options");
+      }, 2500);
+      return () => clearTimeout(timer);
+    } else {
+      setIntroStage("options");
+    }
+  }, [messages.length]);
 
   // Client side typing stream states
   const [streamedTexts, setStreamedTexts] = useState<Record<string, string>>({});
@@ -345,6 +358,7 @@ export default function ChatInterface({
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onFocus={() => { if (introStage !== "options") setIntroStage("options"); }}
               onKeyDown={(e) => {
                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -471,55 +485,77 @@ export default function ChatInterface({
           <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-4 pb-[130px] min-h-full">
               
               {isInitialState && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col text-left w-full max-w-3xl mx-auto pt-6"
-                >
-                  {/* Greeting Hero */}
-                  <div className="mb-6">
-                    <h1 className="text-[36px] sm:text-[44px] font-bold tracking-tight text-[var(--text-main)] mb-1 leading-none font-display">
-                      Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
-                    </h1>
-                    <h2 className="text-[36px] sm:text-[44px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-4 leading-none font-display">
-                      What would you like to know?
-                    </h2>
-                    <p className="text-[var(--text-muted)] text-[15.5px] font-normal leading-relaxed">
-                      Use one of the most common prompts below or use your own to begin
-                    </p>
-                  </div>
-
-                  {/* 4 Card Prompt Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5 w-full mt-4">
-                    {PROMPT_SETS[promptSetIndex].map((prompt, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleSend(prompt.text)}
-                        className="flex flex-col justify-between p-5 bg-[var(--bg-card)] border border-[var(--border-light)] hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200 active:scale-[0.98] cursor-pointer text-left h-[135px] rounded-none shadow-sm"
+                <div className="flex flex-col text-left w-full max-w-3xl mx-auto pt-6 min-h-[300px] justify-center">
+                  <AnimatePresence mode="wait">
+                    {introStage === "initial" ? (
+                      <motion.div 
+                        key="greeting"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        className="flex flex-col text-left w-full py-8"
                       >
-                        <span className="text-[13.5px] text-[var(--text-main)] font-medium leading-snug line-clamp-3">
-                          {prompt.text}
-                        </span>
-                        <div className="shrink-0 mt-2">
-                          {renderPromptIcon(prompt.icon)}
+                        {/* Greeting Hero */}
+                        <div className="mb-6">
+                          <h1 className="text-[36px] sm:text-[44px] font-bold tracking-tight text-[var(--text-main)] mb-1 leading-none font-display">
+                            Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
+                          </h1>
+                          <h2 className="text-[36px] sm:text-[44px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-4 leading-none font-display">
+                            What would you like to know?
+                          </h2>
+                          <p className="text-[var(--text-muted)] text-[15.5px] font-normal leading-relaxed">
+                            Use one of the most common prompts below or use your own to begin learning about me.
+                          </p>
                         </div>
-                      </button>
-                    ))}
-                  </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        key="options"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        className="flex flex-col text-left w-full"
+                      >
+                        {/* Compact suggestions header */}
+                        <div className="mb-3.5">
+                          <p className="text-[var(--text-muted)] text-[12px] font-semibold uppercase tracking-wider">
+                            Quick Suggestions
+                          </p>
+                        </div>
 
-                  {/* Refresh Prompts left-aligned */}
-                  <div className="mt-3.5 flex justify-start mb-8">
-                    <button
-                      onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                      className="flex items-center gap-1.5 text-[12.5px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-medium transition-colors bg-transparent border-0 cursor-pointer p-1"
-                    >
-                      <RotateCw size={13} />
-                      <span>Refresh Prompts</span>
-                    </button>
-                  </div>
+                        {/* Reduced Sleek Horizontal Prompt Cards (3 Columns) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
+                          {PROMPT_SETS[promptSetIndex].slice(0, 3).map((prompt, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleSend(prompt.text)}
+                              className="flex items-center gap-3.5 p-3.5 bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-gray-400 dark:hover:border-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-none shadow-sm"
+                            >
+                              <div className="shrink-0 w-8 h-8 rounded-none bg-[var(--color-accent-light)] flex items-center justify-center">
+                                {renderPromptIcon(prompt.icon)}
+                              </div>
+                              <span className="text-[13px] text-[var(--text-main)] font-semibold leading-tight line-clamp-2">
+                                {prompt.text}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
 
-                  {/* Inline Composer removed from here so it is always sticky at the bottom */}
-                </motion.div>
+                        {/* Refresh Prompts left-aligned */}
+                        <div className="mt-3.5 flex justify-start mb-8">
+                          <button
+                            onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
+                            className="flex items-center gap-1.5 text-[12.5px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-medium transition-colors bg-transparent border-0 cursor-pointer p-1"
+                          >
+                            <RotateCw size={13} />
+                            <span>Refresh Suggestions</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
               
               {messages.length > 0 && (

@@ -89,6 +89,19 @@ export default function MobileApp({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
+  const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      setIntroStage("initial");
+      const timer = setTimeout(() => {
+        setIntroStage("options");
+      }, 2500);
+      return () => clearTimeout(timer);
+    } else {
+      setIntroStage("options");
+    }
+  }, [messages.length]);
 
   const renderComposer = (isFixed: boolean) => {
     return (
@@ -230,6 +243,9 @@ export default function MobileApp({
 
   // Keyboard awareness - scroll when input receives focus
   const handleInputFocus = () => {
+    if (introStage !== "options") {
+      setIntroStage("options");
+    }
     setTimeout(() => {
       scrollToBottom();
     }, 150);
@@ -425,50 +441,76 @@ export default function MobileApp({
                   className="flex-1 overflow-y-auto w-full px-4 pt-3 pb-[140px] scroll-smooth"
                 >
                   {isInitialState ? (
-                    <div className="flex flex-col text-left w-full py-6 px-1">
-                      {/* Greeting Hero */}
-                      <div className="mb-5">
-                        <h1 className="text-[30px] font-bold tracking-tight text-[var(--text-main)] mb-0.5 leading-none font-display">
-                          Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
-                        </h1>
-                        <h2 className="text-[30px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-3 leading-none font-display">
-                          What would you like to know?
-                        </h2>
-                        <p className="text-[var(--text-muted)] text-[14px] font-normal leading-relaxed">
-                          Use one of the most common prompts below or use your own to begin
-                        </p>
-                      </div>
-
-                      {/* 4 Card Prompt Grid (2x2 on mobile, extremely thumb friendly) */}
-                      <div className="grid grid-cols-2 gap-3 w-full mt-2">
-                        {PROMPT_SETS[promptSetIndex].map((prompt, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleSend(prompt.text)}
-                            className="flex flex-col justify-between p-4 bg-[var(--bg-card)] border border-[var(--border-light)] hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200 active:scale-[0.98] cursor-pointer text-left h-[120px] rounded-none shadow-sm"
+                    <div className="flex flex-col text-left w-full py-6 px-1 min-h-[280px] justify-center">
+                      <AnimatePresence mode="wait">
+                        {introStage === "initial" ? (
+                          <motion.div
+                            key="greeting"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -15 }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                            className="flex flex-col text-left w-full"
                           >
-                            <span className="text-[12.5px] text-[var(--text-main)] font-medium leading-snug line-clamp-3">
-                              {prompt.text}
-                            </span>
-                            <div className="shrink-0 mt-1.5">
-                              {renderPromptIcon(prompt.icon)}
+                            {/* Greeting Hero */}
+                            <div className="mb-5">
+                              <h1 className="text-[30px] font-bold tracking-tight text-[var(--text-main)] mb-0.5 leading-none font-display">
+                                Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
+                              </h1>
+                              <h2 className="text-[30px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-3 leading-none font-display">
+                                What would you like to know?
+                              </h2>
+                              <p className="text-[var(--text-muted)] text-[14px] font-normal leading-relaxed">
+                                Use one of the most common prompts below or use your own to begin learning about me.
+                              </p>
                             </div>
-                          </button>
-                        ))}
-                      </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="options"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, ease: "easeOut" }}
+                            className="flex flex-col text-left w-full"
+                          >
+                            {/* Compact suggestions header */}
+                            <div className="mb-2.5">
+                              <p className="text-[var(--text-muted)] text-[11px] font-semibold uppercase tracking-wider">
+                                Quick Suggestions
+                              </p>
+                            </div>
 
-                      {/* Refresh Prompts left-aligned */}
-                      <div className="mt-3.5 flex justify-start mb-6">
-                        <button
-                          onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                          className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-medium transition-colors bg-transparent border-0 cursor-pointer p-1"
-                        >
-                          <RotateCw size={12} />
-                          <span>Refresh Prompts</span>
-                        </button>
-                      </div>
+                            {/* Reduced Sleek Horizontal Prompt Cards (Vertical Stack on Mobile) */}
+                            <div className="flex flex-col gap-2.5 w-full">
+                              {PROMPT_SETS[promptSetIndex].slice(0, 3).map((prompt, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => handleSend(prompt.text)}
+                                  className="flex items-center gap-3 p-3 bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-gray-400 dark:hover:border-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[54px] rounded-none shadow-sm"
+                                >
+                                  <div className="shrink-0 w-7 h-7 rounded-none bg-[var(--color-accent-light)] flex items-center justify-center">
+                                    {renderPromptIcon(prompt.icon)}
+                                  </div>
+                                  <span className="text-[12.5px] text-[var(--text-main)] font-semibold leading-tight line-clamp-2">
+                                    {prompt.text}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
 
-                      {/* Inline Composer removed from here so it is always sticky at the bottom */}
+                            {/* Refresh Prompts left-aligned */}
+                            <div className="mt-3.5 flex justify-start mb-6">
+                              <button
+                                onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
+                                className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-medium transition-colors bg-transparent border-0 cursor-pointer p-1"
+                              >
+                                <RotateCw size={12} />
+                                <span>Refresh Suggestions</span>
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-5">
