@@ -57,3 +57,30 @@ body {
 @keyframes shimmer {
   100% { transform: translateX(100%); }
 }
+
+/* Custom styling for KaTeX mathematical equations to make them clean and premium */
+.katex-display {
+  margin: 1rem 0 !important;
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  display: block;
+  text-align: center;
+}
+
+.dark .katex-display {
+  background-color: #161616;
+  border-color: #2a2a2a;
+}
+
+/* Ensure inline math is cleanly integrated */
+.katex {
+  font-size: 1.05em;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+

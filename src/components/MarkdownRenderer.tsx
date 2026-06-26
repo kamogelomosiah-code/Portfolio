@@ -122,8 +122,18 @@ export function EmailDraftCard({ to, subject, body }: EmailDraftCardProps) {
 
 export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps) {
   // Pre-process contents:
-  // 1. Convert plain text integrals like "integral of x dx" or "\int x dx" if they aren't parsed
+  // 1. Convert LaTeX math delimiters to markdown format ($ and $$) for remark-math/rehype-katex
   let processedContent = content;
+
+  // Replace double escaped block: \\[ ... \\]
+  processedContent = processedContent.replace(/\\\\\[/g, "$$\n").replace(/\\\\\]/g, "\n$$");
+  // Replace single escaped block: \[ ... \]
+  processedContent = processedContent.replace(/\\\[/g, "$$\n").replace(/\\\]/g, "\n$$");
+
+  // Replace double escaped inline: \\( ... \\)
+  processedContent = processedContent.replace(/\\\\\(/g, " $ ").replace(/\\\\\)/g, " $ ");
+  // Replace single escaped inline: \( ... \)
+  processedContent = processedContent.replace(/\\\(/g, " $ ").replace(/\\\)/g, " $ ");
 
   // Detect and split if there is an email structure
   const emailData = splitAndParseEmail(processedContent);
