@@ -7,7 +7,6 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
-import { TimeOfDayWidget } from "./TimeOfDayWidget";
 
 export type Message = {
   id: string;
@@ -306,10 +305,12 @@ export default function ChatInterface({
                 >
                   {/* Greeting Hero */}
                   <div className="w-full flex justify-center mb-6 sm:mb-10 pt-4">
-                    <div className="flex flex-col items-center justify-center text-center w-full max-w-xl">
-                      <TimeOfDayWidget />
-                      <p className="text-[var(--text-muted)] text-[14px] sm:text-[15.5px] font-normal leading-relaxed mt-2.5 px-4">
-                        I'm Kamogelo's automated assistant. Ask me anything about his background, projects, academic qualifications, or download his materials.
+                    <div className="flex flex-col items-center justify-center text-center w-full max-w-xl px-4">
+                      <h1 className="text-[32px] sm:text-[40px] font-bold tracking-tight text-[var(--text-main)] mb-3 leading-tight">
+                        Kamogelo's Assistant
+                      </h1>
+                      <p className="text-[var(--text-muted)] text-[14.5px] sm:text-[16.5px] font-normal leading-relaxed max-w-md">
+                        Hello! Ask me anything about his background, projects, academic qualifications, or download his materials.
                       </p>
                     </div>
                   </div>

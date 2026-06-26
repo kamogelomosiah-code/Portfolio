@@ -7,7 +7,6 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
-import { TimeOfDayWidget } from "./TimeOfDayWidget";
 import { Message } from "./ChatInterface";
 import SettingsModal from "./SettingsModal";
 import ProjectsPage from "./ProjectsPage";
@@ -268,10 +267,12 @@ export default function MobileApp({
                   className="flex-1 overflow-y-auto w-full px-4 pt-3 pb-[140px] scroll-smooth"
                 >
                   {isInitialState ? (
-                    <div className="flex flex-col items-center justify-center text-center py-10">
-                      <TimeOfDayWidget />
-                      <p className="text-[var(--text-muted)] text-[13.5px] leading-relaxed mt-3 px-4 max-w-sm">
-                        I'm Kamogelo's automated assistant. Ask me anything about his qualifications, projects, or background.
+                    <div className="flex flex-col items-center justify-center text-center py-10 px-4">
+                      <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-main)] mb-2 leading-tight">
+                        Kamogelo's Assistant
+                      </h1>
+                      <p className="text-[var(--text-muted)] text-[14px] leading-relaxed max-w-sm">
+                        Hello! Ask me anything about his qualifications, projects, or background.
                       </p>
 
                       {/* Touch Friendly Action Buttons */}

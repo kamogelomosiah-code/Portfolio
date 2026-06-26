@@ -105,16 +105,16 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
               </div>
             </div>
 
-            <div className="border border-[#CEEAD6] dark:border-[#137333]/30 shadow-sm rounded-[24px] p-6 bg-[#E6F4EA] dark:bg-[#137333]/10 flex flex-col gap-3">
-              <h4 className="text-[14px] text-[#137333] dark:text-[#81C784] font-medium tracking-wide">
+            <div className="border border-[var(--border-light)] shadow-sm rounded-[24px] p-6 bg-[var(--bg-card)] flex flex-col gap-3">
+              <h4 className="text-[14px] text-[var(--color-accent)] font-medium tracking-wide">
                 Availability
               </h4>
-              <p className="text-[14px] text-[#188038] dark:text-[#A8DAB5] leading-relaxed">
+              <p className="text-[14px] text-[var(--text-main)] leading-relaxed">
                 Currently open to remote full-stack engineering contracts, startup contributions, and permanent roles.
               </p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="w-2 h-2 bg-[var(--color-accent)] rounded-full animate-pulse" />
-                <span className="text-[13px] font-medium text-[#137333] dark:text-[#81C784]">Available Now</span>
+                <span className="text-[13px] font-medium text-[var(--color-accent)]">Available Now</span>
               </div>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Jane Doe"
-                    className="bg-[var(--bg-main)] dark:bg-[#202124] border border-[var(--border-light)] text-[var(--text-main)] px-4 py-3 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all text-[15px] font-medium placeholder:font-normal placeholder:text-[var(--text-muted)]"
+                    className="bg-[var(--bg-main)] border border-[var(--border-light)] text-[var(--text-main)] px-4 py-3 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all text-[15px] font-medium placeholder:font-normal placeholder:text-[var(--text-muted)]"
                   />
                 </div>
 
@@ -145,7 +145,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="jane@example.com"
-                    className="bg-[var(--bg-main)] dark:bg-[#202124] border border-[var(--border-light)] text-[var(--text-main)] px-4 py-3 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all text-[15px] font-medium placeholder:font-normal placeholder:text-[var(--text-muted)]"
+                    className="bg-[var(--bg-main)] border border-[var(--border-light)] text-[var(--text-main)] px-4 py-3 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all text-[15px] font-medium placeholder:font-normal placeholder:text-[var(--text-muted)]"
                   />
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   placeholder="Opportunity for Contract work / Permanent Hire"
-                  className="bg-[var(--bg-main)] dark:bg-[#202124] border border-[var(--border-light)] text-[var(--text-main)] px-4 py-3 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all text-[15px] font-medium placeholder:font-normal placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-main)] border border-[var(--border-light)] text-[var(--text-main)] px-4 py-3 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all text-[15px] font-medium placeholder:font-normal placeholder:text-[var(--text-muted)]"
                 />
               </div>
 
@@ -171,7 +171,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Hi Kamo, let's schedule an introductory call to discuss..."
-                  className="bg-[var(--bg-main)] dark:bg-[#202124] border border-[var(--border-light)] text-[var(--text-main)] px-4 py-3 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all text-[15px] font-medium placeholder:font-normal placeholder:text-[var(--text-muted)] resize-none"
+                  className="bg-[var(--bg-main)] border border-[var(--border-light)] text-[var(--text-main)] px-4 py-3 rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all text-[15px] font-medium placeholder:font-normal placeholder:text-[var(--text-muted)] resize-none"
                 />
               </div>
 
@@ -180,7 +180,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                 <button
                   type="submit"
                   disabled={status === "submitting" || status === "success"}
-                  className="w-full md:w-auto self-end flex items-center justify-center gap-2 bg-[var(--accent-color)] hover:opacity-90 text-white px-8 py-3.5 rounded-full disabled:bg-[#F1F3F4] dark:disabled:bg-[#2C2C2C] disabled:text-[#9AA0A6] dark:disabled:text-[#5F5F5F] font-medium text-[15px] transition-colors cursor-pointer border-0"
+                  className="w-full md:w-auto self-end flex items-center justify-center gap-2 bg-[var(--color-accent)] hover:opacity-90 text-white px-8 py-3.5 rounded-full disabled:bg-[#F1F3F4] dark:disabled:bg-[#2C2C2C] disabled:text-[#9AA0A6] dark:disabled:text-[#5F5F5F] font-medium text-[15px] transition-colors cursor-pointer border-0"
                 >
                   {status === "submitting" ? (
                     <span>Sending...</span>
@@ -197,12 +197,12 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="bg-[#E6F4EA] dark:bg-[#137333]/20 border border-[#CEEAD6] dark:border-[#137333]/30 text-[#137333] dark:text-[#81C784] p-4 rounded-[16px] flex items-start gap-3"
+                      className="bg-[var(--color-accent-light)] border border-[var(--color-accent)]/20 text-[var(--text-main)] p-4 rounded-[16px] flex items-start gap-3"
                     >
                       <CheckCircle2 className="text-[var(--color-accent)] shrink-0 mt-0.5" size={20} />
                       <div>
-                        <p className="font-medium text-[14px]">Message sent successfully</p>
-                        <p className="mt-1 text-[14px]">Thank you for reaching out. I will get back to your query within 24 hours.</p>
+                        <p className="font-semibold text-[14px]">Message sent successfully</p>
+                        <p className="mt-1 text-[14px] text-[var(--text-muted)]">Thank you for reaching out. I will get back to your query within 24 hours.</p>
                       </div>
                     </motion.div>
                   )}
@@ -212,11 +212,11 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="bg-[#FCE8E6] dark:bg-[#C5221F]/15 border border-[#FAD2CF] dark:border-[#C5221F]/30 text-[#C5221F] dark:text-[#F28B82] p-4 rounded-[16px] flex items-start gap-3"
+                      className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-4 rounded-[16px] flex items-start gap-3"
                     >
-                      <AlertCircle className="text-[#D93025] dark:text-[#F28B82] shrink-0 mt-0.5" size={20} />
+                      <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
                       <div>
-                        <p className="font-medium text-[14px]">Transmission Error</p>
+                        <p className="font-semibold text-[14px]">Transmission Error</p>
                         <p className="mt-1 text-[14px]">Please ensure all required fields are filled correctly.</p>
                       </div>
                     </motion.div>

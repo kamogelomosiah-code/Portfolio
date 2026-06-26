@@ -14,36 +14,36 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
 
   const skillsData = [
     {
-      category: "Data Skills",
-      details: "Data collection and preparation, data quality and governance, database design, SQL querying, data validation, data accuracy"
+      category: "Software Development",
+      details: "Full-stack development, REST APIs, clean coding patterns, responsive design, state management, system architecture, database security"
     },
     {
-      category: "Python and Analytics",
-      details: "Python (actively studying), SQL (MySQL, PostgreSQL), data interpretation, trend analysis, performance metrics, Excel (pivot tables, VLOOKUP, charts, formulas)"
+      category: "Programming Languages",
+      details: "JavaScript, Python (actively studying), SQL (PostgreSQL, MySQL), PHP, HTML5, CSS3"
     },
     {
-      category: "Visualisation and Reporting",
-      details: "Dashboard development, management reporting, documentation, Google Sheets, Excel charts, technical writing"
+      category: "Frameworks & Libraries",
+      details: "React.js, Node.js, Express, Laravel, Flask (actively in progress), Tailwind CSS"
     },
     {
-      category: "Programming",
-      details: "JavaScript, PHP, SQL, React.js, Node.js, REST APIs, MySQL, PostgreSQL, Firebase, HTML5, CSS3"
+      category: "Database & Systems",
+      details: "Database schema design, query optimization, indexing, data normalization, PostgreSQL, MySQL, Firebase/Firestore"
     },
     {
-      category: "Current Study",
-      details: "Python programming certificate, CompTIA IT, Docker, Flask (all actively in progress)"
+      category: "IT Operations & Support",
+      details: "Hardware diagnostics, technical troubleshooting, software configuration, operating system setup, end-user support"
     },
     {
-      category: "Collaboration and Comms",
-      details: "Team-based project delivery, stakeholder communication, technical documentation, agile awareness"
+      category: "DevOps & Tools",
+      details: "Git, GitHub, VS Code, Postman, Docker (actively studying), Chrome DevTools (Google Certified), Render, Android Studio, Excel"
     },
     {
-      category: "Tools",
-      details: "Git, GitHub, VS Code, Postman, Chrome DevTools (Google Certified), Render, Android Studio"
+      category: "Soft Skills & Teamwork",
+      details: "Technical documentation, systems analysis, Agile methodologies, problem-solving, collaboration, prompt response times, self-motivated"
     },
     {
-      category: "Personal",
-      details: "Self-motivated, analytical, detail-oriented, good time management, strong communicator, team player, immediately available"
+      category: "Current Certifications",
+      details: "Google Developer Tools Certification (completed), CompTIA IT Certificate (in progress)"
     }
   ];
 
@@ -85,7 +85,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
           <div className="flex items-center gap-2">
             <button 
               onClick={handlePrint}
-              className="flex items-center gap-2 bg-[#C69214] hover:bg-[#A87C10] text-white px-4 py-2 rounded-lg transition-colors font-medium text-[14px] cursor-pointer shadow-sm border-0"
+              className="flex items-center gap-2 bg-[var(--color-accent)] hover:opacity-95 text-white px-4 py-2 rounded-lg transition-colors font-medium text-[14px] cursor-pointer shadow-sm border-0"
               title="Download or Print CV"
             >
               <Download size={18} /> <span className="hidden sm:inline">Download</span>
@@ -99,124 +99,107 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
         <div className="w-full max-w-4xl pt-4 sm:pt-8 print:pt-0">
           
           {/* CV Sheet - Paper look */}
-          <div className="w-full bg-[var(--bg-card)] dark:bg-[#1E1F20] print:bg-white border border-[var(--border-light)] print:border-0 shadow-lg print:shadow-none rounded-[32px] print:rounded-none p-6 sm:p-12 md:p-16 flex flex-col text-left transition-all relative">
+          <div className="w-full bg-[var(--bg-card)] print:bg-white border border-[var(--border-light)] print:border-0 shadow-lg print:shadow-none rounded-[32px] print:rounded-none p-6 sm:p-12 md:p-16 flex flex-col text-left transition-all relative">
             
             {/* Header Block */}
-            <div className="border-b-2 border-[#C69214] pb-6 mb-8 print:mb-6">
-              <h1 className="text-[36px] sm:text-[44px] md:text-[50px] font-bold text-[#C69214] tracking-tight leading-none mb-3">
+            <div className="border-b-2 border-[var(--color-accent)] pb-6 mb-8 print:mb-6">
+              <h1 className="text-[36px] sm:text-[44px] md:text-[50px] font-bold text-[var(--color-accent)] tracking-tight leading-none mb-3">
                 Kamogelo Mosia
               </h1>
               
-              <div className="text-[14px] sm:text-[15px] text-[var(--text-muted)] dark:text-[#A8DAB5] font-medium tracking-wide mb-4">
-                Data Science Intern <span className="mx-1 text-[#C69214]">•</span> Komatsu Mining Corporation <span className="mx-1 text-[#C69214]">•</span> Wadeville, Germiston, Gauteng
+              <div className="text-[14px] sm:text-[15px] text-[var(--text-muted)] font-medium tracking-wide mb-4">
+                Software & IT Solutions Engineer <span className="mx-1 text-[var(--color-accent)]">•</span> Johannesburg, Gauteng
               </div>
 
               <div className="flex flex-col gap-1.5 text-[13px] sm:text-[14px] text-[var(--text-muted)] font-medium">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <a href="mailto:kamogelomosiah@gmail.com" className="hover:text-[#C69214] transition-colors flex items-center gap-1 shrink-0">
-                    <Mail size={14} className="text-[#C69214]" /> kamogelomosiah@gmail.com
+                  <a href="mailto:kamogelomosiah@gmail.com" className="hover:text-[var(--color-accent)] transition-colors flex items-center gap-1 shrink-0">
+                    <Mail size={14} className="text-[var(--color-accent)]" /> kamogelomosiah@gmail.com
                   </a>
                   <span className="flex items-center gap-1 shrink-0">
-                    <Phone size={14} className="text-[#C69214]" /> 067 742 6447
+                    <Phone size={14} className="text-[var(--color-accent)]" /> 067 742 6447
                   </span>
                   <span className="flex items-center gap-1 shrink-0">
-                    <Phone size={14} className="text-[#C69214]" /> 061 362 4165
+                    <Phone size={14} className="text-[var(--color-accent)]" /> 061 362 4165
                   </span>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <a href="https://github.com/kamogelomosiah-code" target="_blank" rel="noreferrer" className="hover:text-[#C69214] transition-colors flex items-center gap-1 shrink-0">
-                    <Github size={14} className="text-[#C69214]" /> github.com/kamogelomosiah-code
+                  <a href="https://github.com/kamogelomosiah-code" target="_blank" rel="noreferrer" className="hover:text-[var(--color-accent)] transition-colors flex items-center gap-1 shrink-0">
+                    <Github size={14} className="text-[var(--color-accent)]" /> github.com/kamogelomosiah-code
                   </a>
-                  <a href="https://portfolio-q5ji.onrender.com" target="_blank" rel="noreferrer" className="hover:text-[#C69214] transition-colors flex items-center gap-1 shrink-0">
-                    <Globe size={14} className="text-[#C69214]" /> portfolio-q5ji.onrender.com
+                  <a href="https://portfolio-q5ji.onrender.com" target="_blank" rel="noreferrer" className="hover:text-[var(--color-accent)] transition-colors flex items-center gap-1 shrink-0">
+                    <Globe size={14} className="text-[var(--color-accent)]" /> portfolio-q5ji.onrender.com
                   </a>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[#5F6368] dark:text-[#A8A8A8] text-[12px] sm:text-[13px]">
-                  <span className="flex items-center gap-1"><MapPin size={13} className="text-[#C69214]" /> Alexandra, Johannesburg, Gauteng</span>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[var(--text-muted)] text-[12px] sm:text-[13px]">
+                  <span className="flex items-center gap-1"><MapPin size={13} className="text-[var(--color-accent)]" /> Alexandra, Johannesburg, Gauteng</span>
                   <span className="hidden sm:inline text-gray-300">|</span>
                   <span>South African Citizen</span>
                   <span className="hidden sm:inline text-gray-300">|</span>
                   <span>Unemployed</span>
                   <span className="hidden sm:inline text-gray-300">|</span>
-                  <span className="font-semibold text-[#C69214]">Available immediately</span>
+                  <span className="font-semibold text-[var(--color-accent)]">Available immediately</span>
                 </div>
               </div>
             </div>
 
-            {/* WHO I AM */}
+            {/* PROFESSIONAL PROFILE */}
             <div className="mb-8 print:mb-6">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
-                WHO I AM
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
+                PROFESSIONAL PROFILE
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
-              <div className="text-[14px] sm:text-[15px] text-[var(--text-main)] dark:text-[#E8EAED] leading-relaxed flex flex-col gap-4">
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
+              <div className="text-[14px] sm:text-[15px] text-[var(--text-main)] leading-relaxed flex flex-col gap-4">
                 <p>
-                  Data has always been part of how I think. When I build a system, I start by asking what information needs 
-                  to flow through it, where it comes from, and what happens when it is wrong. That is not a skill I was taught. 
-                  It is how my mind works.
+                  I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
                 </p>
                 <p>
-                  I graduated from the University of Johannesburg in February 2026 with a BSc in Information Technology, 
-                  Computer Science and Informatics. My degree gave me a strong foundation in databases, data 
-                  management, system design, and software engineering. I am currently studying Python, which is the 
-                  language at the heart of modern data science, and I am learning it because I want to go deeper into 
-                  data, not because a certificate said I should.
+                  I graduated from the University of Johannesburg in February 2026 with a BSc in Information Technology, double majoring in Computer Science and Informatics. This comprehensive training equipped me with deep knowledge in software engineering paradigms, DBMS administration, networks, system analysis, and IT project management.
                 </p>
                 <p>
-                  Komatsu operates in mining, construction, and industrial machinery. The decisions made in those 
-                  environments carry real weight and real risk. Good data is what makes those decisions defensible. I want 
-                  to be part of the team that makes that data trustworthy.
+                  My passion lies in leveraging modern technologies to build robust systems. I actively expand my competence beyond academic boundaries, and I am currently completing practical certifications in Python scripting, Docker containerization, and Flask web frameworks to ensure my skills remain at the forefront of the IT industry.
                 </p>
               </div>
             </div>
 
-            {/* WHY DATA SCIENCE AND WHY KOMATSU */}
+            {/* TECHNICAL PHILOSOPHY & OBJECTIVE */}
             <div className="mb-8 print:mb-6">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
-                WHY DATA SCIENCE AND WHY KOMATSU
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
+                TECHNICAL APPROACH & EXPERIENCE
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
-              <div className="text-[14px] sm:text-[15px] text-[var(--text-main)] dark:text-[#E8EAED] leading-relaxed flex flex-col gap-4">
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
+              <div className="text-[14px] sm:text-[15px] text-[var(--text-main)] leading-relaxed flex flex-col gap-4">
                 <p>
-                  Every application I have built has a database behind it. I designed the schemas, wrote the queries, and 
-                  thought carefully about what data needed to be stored, how it should be structured, and how it should be 
-                  retrieved. When I built MasterAPI, I was not just writing endpoints. I was designing how data moves through 
-                  a system cleanly and reliably. That is data engineering thinking applied in a development context.
+                  Every software system is only as good as the database and infrastructure behind it. When I design platforms, I prioritize security, data integrity, and API performance. For instance, when constructing MasterAPI, I solved critical data replication issues by engineering a singular, validated REST service. I enjoy resolving system-level bottlenecks and structuring clean information flows.
                 </p>
                 <p>
-                  I am energised by data problems because they have real answers. Either the data is accurate or it is not. 
-                  Either the pattern is there or it is not. Either the visualisation tells the truth or it does not. I like that precision.
+                  I appreciate technical precision. Whether writing SQL queries, diagnosing hardware issues, or building a front-end interface, I aim for absolute correctness and high readability. Technology is a tool to solve real-world problems, and I approach it with the patience and discipline needed for reliable production deployments.
                 </p>
                 <p>
-                  I am self-motivated, I manage my time well, I communicate clearly, and I work just as effectively alone as I 
-                  do in a team. All of those things are true and all of them matter in a data science internship.
-                </p>
-                <p>
-                  Komatsu's environment is diverse, technically demanding, and hands-on. That is exactly the kind of 
-                  environment I grow in.
+                  As an IT professional, I am highly self-motivated and maintain stellar time management. I communicate complex technical concepts clearly with stakeholders and work efficiently both as an independent system builder and as a collaborative, Agile-minded team player.
                 </p>
               </div>
             </div>
 
             {/* SKILLS TABLE */}
             <div className="mb-8 print:mb-6 page-break-before">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
                 SKILLS
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
               
-              <div className="border border-[#F0E4C3] dark:border-[#5C4D26] rounded-xl overflow-hidden shadow-sm flex flex-col">
+              <div className="border border-[var(--border-light)] rounded-xl overflow-hidden shadow-sm flex flex-col">
                 {skillsData.map((skill, index) => (
                   <div 
                     key={index} 
-                    className={`flex flex-col sm:flex-row border-b border-[#F0E4C3] dark:border-[#5C4D26] last:border-0`}
+                    className={`flex flex-col sm:flex-row border-b border-[var(--border-light)] last:border-0`}
                   >
-                    <div className="w-full sm:w-[220px] md:w-[260px] bg-[#FFFDF3] dark:bg-[#2C2615]/60 print:bg-[#FFFDF7] p-4 text-[#A67C1E] font-semibold text-[13px] sm:text-[14px] shrink-0 border-b sm:border-b-0 sm:border-r border-[#F0E4C3] dark:border-[#5C4D26] flex items-center">
+                    <div className="w-full sm:w-[220px] md:w-[260px] bg-[var(--bg-main)] p-4 text-[var(--color-accent)] font-semibold text-[13px] sm:text-[14px] shrink-0 border-b sm:border-b-0 sm:border-r border-[var(--border-light)] flex items-center">
                       {skill.category}
                     </div>
-                    <div className="flex-1 p-4 text-[13px] sm:text-[14px] text-[var(--text-main)] dark:text-[#E8EAED] bg-white dark:bg-[#1C1F22] print:bg-white leading-relaxed">
+                    <div className="flex-1 p-4 text-[13px] sm:text-[14px] text-[var(--text-main)] bg-[var(--bg-card)] leading-relaxed">
                       {skill.details}
                     </div>
                   </div>
@@ -226,31 +209,31 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
 
             {/* RELEVANT PROJECTS */}
             <div className="mb-8 print:mb-6">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
                 RELEVANT PROJECTS
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
               <p className="text-[13px] sm:text-[14px] text-[var(--text-muted)] italic mb-4">
-                These projects are the clearest evidence of how I think about data.
+                These projects showcase my hands-on experience in full-stack development, database architecture, and real-time systems.
               </p>
               
               <div className="flex flex-col gap-6">
                 {projects.map((proj, i) => (
                   <div key={i} className="flex flex-col gap-1.5">
                     <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                      <h3 className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)] dark:text-[#E8EAED]">
+                      <h3 className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)]">
                         {proj.title}
                       </h3>
                       <a 
                         href={proj.url} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="text-[12px] sm:text-[13px] text-[#C69214] hover:underline break-all font-mono"
+                        className="text-[12px] sm:text-[13px] text-[var(--color-accent)] hover:underline break-all font-mono"
                       >
                         {proj.link}
                       </a>
                     </div>
-                    <p className="text-[13px] sm:text-[14px] text-[#444746] dark:text-[#C4C7C5] leading-relaxed">
+                    <p className="text-[13px] sm:text-[14px] text-[var(--text-muted)] leading-relaxed">
                       {proj.description}
                     </p>
                   </div>
@@ -260,24 +243,24 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
 
             {/* WORK EXPERIENCE */}
             <div className="mb-8 print:mb-6">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
                 WORK EXPERIENCE
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
               
               <div className="flex flex-col gap-6">
                 {/* Job 1 */}
                 <div className="flex flex-col gap-1.5">
                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
                     <div className="flex flex-wrap items-baseline gap-1.5">
-                      <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)] dark:text-[#E8EAED]">F-Stop Photolab</span>
-                      <span className="text-[14px] text-[var(--text-muted)] dark:text-[#A8DAB5] italic">Semi-Technical Support and Cashier</span>
+                      <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)]">F-Stop Photolab</span>
+                      <span className="text-[14px] text-[var(--text-muted)] italic">Semi-Technical Support and Cashier</span>
                     </div>
                     <div className="text-[12px] sm:text-[13px] text-[var(--text-muted)] font-mono font-medium flex gap-2 shrink-0">
                       <span>Johannesburg</span> <span>2016</span>
                     </div>
                   </div>
-                  <p className="text-[13px] sm:text-[14px] text-[#444746] dark:text-[#C4C7C5] leading-relaxed">
+                  <p className="text-[13px] sm:text-[14px] text-[var(--text-muted)] leading-relaxed">
                     I worked with equipment data every day. Device histories. Fault logs. Client records. I kept everything 
                     accurate and I flagged inconsistencies when they appeared. In a small business environment, data 
                     accuracy is not optional. A wrong record means a wrong decision and a frustrated customer.
@@ -288,14 +271,14 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
                 <div className="flex flex-col gap-1.5">
                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
                     <div className="flex flex-wrap items-baseline gap-1.5">
-                      <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)] dark:text-[#E8EAED]">Dis-Chem Pharmacy</span>
-                      <span className="text-[14px] text-[var(--text-muted)] dark:text-[#A8DAB5] italic">Cashier and Customer Service Representative</span>
+                      <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)]">Dis-Chem Pharmacy</span>
+                      <span className="text-[14px] text-[var(--text-muted)] italic">Cashier and Customer Service Representative</span>
                     </div>
                     <div className="text-[12px] sm:text-[13px] text-[var(--text-muted)] font-mono font-medium flex gap-2 shrink-0">
                       <span>Gauteng</span> <span>2021</span>
                     </div>
                   </div>
-                  <p className="text-[13px] sm:text-[14px] text-[#444746] dark:text-[#C4C7C5] leading-relaxed">
+                  <p className="text-[13px] sm:text-[14px] text-[var(--text-muted)] leading-relaxed">
                     High-volume transaction processing with strict accuracy requirements. I maintained zero-error records 
                     daily under sustained pressure. The discipline required to do that correctly, every time, is the same 
                     discipline that data quality governance demands.
@@ -306,40 +289,41 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
 
             {/* EDUCATION */}
             <div className="mb-8 print:mb-6 page-break-before">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
                 EDUCATION
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
               
               <div className="flex flex-col gap-6">
                 {/* UJ */}
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                    <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)] dark:text-[#E8EAED]">University of Johannesburg</span>
+                    <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)]">University of Johannesburg</span>
                     <span className="text-[12px] sm:text-[13px] text-[var(--text-muted)] font-mono shrink-0">2019 to 2024 (Degree Awarded February 2026)</span>
                   </div>
-                  <div className="text-[14px] font-semibold text-[#C69214] mt-0.5">
-                    BSc Information Technology in Computer Science and Informatics <span className="text-[12px] px-2 py-0.5 rounded bg-[#FFFDF3] border border-[#F0E4C3] text-[#A67C1E] dark:bg-black/30 dark:border-white/10 ml-2">NQF Level 7</span>
+                  <div className="text-[14px] font-semibold text-[var(--color-accent)] mt-0.5 flex items-center flex-wrap gap-2">
+                    <span>BSc Information Technology in Computer Science and Informatics</span>
+                    <span className="text-[12px] px-2 py-0.5 rounded bg-[var(--color-accent-light)] border border-[var(--color-accent)]/20 text-[var(--color-accent)]">NQF Level 7</span>
                   </div>
                   <div className="text-[12px] sm:text-[13px] text-[var(--text-muted)] font-mono mt-1">
                     SAQA Reg 80372 <span className="mx-1.5">•</span> Student No 217004345
                   </div>
-                  <ul className="list-disc list-outside ml-5 mt-2 flex flex-col gap-1 text-[13px] sm:text-[14px] text-[#444746] dark:text-[#C4C7C5]">
+                  <ul className="list-disc list-outside ml-5 mt-2 flex flex-col gap-1 text-[13px] sm:text-[14px] text-[var(--text-muted)]">
                     <li>Informatics 1A and IT Management 1A passed with distinction.</li>
-                    <li><span className="font-semibold">Modules:</span> Software Engineering, System Design, Databases, IT Management, OOP, Algorithms, Informatics.</li>
+                    <li><span className="font-semibold text-[var(--text-main)]">Modules:</span> Software Engineering, System Design, Databases, IT Management, OOP, Algorithms, Informatics.</li>
                   </ul>
                 </div>
 
                 {/* Hoerskool */}
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                    <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)] dark:text-[#E8EAED]">Hoerskool Birchleigh</span>
+                    <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)]">Hoerskool Birchleigh</span>
                     <span className="text-[12px] sm:text-[13px] text-[var(--text-muted)] font-mono shrink-0">2016</span>
                   </div>
-                  <div className="text-[14px] font-semibold text-[#C69214] mt-0.5">
-                    National Senior Certificate <span className="mx-1 text-[#C69214]">•</span> Bachelor's Pass <span className="mx-1 text-[#C69214]">•</span> IT 71% (Highest in school)
+                  <div className="text-[14px] font-semibold text-[var(--color-accent)] mt-0.5">
+                    National Senior Certificate <span className="mx-1 text-[var(--color-accent)]">•</span> Bachelor's Pass <span className="mx-1 text-[var(--color-accent)]">•</span> IT 71% (Highest in school)
                   </div>
-                  <ul className="list-disc list-outside ml-5 mt-1 text-[13px] sm:text-[14px] text-[#444746] dark:text-[#C4C7C5]">
+                  <ul className="list-disc list-outside ml-5 mt-1 text-[13px] sm:text-[14px] text-[var(--text-muted)]">
                     <li>Elected school prefect.</li>
                   </ul>
                 </div>
@@ -348,58 +332,58 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
 
             {/* CERTIFICATIONS AND ACTIVE STUDY */}
             <div className="mb-8 print:mb-6">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
                 CERTIFICATIONS AND ACTIVE STUDY
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
               
-              <ul className="list-disc list-outside ml-5 flex flex-col gap-1.5 text-[13px] sm:text-[14px] text-[#444746] dark:text-[#C4C7C5] leading-relaxed">
-                <li><span className="font-semibold text-[var(--text-main)] dark:text-white">Google Developer Tools Certification</span> — completed</li>
-                <li><span className="font-semibold text-[var(--text-main)] dark:text-white">Python Programming Certificate</span> — in progress</li>
-                <li><span className="font-semibold text-[var(--text-main)] dark:text-white">CompTIA IT Certificate</span> — in progress</li>
-                <li><span className="font-semibold text-[var(--text-main)] dark:text-white">Docker Certificate</span> — in progress</li>
-                <li><span className="font-semibold text-[var(--text-main)] dark:text-white">Flask Certificate</span> — in progress</li>
+              <ul className="list-disc list-outside ml-5 flex flex-col gap-1.5 text-[13px] sm:text-[14px] text-[var(--text-muted)] leading-relaxed">
+                <li><span className="font-semibold text-[var(--text-main)]">Google Developer Tools Certification</span> — completed</li>
+                <li><span className="font-semibold text-[var(--text-main)]">Python Programming Certificate</span> — in progress</li>
+                <li><span className="font-semibold text-[var(--text-main)]">CompTIA IT Certificate</span> — in progress</li>
+                <li><span className="font-semibold text-[var(--text-main)]">Docker Certificate</span> — in progress</li>
+                <li><span className="font-semibold text-[var(--text-main)]">Flask Certificate</span> — in progress</li>
               </ul>
             </div>
 
             {/* ONE LAST THING */}
             <div className="mb-8 print:mb-6">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
                 ONE LAST THING
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
-              <div className="text-[13px] sm:text-[14px] text-[#444746] dark:text-[#C4C7C5] leading-relaxed flex flex-col gap-3">
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
+              <div className="text-[13px] sm:text-[14px] text-[var(--text-muted)] leading-relaxed flex flex-col gap-3">
                 <p>
-                  I ice skate. I read. I do not drink. I show up every day clear-headed and ready.
+                  I ice skate. I read. I do not drink. I show up every day clear-headed, focused, and ready to solve complex problems.
                 </p>
                 <p>
-                  Mining is one of the most data-intensive industries in the world. The machines generate it. The operations 
-                  depend on it. The safety record is built on it. I want to be part of the team that handles it properly, and I am 
-                  ready to start.
+                  Technology and IT infrastructure are the backbone of any modern enterprise. I am passionate about constructing robust software, 
+                  handling data streams with integrity, and providing stellar technical systems management. I want to be part of a team 
+                  that builds solutions of absolute quality, and I am ready to start immediately.
                 </p>
               </div>
             </div>
 
             {/* REFERENCES */}
             <div className="mb-0 print:mb-0">
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#C69214] tracking-wider uppercase mb-1">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--color-accent)] tracking-wider uppercase mb-1">
                 REFERENCES
               </h2>
-              <div className="w-full h-0.5 bg-[#C69214] mb-4" />
+              <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[13px] sm:text-[14px] leading-relaxed text-[#444746] dark:text-[#C4C7C5]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[13px] sm:text-[14px] leading-relaxed text-[var(--text-muted)]">
                 {/* Ref 1 */}
                 <div className="flex flex-col">
-                  <span className="font-bold text-[var(--text-main)] dark:text-white">Mr Tommy Ferrara</span>
+                  <span className="font-bold text-[var(--text-main)]">Mr Tommy Ferrara</span>
                   <span className="italic">F-Stop Photolab <span className="mx-1">•</span> Former employer</span>
-                  <span className="font-mono text-[#C69214] mt-0.5">073 400 1861</span>
+                  <span className="font-mono text-[var(--color-accent)] mt-0.5">073 400 1861</span>
                 </div>
 
                 {/* Ref 2 */}
                 <div className="flex flex-col">
-                  <span className="font-bold text-[var(--text-main)] dark:text-white">Store Manager</span>
+                  <span className="font-bold text-[var(--text-main)]">Store Manager</span>
                   <span className="italic">Dis-Chem Pharmacy <span className="mx-1">•</span> Former employer</span>
-                  <span className="font-mono text-[#C69214] mt-0.5">011 391 2399</span>
+                  <span className="font-mono text-[var(--color-accent)] mt-0.5">011 391 2399</span>
                 </div>
               </div>
             </div>
