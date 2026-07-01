@@ -11,12 +11,20 @@ import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
+export type Attachment = {
+  name: string;
+  type: string;
+  size: number;
+  dataUrl?: string;
+};
+
 export type Message = {
   id: string;
   role: "user" | "agent";
   text: string;
   uiBlock?: "projects" | "skills" | "cv" | null;
   status?: "sending" | "sent" | "error";
+  attachments?: Attachment[];
 };
 
 const PROMPT_SETS = [
@@ -116,6 +124,9 @@ export default function ChatInterface({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const lastScrollY = useRef(0);
+
+  // Smart Clarification / Follow-up Questions State
+  const [activeClarifications, setActiveClarifications] = useState<string[]>([]);
 
   // Dedicated helper to trigger precise scroll-to-bottom on the chat container
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -260,13 +271,19 @@ export default function ChatInterface({
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
 
-    const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim(), status: "sending" };
+    const userMsg: Message = { 
+      id: Date.now().toString(), 
+      role: "user", 
+      text: text.trim(), 
+      status: "sending"
+    };
     const updatedMessages = [...messages, userMsg];
     
     // Set UI to loading immediately
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
+    setActiveClarifications([]);
 
     try {
       const history = messages.map(m => ({
@@ -283,6 +300,14 @@ export default function ChatInterface({
       const data = await res.json();
       let replyText = data.text || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
+
+      // Extract clarifying follow-up questions
+      let followUps: string[] = [];
+      const clarifyMatch = replyText.match(/\[CLARIFY:\s*([^\]]+)\]/);
+      if (clarifyMatch) {
+        followUps = clarifyMatch[1].split("|").map((q: string) => q.trim()).filter(Boolean);
+        replyText = replyText.replace(/\[CLARIFY:\s*([^\]]+)\]/, "").trim();
+      }
 
       if (replyText.includes("[UI:PROJECTS]")) {
         uiBlock = "projects";
@@ -307,6 +332,10 @@ export default function ChatInterface({
         const updated = prev.map(m => m.id === userMsg.id ? { ...m, status: "sent" as const } : m);
         return [...updated, agentMsg];
       });
+
+      if (followUps.length > 0) {
+        setActiveClarifications(followUps);
+      }
 
     } catch (error) {
       console.error("Chat Error:", error);
@@ -339,6 +368,51 @@ export default function ChatInterface({
                   <Mic size={30} className="text-white" />
                 </div>
                 <span className="font-semibold text-[13.5px] tracking-wide">Listening... Release to transcribe</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Smart Clarification Questions Popup */}
+        <AnimatePresence>
+          {activeClarifications.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="w-full bg-[var(--bg-card)] border border-[var(--color-accent)]/20 shadow-xl p-4 mb-3 rounded-none relative z-30 text-left"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5 text-[var(--color-accent)] font-semibold text-[13px] sm:text-[14px]">
+                  <Sparkles size={14} className="animate-pulse" />
+                  <span>Interactive Follow-up Questions</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveClarifications([])}
+                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors p-0.5 border-0 bg-transparent cursor-pointer"
+                  title="Dismiss suggestions"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <p className="text-[12.5px] text-[var(--text-muted)] mb-3 leading-relaxed">
+                Choose a question below to refine your query, or ask anything else:
+              </p>
+              <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
+                {activeClarifications.map((question, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      handleSend(question);
+                      setActiveClarifications([]);
+                    }}
+                    className="w-full text-left px-3.5 py-2 text-[13px] sm:text-[13.5px] font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/60 hover:bg-[var(--color-accent-light)] hover:text-[var(--color-accent)] border border-neutral-200 dark:border-neutral-800 hover:border-[var(--color-accent)]/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer"
+                  >
+                    {question}
+                  </button>
+                ))}
               </div>
             </motion.div>
           )}
@@ -398,23 +472,14 @@ export default function ChatInterface({
 
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between w-full">
-            {/* Left actions */}
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors border-0 bg-transparent cursor-pointer rounded-none"
-              >
-                <Paperclip size={14} className="text-neutral-400" />
-                <span className="hidden sm:inline">Add Attachment</span>
-              </button>
-
-              <button
-                type="button"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors border-0 bg-transparent cursor-pointer rounded-none"
-              >
-                <ImageIcon size={14} className="text-neutral-400" />
-                <span className="hidden sm:inline">Use Image</span>
-              </button>
+            {/* Left label instead of attachments */}
+            <div className="flex items-center gap-1.5 select-none">
+              <span className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold tracking-wider text-[var(--color-accent)] uppercase bg-[var(--color-accent-light)] border border-[var(--color-accent)]/10 rounded-full animate-pulse">
+                • Real-time
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                IT Engineer AI
+              </span>
             </div>
 
             {/* Right counter & Send */}
@@ -593,6 +658,34 @@ export default function ChatInterface({
                               <p className="text-[14.5px] sm:text-[15px] whitespace-pre-wrap font-normal leading-relaxed break-words">
                                 {msg.text}
                               </p>
+                              
+                              {msg.attachments && msg.attachments.length > 0 && (
+                                <div className="mt-3 flex flex-col gap-2 w-full max-w-xs">
+                                  {msg.attachments.map((attachment, attIdx) => {
+                                    const isImage = attachment.type.startsWith("image/");
+                                    return (
+                                      <div key={attIdx} className="w-full">
+                                        {isImage && attachment.dataUrl ? (
+                                          <img 
+                                            src={attachment.dataUrl} 
+                                            alt={attachment.name} 
+                                            className="max-w-full max-h-[160px] object-cover rounded-lg border border-black/10 dark:border-white/10 shadow-sm" 
+                                            referrerPolicy="no-referrer"
+                                          />
+                                        ) : (
+                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-white/60 dark:bg-black/30 border border-black/5 dark:border-white/5 rounded-lg select-none text-left">
+                                            <FileText size={15} className="text-[var(--color-accent)] shrink-0" />
+                                            <div className="flex flex-col min-w-0">
+                                              <span className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-200 truncate max-w-[160px]">{attachment.name}</span>
+                                              <span className="text-[10px] text-neutral-500 font-mono">{(attachment.size / 1024).toFixed(1)} KB</span>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                             {msg.status === "error" && (
                               <button 
