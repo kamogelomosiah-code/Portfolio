@@ -6,6 +6,7 @@
   --color-accent-light: color-mix(in srgb, var(--color-accent) 10%, transparent);
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Poppins", monospace;
   
   --color-bg-main: var(--bg-main);
   --color-bg-card: var(--bg-card);
