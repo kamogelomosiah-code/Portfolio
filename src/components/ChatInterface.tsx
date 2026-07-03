@@ -4,7 +4,7 @@ import {
   GraduationCap, FileText, Menu, MessageSquare, PlusCircle, X, 
   AlertCircle, ChevronRight, CornerDownLeft, Plus,
   List, Cpu, RotateCw, Globe, Paperclip, ChevronDown, Zap,
-  Image as ImageIcon, Database, Layers, Code2
+  Image as ImageIcon, Database, Layers, Code2, Brain
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
@@ -100,6 +100,22 @@ export default function ChatInterface({
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
+  const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkHfHealth = async () => {
+      try {
+        const res = await fetch("/api/hf-health");
+        const data = await res.json();
+        setIsHfConnected(!!data.connected);
+      } catch (err) {
+        setIsHfConnected(false);
+      }
+    };
+    checkHfHealth();
+    const interval = setInterval(checkHfHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -419,18 +435,18 @@ export default function ChatInterface({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_2px_12px_rgba(26,115,232,0.15)]' : 'border-gray-300 dark:border-neutral-700 shadow-sm'} rounded-none focus-within:shadow-[0_2px_8px_rgba(0,0,0,0.08)] focus-within:border-gray-400 dark:focus-within:border-neutral-500 transition-all flex flex-col p-4 relative`}>
+        <div className={`w-full bg-[var(--bg-card)] border-2 ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_4px_20px_rgba(26,115,232,0.15)]' : 'border-gray-300 dark:border-neutral-700 shadow-md'} rounded-xl focus-within:shadow-[0_4px_16px_rgba(26,115,232,0.08)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 sm:p-5 relative`}>
           {isTranscribing && (
-            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-none flex items-center justify-center gap-3">
+            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-xl flex items-center justify-center gap-3">
                <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                </svg>
-               <span className="font-semibold text-[14px] text-[var(--color-accent)]">Transcribing voice input...</span>
+               <span className="font-semibold text-[14.5px] text-[var(--color-accent)]">Transcribing voice input...</span>
             </div>
           )}
 
-          {/* Top Row: text area & All Web Badge */}
+          {/* Top Row: text area */}
           <div className="flex items-start justify-between gap-3 w-full min-h-[50px]">
             <textarea
               value={input}
@@ -444,57 +460,99 @@ export default function ChatInterface({
               }}
               placeholder="Ask whatever you want...." 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-[var(--text-main)] py-1 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[15px] sm:text-[16px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-[var(--text-main)] py-1 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading || isTranscribing}
               rows={2}
             />
-
-            <button 
-              onClick={() => setModelSelectorOpen(true)}
-              type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-[12px] font-semibold text-[var(--text-muted)] border border-[var(--border-light)] rounded-none hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer shrink-0"
-              title="Select AI Mode"
-            >
-              {selectedModel === "swift" ? (
-                <Zap size={13} className="text-amber-500 fill-amber-500/10" />
-              ) : (
-                <Cpu size={13} className="text-[var(--color-accent)]" />
-              )}
-              <span className="truncate max-w-[100px]">
-                {selectedModel === "swift" ? "Swift" : "Fusion"}
-              </span>
-              <ChevronDown size={11} className="text-neutral-400" />
-            </button>
           </div>
 
           {/* Separator line */}
-          <div className="h-px bg-gray-100 dark:bg-neutral-800 my-3 w-full" />
+          <div className="h-px bg-gray-200 dark:bg-neutral-800 my-3.5 w-full" />
 
           {/* Bottom Row: Actions & Send */}
-          <div className="flex items-center justify-between w-full">
-            {/* Left label instead of attachments */}
-            <div className="flex items-center gap-1.5 select-none">
-              <span className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold tracking-wider text-[var(--color-accent)] uppercase bg-[var(--color-accent-light)] border border-[var(--color-accent)]/10 rounded-full animate-pulse">
-                • Real-time
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 w-full">
+            {/* Left side: Hugging Face connection status dot */}
+            <div className="flex items-center gap-2 select-none">
+              <span className="relative flex h-2.5 w-2.5">
+                {isHfConnected === null ? (
+                  <>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                  </>
+                ) : isHfConnected ? (
+                  <>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </>
+                ) : (
+                  <>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                  </>
+                )}
               </span>
-              <span className="text-[11px] text-[var(--text-muted)] font-mono">
-                IT Engineer AI
+              <span className="text-[12.5px] font-semibold text-[var(--text-main)] font-mono leading-none">
+                {isHfConnected === null ? (
+                  "checking connection..."
+                ) : isHfConnected ? (
+                  <span className="text-emerald-600 dark:text-emerald-400">connected to server</span>
+                ) : (
+                  <span className="text-neutral-500 dark:text-neutral-400">offline mode</span>
+                )}
               </span>
             </div>
 
-            {/* Right counter & Send */}
-            <div className="flex items-center gap-3">
-              <span className="text-[12px] text-[var(--text-muted)] font-mono">
+            {/* Right side: Model selection, counter, mic & send */}
+            <div className="flex items-center justify-between sm:justify-end gap-3.5">
+              <button 
+                onClick={() => setModelSelectorOpen(true)}
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-[12px] font-bold text-[var(--text-main)] border border-gray-300 dark:border-neutral-700 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer shrink-0"
+                title="Select AI Mode"
+              >
+                {selectedModel === "swift" ? (
+                  <Zap size={13} className="text-amber-500 fill-amber-500/10" />
+                ) : (
+                  <Brain size={13} className="text-[var(--color-accent)]" />
+                )}
+                <span className="truncate max-w-[100px]">
+                  {selectedModel === "swift" ? "Swift" : "Fusion"}
+                </span>
+                <ChevronDown size={11} className="text-neutral-400" />
+              </button>
+
+              <span className="text-[12px] text-[var(--text-muted)] font-mono select-none">
                 {input.length}/1000
               </span>
-              <button
-                onClick={() => handleSend(input)}
-                disabled={!input.trim() || isLoading || isTranscribing}
-                className="flex items-center justify-center w-8 h-8 rounded-full disabled:text-gray-300 disabled:bg-transparent bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 transition-all cursor-pointer border-0 shadow-sm"
-                title="Send message"
-              >
-                <Send size={14} className="-ml-0.5" />
-              </button>
+
+              <div className="flex items-center gap-2">
+                {/* Voice button */}
+                <button
+                  onPointerDown={startRecording}
+                  onPointerUp={stopRecording}
+                  onPointerLeave={stopRecording}
+                  onTouchStart={startRecording}
+                  onTouchEnd={stopRecording}
+                  type="button"
+                  className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer border-0 shadow-sm ${
+                    isRecording 
+                      ? "bg-red-500 text-white animate-pulse ring-4 ring-red-500/20" 
+                      : "bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                  }`}
+                  title="Hold to speak"
+                >
+                  <Mic size={18} />
+                </button>
+
+                {/* Send button */}
+                <button
+                  onClick={() => handleSend(input)}
+                  disabled={!input.trim() || isLoading || isTranscribing}
+                  className="flex items-center justify-center w-11 h-11 rounded-xl disabled:opacity-40 bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 transition-all cursor-pointer border-0 shadow-sm"
+                  title="Send message"
+                >
+                  <Send size={16} className="-ml-0.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -767,36 +825,61 @@ export default function ChatInterface({
 
       </div>
 
-      {/* Model Selection Modal Panel */}
+      {/* Model Selection Drawer Bottom Sheet */}
       <AnimatePresence>
         {modelSelectorOpen && (
           <>
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setModelSelectorOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer"
+              className="fixed inset-0 bg-black/45 backdrop-blur-[2px] z-50 cursor-pointer pointer-events-auto"
             />
+            {/* Drawer Body */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ type: "spring", duration: 0.2 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm bg-[var(--bg-card)] rounded-none shadow-xl z-50 overflow-hidden flex flex-col p-6 text-[var(--text-main)] pointer-events-auto border border-gray-100 dark:border-neutral-800"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 240 }}
+              className="fixed bottom-0 left-0 right-0 max-h-[85vh] bg-[var(--bg-card)] rounded-t-3xl shadow-2xl z-50 overflow-hidden flex flex-col pb-8 pt-4 px-6 text-[var(--text-main)] pointer-events-auto border-t border-gray-200 dark:border-neutral-800"
             >
+              {/* Drag Handle Accent */}
+              <div className="w-12 h-1.5 bg-gray-300 dark:bg-neutral-700 rounded-full mx-auto mb-5 shrink-0" />
+
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-[19px] text-[var(--text-main)] flex items-center gap-2 m-0">
-                  <Sparkles size={18} className="text-[var(--color-accent)]" />
-                  Select Mode
+                <h3 className="font-semibold text-[20px] text-[var(--text-main)] flex items-center gap-2 m-0 font-display">
+                  <Sparkles size={18} className="text-[var(--color-accent)] animate-pulse" />
+                  Select Model Engine
                 </h3>
+                <button
+                  onClick={() => setModelSelectorOpen(false)}
+                  className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center border-0 cursor-pointer transition-colors"
+                >
+                  <X size={16} />
+                </button>
               </div>
-              <p className="text-[13.5px] text-[var(--text-muted)] mb-5">Choose the AI mode powering this chat session.</p>
+              <p className="text-[14px] text-[var(--text-muted)] mb-6">
+                Choose the model configuration that powers Kamo's AI response engine.
+              </p>
               
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 {[
-                  { id: "swift", name: "Swift", icon: Zap, desc: "Fast responses for everyday use.", color: "text-amber-500 bg-amber-500/10 dark:bg-amber-500/20" },
-                  { id: "fusion", name: "Fusion", icon: Cpu, desc: "Uses multiple AI models to reason and verify answers for maximum accuracy.", color: "text-[var(--color-accent)] bg-[var(--color-accent-light)]" }
+                  { 
+                    id: "swift", 
+                    name: "Swift Model (Fast Pass)", 
+                    icon: Zap, 
+                    desc: "A highly-optimized, lightning-fast single model. Designed for standard professional inquiries, direct Q&A, and quick CV retrieval with minimal latency.", 
+                    color: "text-amber-500 bg-amber-500/10 dark:bg-amber-500/20" 
+                  },
+                  { 
+                    id: "fusion", 
+                    name: "Fusion Engine (Ensemble Reasoning)", 
+                    icon: Brain, 
+                    desc: "An advanced multi-model ensemble. Reasons deeply, synthesizes professional IT background data, and cross-references answers for maximum depth and accuracy.", 
+                    color: "text-[var(--color-accent)] bg-[var(--color-accent-light)]" 
+                  }
                 ].map((m) => {
                   const Icon = m.icon;
                   const isSelected = selectedModel === m.id;
@@ -807,21 +890,21 @@ export default function ChatInterface({
                         setSelectedModel?.(m.id);
                         setModelSelectorOpen(false);
                       }}
-                      className={`flex items-start text-left gap-3.5 p-3.5 rounded-none border transition-all cursor-pointer bg-transparent w-full ${
+                      className={`flex items-start text-left gap-4 p-4 rounded-xl border transition-all cursor-pointer bg-transparent w-full ${
                         isSelected
-                          ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]/40 shadow-sm"
+                          ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]/40 shadow-sm ring-1 ring-[var(--color-accent)]"
                           : "border-[var(--border-light)] hover:bg-gray-50 dark:hover:bg-neutral-800"
                       }`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center rounded-none shrink-0 ${m.color} mt-0.5`}>
-                        <Icon size={15} className="stroke-[2.5]" />
+                      <div className={`w-10 h-10 flex items-center justify-center rounded-lg shrink-0 ${m.color}`}>
+                        <Icon size={18} className="stroke-[2.5]" />
                       </div>
                       <div className="flex flex-col flex-1 min-w-0 font-sans">
-                        <span className="text-[14.5px] font-semibold text-[var(--text-main)] leading-snug">{m.name}</span>
-                        <span className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed mt-0.5 whitespace-normal">{m.desc}</span>
+                        <span className="text-[15.5px] font-bold text-[var(--text-main)] leading-snug">{m.name}</span>
+                        <span className="text-[13px] text-[var(--text-muted)] font-normal leading-relaxed mt-1 whitespace-normal">{m.desc}</span>
                       </div>
                       {isSelected && (
-                        <div className="w-5 h-5 rounded-none bg-[var(--color-accent)] flex items-center justify-center text-white shrink-0 mt-1">
+                        <div className="w-5.5 h-5.5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-white shrink-0 mt-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         </div>
                       )}
@@ -829,10 +912,11 @@ export default function ChatInterface({
                   );
                 })}
               </div>
-              <div className="mt-6 flex justify-end">
+
+              <div className="mt-8 flex justify-end">
                  <button
                    onClick={() => setModelSelectorOpen(false)}
-                   className="px-6 py-2.5 rounded-none bg-transparent text-[var(--color-accent)] hover:bg-[var(--bg-accent-light)] font-semibold text-[14.5px] transition-colors cursor-pointer border-0"
+                   className="px-8 py-3 rounded-xl bg-[var(--color-accent)] text-white hover:opacity-90 font-bold text-[14.5px] transition-colors cursor-pointer border-0 shadow-sm"
                  >
                    Done
                  </button>

@@ -96,8 +96,8 @@ app.post('/api/contact', async (req, res) => {
       recipient: "kamogelomosiah@gmail.com", 
       message: "Message successfully routed to Kamogelo's mailbox." 
     });
-  } catch (error) {
-    console.error("Contact Form Server Error:", error);
+  } catch (error: any) {
+    console.error("Contact Form Server Error:", error.message || "Unknown error");
     return res.status(500).json({ success: false, error: "Internal server payload delivery failure" });
   }
 });
@@ -123,7 +123,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 
     return res.status(200).json({ text: output.text });
   } catch (error: any) {
-    console.error("Transcription Error:", error);
+    console.error("Transcription Error:", error.message || "Unknown error");
     let errorMessage = "Failed to transcribe audio.";
     if (error?.message?.includes("Invalid username or password") || error?.message?.includes("401")) {
        errorMessage = "Invalid Hugging Face token. Please check your HF_TOKEN in the application settings.";
@@ -248,6 +248,24 @@ app.post('/api/ping-model', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.json({ success: false });
+  }
+});
+
+app.get('/api/hf-health', async (req, res) => {
+  try {
+    const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
+    if (!currentToken) {
+      return res.json({ connected: false });
+    }
+    await client.chat.completions.create({
+      model: "deepseek-ai/DeepSeek-V4-Flash:novita",
+      messages: [{ role: "user", content: "ping" }],
+      max_tokens: 1
+    });
+    res.json({ connected: true });
+  } catch (error: any) {
+    console.log("HF health check failed:", error.message || "Unknown error");
+    res.json({ connected: false });
   }
 });
 
