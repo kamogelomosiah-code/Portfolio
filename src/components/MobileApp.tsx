@@ -405,6 +405,27 @@ export default function MobileApp({
     }
   };
 
+  const getOfflineResponse = (text: string) => {
+    const lower = text.toLowerCase();
+    if (lower.includes("hi") || lower.includes("hello") || lower.includes("hey")) {
+      return "Hi there! I'm currently in offline mode, but I can still help you. Would you like to see Kamogelo's [UI:PROJECTS], [UI:SKILLS], or [UI:CV]?";
+    }
+    if (lower.includes("project") || lower.includes("portfolio") || lower.includes("work")) {
+      return "I can't fetch live data right now, but here are some of Kamogelo's highlighted projects: [UI:PROJECTS]";
+    }
+    if (lower.includes("skill") || lower.includes("tech") || lower.includes("stack")) {
+      return "Kamogelo is an IT Engineer. Here is an overview of his technical skills: [UI:SKILLS]";
+    }
+    if (lower.includes("cv") || lower.includes("resume") || lower.includes("hire") || lower.includes("download")) {
+      return "You can download Kamogelo's full CV right here: [UI:CV]";
+    }
+    if (lower.includes("contact") || lower.includes("email") || lower.includes("message")) {
+      return "Kamogelo can be reached at kamogelomosiah@gmail.com. Feel free to reach out to him directly!";
+    }
+    
+    return "I'm currently operating in offline mode and can't process complex queries. However, you can still view Kamogelo's [UI:PROJECTS], explore his [UI:SKILLS], or download his [UI:CV]. What would you like to see?";
+  };
+
   // Send message logic
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
@@ -421,6 +442,39 @@ export default function MobileApp({
     setInput("");
     setIsLoading(true);
     setActiveClarifications([]);
+
+    if (isHfConnected === false) {
+      setTimeout(() => {
+        let replyText = getOfflineResponse(text);
+        let uiBlock: Message["uiBlock"] = null;
+
+        if (replyText.includes("[UI:PROJECTS]")) {
+          uiBlock = "projects";
+          replyText = replyText.replace("[UI:PROJECTS]", "").trim();
+        } else if (replyText.includes("[UI:SKILLS]")) {
+          uiBlock = "skills";
+          replyText = replyText.replace("[UI:SKILLS]", "").trim();
+        } else if (replyText.includes("[UI:CV]")) {
+          uiBlock = "cv";
+          replyText = replyText.replace("[UI:CV]", "").trim();
+        }
+
+        const agentMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "agent",
+          text: replyText,
+          uiBlock,
+          status: "sent"
+        };
+
+        setMessages(prev => {
+          const updated = prev.map(m => m.id === userMsg.id ? { ...m, status: "sent" as const } : m);
+          return [...updated, agentMsg];
+        });
+        setIsLoading(false);
+      }, 600);
+      return;
+    }
 
     try {
       const history = messages.map(m => ({
