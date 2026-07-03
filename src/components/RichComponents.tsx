@@ -31,19 +31,19 @@ export function ProjectCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-2xl font-sans">
       {projects.map((project, i) => (
-        <div key={i} className="bg-[var(--bg-card)] border border-[var(--border-light)] rounded-xl p-5 hover:border-accent transition-colors flex flex-col justify-between shadow-sm">
+        <div key={i} className="bg-[var(--bg-card)] border border-[var(--border-light)] rounded-xl p-5 hover:border-[var(--color-accent)] dark:hover:border-[var(--color-accent)] transition-colors flex flex-col justify-between shadow-sm">
           <div>
-            <h3 className="font-semibold text-base mb-2 text-black">{project.title}</h3>
-            <p className="text-gray-600 text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
+            <h3 className="font-semibold text-base mb-2 text-black dark:text-white">{project.title}</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
             <div className="flex flex-wrap gap-1.5 mb-6">
               {project.tags.map(tag => (
-                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-gray-50 border border-gray-100 rounded-lg text-gray-700">
+                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-lg text-gray-700 dark:text-gray-300">
                   {tag}
                 </span>
                ))}
             </div>
           </div>
-          <a href={project.link} target="_blank" rel="noreferrer" className="flex items-center text-xs sm:text-sm font-semibold text-accent hover:text-accent/80 transition-colors">
+          <a href={project.link} target="_blank" rel="noreferrer" className="flex items-center text-xs sm:text-sm font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors">
             View Project <ExternalLink size={14} className="ml-1" />
           </a>
         </div>
@@ -62,7 +62,7 @@ export function SkillChips() {
   return (
     <div className="flex flex-wrap gap-2 mt-4 max-w-xl font-sans">
       {skills.map(skill => (
-        <div key={skill} className="px-3 py-1.5 border border-[var(--border-light)] bg-gray-50/50 rounded-full text-xs font-semibold text-gray-850 hover:bg-black hover:text-white transition-colors cursor-default">
+        <div key={skill} className="px-3 py-1.5 border border-[var(--border-light)] bg-gray-50/50 dark:bg-neutral-800 rounded-full text-xs font-semibold text-gray-800 dark:text-neutral-200 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors cursor-default shadow-sm">
           {skill}
         </div>
       ))}
@@ -170,7 +170,7 @@ REFERENCES
         </div>
         
         <div className="flex flex-col text-left">
-          <span className="font-bold text-[14px] text-neutral-850 dark:text-neutral-200 leading-snug truncate max-w-[220px] sm:max-w-[280px]">
+          <span className="font-bold text-[14px] text-neutral-800 dark:text-neutral-200 leading-snug truncate max-w-[220px] sm:max-w-[280px]">
             Kamogelo_Mosia_CV.pdf
           </span>
           <span className="text-[12px] text-neutral-400 font-medium mt-0.5">

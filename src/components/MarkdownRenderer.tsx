@@ -86,7 +86,7 @@ export function EmailDraftCard({ to, subject, body }: EmailDraftCardProps) {
       </div>
 
       {/* Mail Envelope Content Body */}
-      <div className="p-5 max-h-[350px] overflow-y-auto bg-white dark:bg-neutral-950 text-neutral-850 dark:text-neutral-200 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap font-sans border-b border-neutral-100 dark:border-neutral-900">
+      <div className="p-5 max-h-[350px] overflow-y-auto bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap font-sans border-b border-neutral-100 dark:border-neutral-900">
         {body}
       </div>
 

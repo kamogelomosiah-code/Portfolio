@@ -286,9 +286,6 @@ export default function ChatInterface({
 
   const getOfflineResponse = (text: string) => {
     const lower = text.toLowerCase();
-    if (lower.includes("hi") || lower.includes("hello") || lower.includes("hey")) {
-      return "Hi there! I'm currently in offline mode, but I can still help you. Would you like to see Kamogelo's [UI:PROJECTS], [UI:SKILLS], or [UI:CV]?";
-    }
     if (lower.includes("project") || lower.includes("portfolio") || lower.includes("work")) {
       return "I can't fetch live data right now, but here are some of Kamogelo's highlighted projects: [UI:PROJECTS]";
     }
@@ -302,7 +299,7 @@ export default function ChatInterface({
       return "Kamogelo can be reached at kamogelomosiah@gmail.com. Feel free to reach out to him directly!";
     }
     
-    return "I'm currently operating in offline mode and can't process complex queries. However, you can still view Kamogelo's [UI:PROJECTS], explore his [UI:SKILLS], or download his [UI:CV]. What would you like to see?";
+    return "I'm currently operating in offline mode. I can show you Kamogelo's projects, skills, or CV. What would you like to see?";
   };
 
   const handleSend = async (text: string) => {
