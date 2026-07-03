@@ -264,7 +264,6 @@ app.get('/api/hf-health', async (req, res) => {
     });
     res.json({ connected: true });
   } catch (error: any) {
-    console.log("HF health check failed:", error.message || "Unknown error");
     res.json({ connected: false });
   }
 });
