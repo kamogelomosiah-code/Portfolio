@@ -94,8 +94,6 @@ export default function App() {
   if (isMobile) {
     return (
       <MobileApp
-        accentColor={accentColor}
-        setAccentColor={setAccentColor}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
         messages={messages}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { 
   Send, Sparkles, Mic, User, Mail, 
   GraduationCap, FileText, MessageSquare, AlertCircle, 
@@ -10,14 +10,19 @@ import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
 import { Message, Attachment } from "./ChatInterface";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import ProjectsPage from "./ProjectsPage";
-import CvPage from "./CvPage";
-import ContactPage from "./ContactPage";
 import MenuDrawer from "./MenuDrawer";
 
+const ProjectsPage = lazy(() => import("./ProjectsPage"));
+const CvPage = lazy(() => import("./CvPage"));
+const ContactPage = lazy(() => import("./ContactPage"));
+
+const FallbackLoader = () => (
+  <div className="flex w-full h-full items-center justify-center bg-[var(--bg-main)]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+  </div>
+);
+
 interface MobileAppProps {
-  accentColor: string;
-  setAccentColor: (color: string) => void;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
   messages: Message[];
@@ -76,8 +81,6 @@ function renderPromptIcon(iconName: string) {
 }
 
 export default function MobileApp({
-  accentColor,
-  setAccentColor,
   selectedModel,
   setSelectedModel,
   messages,
@@ -802,24 +805,30 @@ export default function MobileApp({
             )}
 
             {activeTab === "projects" && (
-              <ProjectsPage 
-                onBackToChat={() => handleTabChange("chat")} 
-                onToggleDrawer={() => setDrawerOpen(true)}
-              />
+              <Suspense fallback={<FallbackLoader />}>
+                <ProjectsPage 
+                  onBackToChat={() => handleTabChange("chat")} 
+                  onToggleDrawer={() => setDrawerOpen(true)}
+                />
+              </Suspense>
             )}
 
             {activeTab === "cv" && (
-              <CvPage 
-                onBackToChat={() => handleTabChange("chat")} 
-                onToggleDrawer={() => setDrawerOpen(true)}
-              />
+              <Suspense fallback={<FallbackLoader />}>
+                <CvPage 
+                  onBackToChat={() => handleTabChange("chat")} 
+                  onToggleDrawer={() => setDrawerOpen(true)}
+                />
+              </Suspense>
             )}
 
             {activeTab === "contact" && (
-              <ContactPage 
-                onBackToChat={() => handleTabChange("chat")} 
-                onToggleDrawer={() => setDrawerOpen(true)}
-              />
+              <Suspense fallback={<FallbackLoader />}>
+                <ContactPage 
+                  onBackToChat={() => handleTabChange("chat")} 
+                  onToggleDrawer={() => setDrawerOpen(true)}
+                />
+              </Suspense>
             )}
           </motion.div>
         </AnimatePresence>

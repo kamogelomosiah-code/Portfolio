@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import { initAuth, googleSignIn, logout } from "../lib/auth";
+import { initAuth, googleSignIn, logout, getAccessToken } from "../lib/auth";
 import type { User as FirebaseUser } from "firebase/auth";
 
 export type Attachment = {
@@ -397,7 +397,6 @@ export default function ChatInterface({
         text: m.text
       }));
 
-      const { getAccessToken } = await import('../lib/auth');
       const token = await getAccessToken();
 
       const headers: Record<string, string> = { "Content-Type": "application/json" };
