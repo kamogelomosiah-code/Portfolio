@@ -101,6 +101,7 @@ export default function ChatInterface({
   const [isScrolled, setIsScrolled] = useState(false);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
+  const [searchEnabled, setSearchEnabled] = useState(false);
 
   useEffect(() => {
     const checkHfHealth = async () => {
@@ -486,9 +487,9 @@ export default function ChatInterface({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className={`w-full bg-[var(--bg-card)] border-2 ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_4px_20px_rgba(26,115,232,0.15)]' : 'border-gray-300 dark:border-neutral-700 shadow-md'} rounded-xl focus-within:shadow-[0_4px_16px_rgba(26,115,232,0.08)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 sm:p-5 relative`}>
+        <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_4px_20px_rgba(26,115,232,0.15)]' : 'border-neutral-200 dark:border-neutral-800 shadow-sm'} rounded-[24px] focus-within:shadow-[0_4px_16px_rgba(26,115,232,0.08)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-3 sm:p-4 pb-2.5 relative`}>
           {isTranscribing && (
-            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-xl flex items-center justify-center gap-3">
+            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[24px] flex items-center justify-center gap-3">
                <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -498,7 +499,7 @@ export default function ChatInterface({
           )}
 
           {/* Top Row: text area */}
-          <div className="flex items-start justify-between gap-3 w-full min-h-[50px]">
+          <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -509,108 +510,136 @@ export default function ChatInterface({
                     handleSend(input);
                  }
               }}
-              placeholder="Ask whatever you want...." 
+              placeholder="Type a message or hold to speak..." 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-[var(--text-main)] py-1 focus:outline-none resize-none placeholder:text-[var(--text-muted)] font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-[var(--text-main)] py-1.5 px-1 focus:outline-none resize-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading || isTranscribing}
               rows={2}
             />
           </div>
 
-          {/* Separator line */}
-          <div className="h-px bg-gray-200 dark:bg-neutral-800 my-3.5 w-full" />
-
           {/* Bottom Row: Actions & Send */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 w-full">
-            {/* Left side: Hugging Face connection status dot */}
-            <div className="flex items-center gap-2 select-none">
-              <span className="relative flex h-2.5 w-2.5">
-                {isHfConnected === null ? (
-                  <>
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                  </>
-                ) : isHfConnected ? (
-                  <>
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </>
-                ) : (
-                  <>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
-                  </>
-                )}
-              </span>
-              <span className="text-[12.5px] font-semibold text-[var(--text-main)] font-mono leading-none">
-                {isHfConnected === null ? (
-                  "checking connection..."
-                ) : isHfConnected ? (
-                  <span className="text-emerald-600 dark:text-emerald-400">connected to server</span>
-                ) : (
-                  <span className="text-neutral-500 dark:text-neutral-400">offline mode</span>
-                )}
-              </span>
-            </div>
-
-            {/* Right side: Model selection, counter, mic & send */}
-            <div className="flex items-center justify-between sm:justify-end gap-3.5">
-              <button 
-                onClick={() => setModelSelectorOpen(true)}
+          <div className="flex items-center justify-between mt-2 px-1 w-full gap-2 select-none">
+            {/* Left side: Think & Search Pills in DeepSeek Style */}
+            <div className="flex items-center gap-1.5">
+              {/* Think Pill */}
+              <button
                 type="button"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-[12px] font-bold text-[var(--text-main)] border border-gray-300 dark:border-neutral-700 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer shrink-0"
-                title="Select AI Mode"
+                onClick={() => {
+                  if (setSelectedModel) {
+                    setSelectedModel(selectedModel === "fusion" ? "swift" : "fusion");
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border cursor-pointer ${
+                  selectedModel === "fusion"
+                    ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] border-[var(--color-accent)]/30 font-bold"
+                    : "bg-transparent text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                }`}
+                title="Reasoning Mode"
               >
-                {selectedModel === "swift" ? (
-                  <Zap size={13} className="text-amber-500 fill-amber-500/10" />
-                ) : (
-                  <Brain size={13} className="text-[var(--color-accent)]" />
-                )}
-                <span className="truncate max-w-[100px]">
-                  {selectedModel === "swift" ? "Swift" : "Fusion"}
-                </span>
-                <ChevronDown size={11} className="text-neutral-400" />
+                <Brain size={12.5} className={selectedModel === "fusion" ? "animate-pulse" : ""} />
+                <span>Think</span>
               </button>
 
-              <span className="text-[12px] text-[var(--text-muted)] font-mono select-none">
+              {/* Search Pill */}
+              <button
+                type="button"
+                onClick={() => setSearchEnabled(prev => !prev)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border cursor-pointer ${
+                  searchEnabled
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold"
+                    : "bg-transparent text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                }`}
+                title="Grounding Search Mode"
+              >
+                <Globe size={12.5} />
+                <span>Search</span>
+              </button>
+            </div>
+
+            {/* Right side: Options, Voice, Character count and Send */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11.5px] text-[var(--text-muted)] font-mono hidden sm:inline select-none pr-1">
                 {input.length}/1000
               </span>
 
-              <div className="flex items-center gap-2">
-                {/* Voice button */}
-                <button
-                  onPointerDown={startRecording}
-                  onPointerUp={stopRecording}
-                  onPointerLeave={stopRecording}
-                  onTouchStart={startRecording}
-                  onTouchEnd={stopRecording}
-                  type="button"
-                  className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer border-0 shadow-sm ${
-                    isRecording 
-                      ? "bg-red-500 text-white animate-pulse ring-4 ring-red-500/20" 
-                      : "bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-[var(--text-muted)] hover:text-[var(--text-main)]"
-                  }`}
-                  title="Hold to speak"
-                >
-                  <Mic size={18} />
-                </button>
+              {/* Add attachment/model options button */}
+              <button
+                type="button"
+                onClick={() => setModelSelectorOpen(true)}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-850 text-neutral-500 dark:text-neutral-400 cursor-pointer transition-colors"
+                title="Options & Models"
+              >
+                <span className="text-base font-bold leading-none -mt-0.5">+</span>
+              </button>
 
-                {/* Send button */}
-                <button
-                  onClick={() => handleSend(input)}
-                  disabled={!input.trim() || isLoading || isTranscribing}
-                  className="flex items-center justify-center w-11 h-11 rounded-xl disabled:opacity-40 bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 transition-all cursor-pointer border-0 shadow-sm"
-                  title="Send message"
-                >
-                  <Send size={16} className="-ml-0.5" />
-                </button>
-              </div>
+              {/* Voice button */}
+              <button
+                onPointerDown={startRecording}
+                onPointerUp={stopRecording}
+                onPointerLeave={stopRecording}
+                onTouchStart={startRecording}
+                onTouchEnd={stopRecording}
+                type="button"
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all cursor-pointer border-0 ${
+                  isRecording 
+                    ? "bg-red-500 text-white animate-pulse" 
+                    : "bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400"
+                }`}
+                title="Hold to speak"
+              >
+                <Mic size={14} />
+              </button>
+
+              {/* Send button */}
+              <button
+                onClick={() => handleSend(input)}
+                disabled={!input.trim() || isLoading || isTranscribing}
+                className={`w-8 h-8 flex items-center justify-center rounded-full border-0 transition-all cursor-pointer ${
+                  input.trim() && !isLoading && !isTranscribing
+                    ? "bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95"
+                    : "bg-neutral-100 dark:bg-neutral-800 text-neutral-300 dark:text-neutral-600 cursor-not-allowed"
+                }`}
+                title="Send message"
+              >
+                <Send size={12} className="-ml-0.5" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Footer text */}
-        <div className="text-center mt-2.5 w-full flex flex-col items-center">
-           <span className="text-[11px] text-[var(--text-muted)] font-normal">
+        {/* Footer text with elegant small connection status */}
+        <div className="text-center mt-2 w-full flex flex-col sm:flex-row items-center justify-between px-1.5 gap-1.5 sm:gap-0 select-none">
+           <div className="flex items-center gap-1.5">
+             <span className="relative flex h-2 w-2">
+               {isHfConnected === null ? (
+                 <>
+                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                 </>
+               ) : isHfConnected ? (
+                 <>
+                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                 </>
+               ) : (
+                 <>
+                   <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                 </>
+               )}
+             </span>
+             <span className="text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 font-mono">
+               {isHfConnected === null ? (
+                 "Checking server..."
+               ) : isHfConnected ? (
+                 "HuggingFace: Active"
+               ) : (
+                 "Offline Mode: Active"
+               )}
+             </span>
+           </div>
+
+           <span className="text-[10.5px] text-[var(--text-muted)] font-normal">
               Assistant can make mistakes. Please check important details.
            </span>
         </div>
