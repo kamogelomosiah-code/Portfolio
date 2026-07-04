@@ -97,14 +97,12 @@ export default function ChatInterface({
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [needsAuth, setNeedsAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = initAuth(
@@ -565,53 +563,30 @@ export default function ChatInterface({
 
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
-            {/* Left side: Think Pill in DeepSeek Style */}
-            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full shrink-0">
-              <div className="flex items-center pl-2 text-neutral-500">
-                <Brain size={14} />
-              </div>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                  className="bg-transparent flex items-center justify-between text-[11.5px] sm:text-[12px] font-semibold text-neutral-700 dark:text-neutral-300 py-1.5 px-2 focus:outline-none cursor-pointer border-0 w-auto min-w-[150px] text-left"
-                >
-                  <span className="whitespace-nowrap">
-                    {selectedModel === 'MiniMaxAI/MiniMax-M3:preferred' ? 'MiniMax-M3' :
-                     selectedModel === 'deepseek-ai/DeepSeek-V4-Flash:novita' ? 'DeepSeek-V4-Flash' :
-                     selectedModel === 'Qwen/Qwen3.6-27B:featherless-ai' ? 'Qwen3.6-27B' :
-                     'Think Longer (Agentic)'}
-                  </span>
-                  <svg className={`w-3 h-3 ml-1 text-neutral-500 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                
-                {isModelDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setIsModelDropdownOpen(false)}></div>
-                    <div className="absolute bottom-full left-0 mb-1 w-auto min-w-[180px] bg-white dark:bg-[#27272a] border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-30 py-1 overflow-hidden">
-                      {[
-                        { id: 'MiniMaxAI/MiniMax-M3:preferred', name: 'MiniMax-M3' },
-                        { id: 'deepseek-ai/DeepSeek-V4-Flash:novita', name: 'DeepSeek-V4-Flash' },
-                        { id: 'Qwen/Qwen3.6-27B:featherless-ai', name: 'Qwen3.6-27B' },
-                        { id: 'fusion', name: 'Think Longer (Agentic)' }
-                      ].map((m) => (
-                        <button
-                          key={m.id}
-                          type="button"
-                          onClick={() => {
-                            if (setSelectedModel) setSelectedModel(m.id);
-                            setIsModelDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-[12px] font-medium border-0 cursor-pointer whitespace-nowrap ${selectedModel === m.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
-                        >
-                          {m.name}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            {/* Thinking Mode Toggle button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (setSelectedModel) {
+                  setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 border cursor-pointer shrink-0 ${
+                selectedModel === "fusion"
+                  ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/50 shadow-sm"
+                  : "bg-[#f4f4f5] dark:bg-[#27272a] text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
+              }`}
+              title={selectedModel === "fusion" ? "Thinking Mode Active" : "Enable Thinking Mode for advanced responses"}
+            >
+              <Brain size={14} className={selectedModel === "fusion" ? "animate-pulse" : ""} />
+              <span>Thinking Mode</span>
+              {selectedModel === "fusion" && (
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
+                </span>
+              )}
+            </button>
 
             {/* Right side: Options, Voice, Character count and Send */}
             <div className="flex items-center gap-2">
@@ -950,105 +925,7 @@ export default function ChatInterface({
       </div>
 
       {/* Model Selection Drawer Bottom Sheet */}
-      <AnimatePresence>
-        {modelSelectorOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setModelSelectorOpen(false)}
-              className="fixed inset-0 bg-black/45 backdrop-blur-[2px] z-50 cursor-pointer pointer-events-auto"
-            />
-            {/* Drawer Body */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 240 }}
-              className="fixed bottom-0 left-0 right-0 max-h-[85vh] bg-[var(--bg-card)] rounded-t-3xl shadow-2xl z-50 overflow-hidden flex flex-col pb-8 pt-4 px-6 text-[var(--text-main)] pointer-events-auto border-t border-gray-200 dark:border-neutral-800"
-            >
-              {/* Drag Handle Accent */}
-              <div className="w-12 h-1.5 bg-gray-300 dark:bg-neutral-700 rounded-full mx-auto mb-5 shrink-0" />
 
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-[20px] text-[var(--text-main)] flex items-center gap-2 m-0 font-display">
-                  <Sparkles size={18} className="text-[var(--color-accent)] animate-pulse" />
-                  Select Model Engine
-                </h3>
-                <button
-                  onClick={() => setModelSelectorOpen(false)}
-                  className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center border-0 cursor-pointer transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <p className="text-[14px] text-[var(--text-muted)] mb-6">
-                Choose the model configuration that powers Kamo's AI response engine.
-              </p>
-              
-              <div className="flex flex-col gap-3">
-                {[
-                  { 
-                    id: "swift", 
-                    name: "Swift Model (Fast Pass)", 
-                    icon: Zap, 
-                    desc: "A highly-optimized, lightning-fast single model. Designed for standard professional inquiries, direct Q&A, and quick CV retrieval with minimal latency.", 
-                    color: "text-amber-500 bg-amber-500/10 dark:bg-amber-500/20" 
-                  },
-                  { 
-                    id: "fusion", 
-                    name: "Fusion Engine (Ensemble Reasoning)", 
-                    icon: Brain, 
-                    desc: "An advanced multi-model ensemble. Reasons deeply, synthesizes professional IT background data, and cross-references answers for maximum depth and accuracy.", 
-                    color: "text-[var(--color-accent)] bg-[var(--color-accent-light)]" 
-                  }
-                ].map((m) => {
-                  const Icon = m.icon;
-                  const isSelected = selectedModel === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => {
-                        setSelectedModel?.(m.id);
-                        setModelSelectorOpen(false);
-                      }}
-                      className={`flex items-start text-left gap-4 p-4 rounded-xl border transition-all cursor-pointer bg-transparent w-full ${
-                        isSelected
-                          ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]/40 shadow-sm ring-1 ring-[var(--color-accent)]"
-                          : "border-[var(--border-light)] hover:bg-gray-50 dark:hover:bg-neutral-800"
-                      }`}
-                    >
-                      <div className={`w-10 h-10 flex items-center justify-center rounded-lg shrink-0 ${m.color}`}>
-                        <Icon size={18} className="stroke-[2.5]" />
-                      </div>
-                      <div className="flex flex-col flex-1 min-w-0 font-sans">
-                        <span className="text-[15.5px] font-bold text-[var(--text-main)] leading-snug">{m.name}</span>
-                        <span className="text-[13px] text-[var(--text-muted)] font-normal leading-relaxed mt-1 whitespace-normal">{m.desc}</span>
-                      </div>
-                      {isSelected && (
-                        <div className="w-5.5 h-5.5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-white shrink-0 mt-1">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-8 flex justify-end">
-                 <button
-                   onClick={() => setModelSelectorOpen(false)}
-                   className="px-8 py-3 rounded-xl bg-[var(--color-accent)] text-white hover:opacity-90 font-bold text-[14.5px] transition-colors cursor-pointer border-0 shadow-sm"
-                 >
-                   Done
-                 </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
     </div>
   );
