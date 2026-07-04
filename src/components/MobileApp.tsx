@@ -201,24 +201,39 @@ export default function MobileApp({
           {/* Bottom Row: Actions & Send in DeepSeek Style */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
             {/* Left side: Think Pill */}
-            <div className="flex items-center gap-1.5">
-              {/* Think Pill */}
+            <div className="flex items-center gap-1 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full">
+              {/* Quick Mode Pill */}
               <button
                 type="button"
                 onClick={() => {
-                  if (setSelectedModel) {
-                    setSelectedModel(selectedModel === "fusion" ? "swift" : "fusion");
-                  }
+                  if (setSelectedModel) setSelectedModel("swift");
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border-0 cursor-pointer ${
-                  selectedModel === "fusion"
-                    ? "bg-[#ebf3fe] dark:bg-blue-950/40 text-[#1a73e8] dark:text-blue-400 font-bold"
-                    : "bg-[#f4f4f5] dark:bg-[#27272a] text-neutral-500 dark:text-neutral-400 hover:bg-[#e4e4e7] dark:hover:bg-[#3f3f46]"
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all border-0 cursor-pointer ${
+                  selectedModel !== "fusion"
+                    ? "bg-white dark:bg-[#3f3f46] text-neutral-900 dark:text-white shadow-sm"
+                    : "bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 }`}
-                title="Reasoning Mode"
+                title="Quick Mode"
               >
-                <Brain size={14} strokeWidth={2.2} className={selectedModel === "fusion" ? "animate-pulse text-[#1a73e8] dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"} />
-                <span>Think</span>
+                <Zap size={14} strokeWidth={2.2} className={selectedModel !== "fusion" ? "text-amber-500" : ""} />
+                <span>Quick</span>
+              </button>
+
+              {/* Think Longer Pill */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (setSelectedModel) setSelectedModel("fusion");
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all border-0 cursor-pointer ${
+                  selectedModel === "fusion"
+                    ? "bg-[#ebf3fe] dark:bg-blue-950/40 text-[#1a73e8] dark:text-blue-400 shadow-sm"
+                    : "bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+                }`}
+                title="Think Longer Mode"
+              >
+                <Brain size={14} strokeWidth={2.2} className={selectedModel === "fusion" ? "animate-pulse text-[#1a73e8] dark:text-blue-400" : ""} />
+                <span>Think Longer</span>
               </button>
             </div>
 
@@ -724,7 +739,7 @@ export default function MobileApp({
                                 <div className="flex-1 min-w-0">
                                   {isFirst && (
                                     <span className="block font-semibold text-[11px] text-[var(--text-muted)] mb-0.5">
-                                      Kamogelo's GPT
+                                      CodeMind Assistant
                                     </span>
                                   )}
                                   <div className="text-[14px] leading-relaxed text-[var(--text-main)] w-full">
@@ -752,10 +767,12 @@ export default function MobileApp({
                           </div>
                           <div className="flex-1">
                             <span className="block font-semibold text-[11px] text-[var(--text-muted)] mb-0.5">
-                              Kamogelo's GPT
+                              CodeMind Assistant
                             </span>
                             <div className="flex items-center gap-1.5 text-[var(--text-muted)] py-1.5">
-                              <span className="text-[13px] italic">Thinking</span>
+                              <span className="text-[13px] italic">
+                                {selectedModel === 'fusion' ? 'Consulting models...' : 'Thinking'}
+                              </span>
                               <span className="inline-block animate-pulse text-[var(--color-accent)]">▍</span>
                             </div>
                           </div>

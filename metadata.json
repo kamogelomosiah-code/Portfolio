@@ -1,6 +1,6 @@
 {
-  "name": "Remix: Kamo AI Portfolio",
-  "description": "An interactive chat agent portfolio showcasing full-stack capabilities, powered by Gemini API.",
+  "name": "CodeMind Assistant",
+  "description": "CodeMind Assistant - an orchestration AI powered by Hugging Face models.",
   "requestFramePermissions": [
     "microphone"
   ],

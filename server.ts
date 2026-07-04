@@ -41,58 +41,15 @@ const app = express();
 app.use(express.json());
 const PORT = 3000;
 
-// Portfolio Context
-const PORTFOLIO_CONTEXT = `
-You are Kamogelo Mosia (or Kamo for short), a highly intelligent Software & IT Solutions Engineer. You are conversing with a visitor, client, or HR recruiter through an interactive AI portfolio.
-Always maintain a highly professional, confident, polite, and welcoming tone. Speak as Kamo yourself.
+const SYSTEM_PROMPT = `You are CodeMind Assistant, an AI assistant representing Kamogelo (Kamo) Mosiah.
+Kamo is a BSc IT graduate (Computer Science and Informatics, University of Johannesburg) looking for opportunities in IT support, software development, and graduate programmes. 
+His degree status: "Coursework completed, conferral pending."
+Tech Stack: Python, JavaScript/full-stack, Docker, Flask
+Live Projects: Resume Maker, MasterAPI, Real-Time Chat App, CallTrax, KamoCodes, Portfolio Website
+GitHub: github.com/kamogelomosiah-code
+Portfolio: portfolio-q5ji.onrender.com
 
-Your background profile data in structured JSON format:
-${JSON.stringify(meData, null, 2)}
-
-CORE REASONING ENGINE - DOMAIN ADAPTATION:
-Your output must automatically and dynamically adapt its structured delivery depending on the domain of the topic asked:
-
-1. SCIENCE (Physics, Calculus, Analytical Science, etc.):
-   - Deliver with empirical precision, clear methodologies, and systematic analysis.
-   - Summarize complex formulas or theories into 2-3 logical, easily digestible insights.
-   - When outputting integration or mathematical formulas, always wrap them in standard LaTeX equation notation like "$\\int f(x) \\, dx$" or "$$\\int_{a}^{b} f(x) \\, dx$$".
-   - Keep answers extremely clean, factual, and easy to understand.
-
-2. PHILOSOPHY (Work ethic, life views, ethics in AI, etc.):
-   - Deliver with classical reasoning, critical analysis, and conceptual clarity.
-   - Present balanced, thoughtful arguments.
-   - Keep answers deeply insightful yet beautifully concise and elegant, avoiding repetitive fluff.
-
-3. ENGINEERING & TECHNOLOGY (Web systems, networks, database, code, etc.):
-   - Focus on system architectures, logical patterns, performance metrics, clean designs, and flow.
-   - Structure answers using precise technical terms, explaining how parts connect to form a cohesive system.
-   - Highlight practical usability, trade-offs, and scalability.
-
-4. RECRUITMENT & GENERAL OUTCOMES (HR Managers, CV, Skills, Contacting Kamo):
-   - Focus heavily on professional experience, achievements, and technical credentials (BSc IT from University of Johannesburg, official number: +27 76 951 8655, email: kamogelomosiah@gmail.com).
-   - Use the designated interactive UI widgets to make the recruiter's journey frictionless:
-     * Appending exactly "[UI:PROJECTS]" to trigger the interactive project grids.
-     * Appending exactly "[UI:SKILLS]" to trigger the skills panel.
-     * Appending exactly "[UI:CV]" to trigger the official CV and download buttons.
-   - Keep response structure brief, helpful, and highly scannable.
-
-RESPONSE FORMAT RULES:
-- ALWAYS keep responses concise, clean, and structured. Use short paragraphs.
-- STRICTLY FORBIDDEN: Do NOT use asterisks (*) or double asterisks (**) in your responses under any circumstances. Ensure no raw asterisks appear in the output.
-- To bold key terms or section headings, use standard HTML bold tags: <b>bold text</b>.
-- Use simple dashes (- ) or numbered formats (1. ) for lists.
-- Avoid low-quality filler. Give the most polished, human-crafted answer possible.
-
-CLARIFYING QUESTIONS GENERATION (POP-UPS):
-To create a highly smart, conversational experience, if the user asks a short, open-ended question, or if there are multiple valuable paths to explore, you should invite them to refine their query.
-You do this by appending exactly \`[CLARIFY: Option A | Option B | Option C]\` to the very end of your response.
-Generate 2 to 3 highly contextual, topic-specific follow-up questions separated by "|".
-Examples:
-- If asked about projects: \`[CLARIFY: Tell me about IT Support projects | Show me Web Development work | How can I contact Kamo?]\`
-- If asked about coding: \`[CLARIFY: What is Kamo's frontend stack? | How does Kamo handle database security? | View Kamo's qualifications]\`
-- If asked about philosophy: \`[CLARIFY: Kamo's view on artificial intelligence | Kamo's approach to technical challenges | See Kamo's resume]\`
-- If asked about hiring or CV: \`[CLARIFY: Request Kamo's contact details | Learn about Kamo's education | See Kamo's key skills]\`
-`;
+You are highly capable of answering general questions, doing math, drafting emails, explaining concepts, AND talking about Kamo's background if asked. Answer clearly and professionally.`;
 
 app.post('/api/contact', async (req, res) => {
   try {
@@ -171,17 +128,9 @@ function getOfflineFallbackResponse(message: string): string {
 app.post('/api/chat', async (req, res) => {
   const { history, message, model } = req.body || {};
   try {
-    let resolvedModel = model || 'swift';
-    if (resolvedModel === 'swift') {
-      resolvedModel = 'meta-llama/Llama-3.3-70B-Instruct';
-    } else if (resolvedModel === 'fusion') {
-      resolvedModel = 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
-    } else if (resolvedModel === 'zai-org/GLM-5.2:novita') {
-      resolvedModel = 'meta-llama/Llama-3.3-70B-Instruct';
-    }
-    const targetModel = resolvedModel;
-    
+    const isThinkMode = model === 'fusion'; // "Think Longer"
     const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
+    
     if (!currentToken) {
       return res.status(200).json({ text: "HF_TOKEN is not configured yet. Please configure it in settings." });
     }
@@ -191,35 +140,85 @@ app.post('/api/chat', async (req, res) => {
         content: msg.text
     }));
 
-    const isHfInference = targetModel.includes("VibeThinker") || targetModel.includes("DeepSeek-V4-Pro") || targetModel.includes("DeepSeek-R1");
-    
-    let textResponse = "";
+    const openaiClient = getOpenAIClient();
 
-    if (isHfInference) {
-      const hfClient = new InferenceClient(currentToken);
-      const completion = await hfClient.chatCompletion({
-        model: targetModel,
+    if (isThinkMode) {
+      // 1. Reasoning pass
+      const reasoningModel = 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
+      const reasoningPrompt = `Analyze this query and draft a step-by-step plan or core answer:\n\n${message}`;
+      const reasoningCompletion = await openaiClient.chat.completions.create({
+        model: reasoningModel,
+        messages: [{ role: 'user', content: reasoningPrompt }],
+      });
+      const reasoningResult = reasoningCompletion.choices[0]?.message?.content || "";
+
+      // 2. Math & code pass (Run in parallel with search?)
+      const codeModel = 'Qwen/Qwen2.5-Coder-32B-Instruct';
+      const codePrompt = `Write any code or math derivation needed for this query: ${message}. If none is needed, say 'No code or math required.'`;
+      const codePromise = openaiClient.chat.completions.create({
+        model: codeModel,
+        messages: [{ role: 'user', content: codePrompt }],
+      });
+
+      // 3. Optional live-data pass
+      let searchResult = "No live search performed.";
+      if (process.env.SEARCH_API_KEY) {
+         try {
+            const response = await fetch('https://api.tavily.com/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ api_key: process.env.SEARCH_API_KEY, query: message })
+            });
+            const data = await response.json();
+            searchResult = JSON.stringify(data.results || data);
+         } catch (e) {
+            searchResult = "Search failed or not available.";
+         }
+      }
+
+      const codeCompletion = await codePromise;
+      const codeResult = codeCompletion.choices[0]?.message?.content || "";
+
+      // 4. Synthesis pass
+      const synthesisPrompt = `You are CodeMind Assistant. Combine these inputs to answer the user's query perfectly.
+      
+User Query: ${message}
+
+Reasoning Draft:
+${reasoningResult}
+
+Math & Code Output:
+${codeResult}
+
+Search Data:
+${searchResult}
+
+Synthesize a single polished final answer. Do not expose the internal reasoning or search details directly unless useful.`;
+      
+      const finalCompletion = await openaiClient.chat.completions.create({
+        model: 'meta-llama/Llama-3.3-70B-Instruct',
         messages: [
-            { role: "system", content: PORTFOLIO_CONTEXT },
-            ...formattedHistory,
-            { role: "user", content: message }
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...formattedHistory,
+          { role: 'user', content: synthesisPrompt }
         ],
       });
-      textResponse = completion.choices[0]?.message?.content || "";
+      
+      const textResponse = finalCompletion.choices[0]?.message?.content || "";
+      res.json({ text: textResponse });
     } else {
-      const openaiClient = getOpenAIClient();
+      // Quick Mode
+      const quickModel = 'meta-llama/Llama-3.3-70B-Instruct';
       const completion = await openaiClient.chat.completions.create({
-        model: targetModel,
+        model: quickModel,
         messages: [
-            { role: "system", content: PORTFOLIO_CONTEXT },
+            { role: "system", content: SYSTEM_PROMPT },
             ...formattedHistory,
             { role: "user", content: message }
         ],
       });
-      textResponse = completion.choices[0]?.message?.content || "";
+      res.json({ text: completion.choices[0]?.message?.content || "" });
     }
-
-    res.json({ text: textResponse });
   } catch (error: any) {
     const errorMsg = error.message || JSON.stringify(error);
     if (errorMsg.includes("401") || errorMsg.includes("Invalid username or password")) {

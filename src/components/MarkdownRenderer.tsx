@@ -3,7 +3,122 @@ import Markdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import { Check, Copy, Mail } from "lucide-react";
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import scss from 'react-syntax-highlighter/dist/esm/languages/prism/scss';
+import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
+import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Check, Copy, Mail, Download } from "lucide-react";
+
+SyntaxHighlighter.registerLanguage('tsx', tsx);
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('scss', scss);
+SyntaxHighlighter.registerLanguage('bash', bash);
+SyntaxHighlighter.registerLanguage('markdown', markdown);
+SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('python', python);
+SyntaxHighlighter.registerLanguage('css', css);
+
+function CodeBlock({ children, className }: { children: React.ReactNode, className?: string }) {
+  const [copied, setCopied] = React.useState(false);
+  const match = /language-(\w+)/.exec(className || '');
+  const language = match ? match[1] : 'text';
+  const codeText = String(children).replace(/\n$/, '');
+  const isHtml = language === 'html' || language === 'xml';
+  const [showPreview, setShowPreview] = React.useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(codeText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([codeText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `code.${language === 'text' ? 'txt' : language}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="rounded-lg overflow-hidden my-4 border border-neutral-800 shadow-sm bg-neutral-950 font-sans">
+      <div className="flex items-center justify-between px-4 py-2 bg-neutral-900 border-b border-neutral-800">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">{language}</span>
+          {isHtml && (
+            <div className="flex bg-neutral-800 rounded p-0.5">
+              <button
+                onClick={() => setShowPreview(false)}
+                className={`text-[10px] px-2 py-0.5 rounded-sm font-semibold transition-colors border-0 cursor-pointer ${!showPreview ? 'bg-neutral-700 text-white' : 'bg-transparent text-neutral-400 hover:text-neutral-200'}`}
+              >
+                Code
+              </button>
+              <button
+                onClick={() => setShowPreview(true)}
+                className={`text-[10px] px-2 py-0.5 rounded-sm font-semibold transition-colors border-0 cursor-pointer ${showPreview ? 'bg-neutral-700 text-white' : 'bg-transparent text-neutral-400 hover:text-neutral-200'}`}
+              >
+                Preview
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCopy}
+            className="text-neutral-400 hover:text-white transition-colors flex items-center justify-center p-1 bg-transparent border-0 cursor-pointer"
+            title="Copy code"
+          >
+            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+          </button>
+          <button
+            onClick={handleDownload}
+            className="text-neutral-400 hover:text-white transition-colors flex items-center justify-center p-1 bg-transparent border-0 cursor-pointer"
+            title="Download file"
+          >
+            <Download size={14} />
+          </button>
+        </div>
+      </div>
+      <div className="w-full relative overflow-hidden bg-neutral-950">
+        {showPreview && isHtml ? (
+          <div className="w-full h-full min-h-[200px] bg-white overflow-auto relative">
+            <iframe
+              srcDoc={codeText}
+              className="w-full h-full min-h-[300px] border-0"
+              title="HTML Preview"
+              sandbox="allow-scripts"
+            />
+          </div>
+        ) : (
+          <div className="p-0 m-0 overflow-x-auto text-[13px] sm:text-[13.5px]">
+            <SyntaxHighlighter
+              style={oneDark}
+              language={language}
+              PreTag="div"
+              customStyle={{
+                margin: 0,
+                background: 'transparent',
+                padding: '1rem',
+              }}
+            >
+              {codeText}
+            </SyntaxHighlighter>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface MarkdownRendererProps {
   content: string;
@@ -189,9 +304,7 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
                 {children}
               </code>
             ) : (
-              <pre className="p-3.5 my-3.5 rounded-none bg-neutral-950 text-neutral-200 overflow-x-auto text-[13px] sm:text-[13.5px] font-mono border border-neutral-800 shadow-inner">
-                <code className={className}>{children}</code>
-              </pre>
+              <CodeBlock className={className}>{children}</CodeBlock>
             );
           },
           a: ({ children, href }) => (
