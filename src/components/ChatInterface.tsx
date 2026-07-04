@@ -10,6 +10,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import { initAuth, googleSignIn, logout } from "../lib/auth";
+import type { User as FirebaseUser } from "firebase/auth";
 
 export type Attachment = {
   name: string;
@@ -99,6 +101,44 @@ export default function ChatInterface({
   const [isScrolled, setIsScrolled] = useState(false);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [needsAuth, setNeedsAuth] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = initAuth(
+      (user, token) => {
+        setUser(user);
+        setNeedsAuth(false);
+      },
+      () => {
+        setUser(null);
+        setNeedsAuth(true);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      const result = await googleSignIn();
+      if (result) {
+        setUser(result.user);
+        setNeedsAuth(false);
+      }
+    } catch (err) {
+      console.error('Login failed:', err);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setUser(null);
+    setNeedsAuth(true);
+  };
 
   useEffect(() => {
     const checkHfHealth = async () => {
@@ -356,9 +396,17 @@ export default function ChatInterface({
         text: m.text
       }));
 
+      const { getAccessToken } = await import('../lib/auth');
+      const token = await getAccessToken();
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ history, message: text.trim(), model: selectedModel }),
       });
       
@@ -518,40 +566,22 @@ export default function ChatInterface({
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
             {/* Left side: Think Pill in DeepSeek Style */}
-            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full">
-              {/* Quick Mode Pill */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (setSelectedModel) setSelectedModel("swift");
+            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full overflow-hidden">
+              <div className="flex items-center pl-2 text-neutral-500">
+                <Brain size={14} />
+              </div>
+              <select
+                value={selectedModel}
+                onChange={(e) => {
+                  if (setSelectedModel) setSelectedModel(e.target.value);
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border-0 cursor-pointer ${
-                  selectedModel !== "fusion"
-                    ? "bg-white dark:bg-[#3f3f46] text-neutral-900 dark:text-white shadow-sm"
-                    : "bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
-                }`}
-                title="Quick Mode"
+                className="bg-transparent text-[11.5px] sm:text-[12px] font-semibold text-neutral-700 dark:text-neutral-300 py-1.5 pr-2 focus:outline-none cursor-pointer border-0 w-32 sm:w-48 text-ellipsis"
               >
-                <Zap size={15} strokeWidth={2.2} className={selectedModel !== "fusion" ? "text-amber-500" : ""} />
-                <span>Quick</span>
-              </button>
-
-              {/* Think Longer Pill */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (setSelectedModel) setSelectedModel("fusion");
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border-0 cursor-pointer ${
-                  selectedModel === "fusion"
-                    ? "bg-[#ebf3fe] dark:bg-blue-950/40 text-[#1a73e8] dark:text-blue-400 shadow-sm"
-                    : "bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
-                }`}
-                title="Think Longer Mode"
-              >
-                <Brain size={15} strokeWidth={2.2} className={selectedModel === "fusion" ? "animate-pulse text-[#1a73e8] dark:text-blue-400" : ""} />
-                <span>Think Longer</span>
-              </button>
+                <option value="MiniMaxAI/MiniMax-M3:preferred">MiniMax-M3</option>
+                <option value="deepseek-ai/DeepSeek-V4-Flash:novita">DeepSeek-V4-Flash</option>
+                <option value="Qwen/Qwen3.6-27B:featherless-ai">Qwen3.6-27B</option>
+                <option value="fusion">Think Longer (Agentic)</option>
+              </select>
             </div>
 
             {/* Right side: Options, Voice, Character count and Send */}
@@ -644,6 +674,29 @@ export default function ChatInterface({
             </div>
           </div>
           
+          <div className="flex items-center gap-2">
+            {needsAuth ? (
+              <button onClick={handleLogin} disabled={isLoggingIn} className="gsi-material-button bg-white text-gray-700 font-semibold py-1.5 px-3 rounded shadow border border-gray-300 flex items-center gap-2 text-[13px] hover:bg-gray-50 cursor-pointer">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-4 h-4">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                  <path fill="none" d="M0 0h48v48H0z"></path>
+                </svg>
+                {isLoggingIn ? "Signing in..." : "Sign in with Google"}
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-[13px] text-[var(--text-muted)] font-medium truncate max-w-[150px]">
+                  {user?.email}
+                </span>
+                <button onClick={handleLogout} className="text-[12px] text-red-500 hover:text-red-600 bg-transparent border-0 cursor-pointer font-medium px-2 py-1">
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Scrollable chat body */}

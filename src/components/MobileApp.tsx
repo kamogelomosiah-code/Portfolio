@@ -201,40 +201,22 @@ export default function MobileApp({
           {/* Bottom Row: Actions & Send in DeepSeek Style */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
             {/* Left side: Think Pill */}
-            <div className="flex items-center gap-1 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full">
-              {/* Quick Mode Pill */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (setSelectedModel) setSelectedModel("swift");
+            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full overflow-hidden max-w-[140px]">
+              <div className="flex items-center pl-2 text-neutral-500">
+                <Brain size={14} />
+              </div>
+              <select
+                value={selectedModel}
+                onChange={(e) => {
+                  if (setSelectedModel) setSelectedModel(e.target.value);
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all border-0 cursor-pointer ${
-                  selectedModel !== "fusion"
-                    ? "bg-white dark:bg-[#3f3f46] text-neutral-900 dark:text-white shadow-sm"
-                    : "bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
-                }`}
-                title="Quick Mode"
+                className="bg-transparent text-[11px] font-bold text-neutral-700 dark:text-neutral-300 py-1.5 pr-2 focus:outline-none cursor-pointer border-0 w-full text-ellipsis"
               >
-                <Zap size={14} strokeWidth={2.2} className={selectedModel !== "fusion" ? "text-amber-500" : ""} />
-                <span>Quick</span>
-              </button>
-
-              {/* Think Longer Pill */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (setSelectedModel) setSelectedModel("fusion");
-                }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all border-0 cursor-pointer ${
-                  selectedModel === "fusion"
-                    ? "bg-[#ebf3fe] dark:bg-blue-950/40 text-[#1a73e8] dark:text-blue-400 shadow-sm"
-                    : "bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
-                }`}
-                title="Think Longer Mode"
-              >
-                <Brain size={14} strokeWidth={2.2} className={selectedModel === "fusion" ? "animate-pulse text-[#1a73e8] dark:text-blue-400" : ""} />
-                <span>Think Longer</span>
-              </button>
+                <option value="MiniMaxAI/MiniMax-M3:preferred">MiniMax-M3</option>
+                <option value="deepseek-ai/DeepSeek-V4-Flash:novita">DeepSeek-V4-Flash</option>
+                <option value="Qwen/Qwen3.6-27B:featherless-ai">Qwen3.6-27B</option>
+                <option value="fusion">Think Longer (Agentic)</option>
+              </select>
             </div>
 
             {/* Right side: Options, Voice, Counter and Send */}

@@ -49,7 +49,31 @@ Live Projects: Resume Maker, MasterAPI, Real-Time Chat App, CallTrax, KamoCodes,
 GitHub: github.com/kamogelomosiah-code
 Portfolio: portfolio-q5ji.onrender.com
 
-You are highly capable of answering general questions, doing math, drafting emails, explaining concepts, AND talking about Kamo's background if asked. Answer clearly and professionally.`;
+You are highly capable of answering general questions, doing math, drafting emails, explaining concepts, AND talking about Kamo's background if asked. Answer clearly and professionally.
+
+IMPORTANT: You may receive context from the user's Google Drive and Google Keep below. If you do, use it to answer the user's request.`;
+
+async function fetchGoogleData(token: string) {
+  try {
+    const driveRes = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=5&fields=files(id,name,mimeType)', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const driveData = await driveRes.json();
+    
+    const keepRes = await fetch('https://keep.googleapis.com/v1/notes', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const keepData = await keepRes.json();
+
+    return {
+      drive: driveData.files || [],
+      keep: keepData.notes || []
+    };
+  } catch (e) {
+    console.error("Google API Error", e);
+    return null;
+  }
+}
 
 app.post('/api/contact', async (req, res) => {
   try {
@@ -135,12 +159,23 @@ app.post('/api/chat', async (req, res) => {
       return res.status(200).json({ text: "HF_TOKEN is not configured yet. Please configure it in settings." });
     }
 
+    const authHeader = req.headers.authorization;
+    let googleContext = "";
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const userToken = authHeader.split(' ')[1];
+      const data = await fetchGoogleData(userToken);
+      if (data) {
+        googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
+      }
+    }
+
     const formattedHistory = history.map((msg: any) => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.text
     }));
 
     const openaiClient = getOpenAIClient();
+    const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
 
     if (isThinkMode) {
       // 1. Reasoning pass
@@ -198,7 +233,7 @@ Synthesize a single polished final answer. Do not expose the internal reasoning 
       const finalCompletion = await openaiClient.chat.completions.create({
         model: 'meta-llama/Llama-3.3-70B-Instruct',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: activeSystemPrompt },
           ...formattedHistory,
           { role: 'user', content: synthesisPrompt }
         ],
@@ -207,17 +242,33 @@ Synthesize a single polished final answer. Do not expose the internal reasoning 
       const textResponse = finalCompletion.choices[0]?.message?.content || "";
       res.json({ text: textResponse });
     } else {
-      // Quick Mode
-      const quickModel = 'meta-llama/Llama-3.3-70B-Instruct';
-      const completion = await openaiClient.chat.completions.create({
-        model: quickModel,
-        messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...formattedHistory,
-            { role: "user", content: message }
-        ],
-      });
-      res.json({ text: completion.choices[0]?.message?.content || "" });
+      // Quick Mode using the provided model
+      const targetModel = model || "MiniMaxAI/MiniMax-M3:preferred";
+      
+      if (targetModel.includes("Qwen")) {
+        // Use OpenAI client for Qwen
+        const completion = await openaiClient.chat.completions.create({
+          model: targetModel,
+          messages: [
+              { role: "system", content: activeSystemPrompt },
+              ...formattedHistory,
+              { role: "user", content: message }
+          ],
+        });
+        res.json({ text: completion.choices[0]?.message?.content || "" });
+      } else {
+        // Use InferenceClient for MiniMax and DeepSeek
+        const hfClient = new InferenceClient(currentToken);
+        const completion = await hfClient.chatCompletion({
+          model: targetModel,
+          messages: [
+              { role: "system", content: activeSystemPrompt },
+              ...formattedHistory,
+              { role: "user", content: message }
+          ],
+        });
+        res.json({ text: completion.choices[0]?.message?.content || "" });
+      }
     }
   } catch (error: any) {
     const errorMsg = error.message || JSON.stringify(error);
@@ -237,11 +288,11 @@ app.post('/api/ping-model', async (req, res) => {
   try {
     let resolvedModel = model || 'swift';
     if (resolvedModel === 'swift') {
-      resolvedModel = 'meta-llama/Llama-3.3-70B-Instruct';
+      resolvedModel = 'MiniMaxAI/MiniMax-M3:preferred';
     } else if (resolvedModel === 'fusion') {
       resolvedModel = 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
     }
-    const isHfInference = resolvedModel.includes("VibeThinker") || resolvedModel.includes("DeepSeek-V4-Pro") || resolvedModel.includes("DeepSeek-R1");
+    const isHfInference = resolvedModel.includes("VibeThinker") || resolvedModel.includes("DeepSeek-V4-Pro") || resolvedModel.includes("DeepSeek-R1") || resolvedModel.includes("MiniMaxAI");
     if (isHfInference) {
       const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
       const hfClient = new InferenceClient(currentToken);

@@ -32,7 +32,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [accentColor, setAccentColor] = useState(getDefaultAccentColor());
-  const [selectedModel, setSelectedModel] = useState("swift");
+  const [selectedModel, setSelectedModel] = useState("MiniMaxAI/MiniMax-M3:preferred");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -43,29 +43,6 @@ export default function App() {
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    const testModels = async () => {
-      const models = ["swift", "fusion"];
-      for (const m of models) {
-        try {
-          const res = await fetch('/api/ping-model', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: m })
-          });
-          const data = await res.json();
-          if (data.success) {
-            setSelectedModel(m);
-            break;
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-    };
-    testModels();
   }, []);
 
   useEffect(() => {
