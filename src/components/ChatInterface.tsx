@@ -104,6 +104,7 @@ export default function ChatInterface({
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [needsAuth, setNeedsAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = initAuth(
@@ -566,22 +567,51 @@ export default function ChatInterface({
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
             {/* Left side: Think Pill in DeepSeek Style */}
-            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full overflow-hidden">
+            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full">
               <div className="flex items-center pl-2 text-neutral-500">
                 <Brain size={14} />
               </div>
-              <select
-                value={selectedModel}
-                onChange={(e) => {
-                  if (setSelectedModel) setSelectedModel(e.target.value);
-                }}
-                className="bg-transparent text-[11.5px] sm:text-[12px] font-semibold text-neutral-700 dark:text-neutral-300 py-1.5 pr-2 focus:outline-none cursor-pointer border-0 w-32 sm:w-48 text-ellipsis"
-              >
-                <option value="MiniMaxAI/MiniMax-M3:preferred">MiniMax-M3</option>
-                <option value="deepseek-ai/DeepSeek-V4-Flash:novita">DeepSeek-V4-Flash</option>
-                <option value="Qwen/Qwen3.6-27B:featherless-ai">Qwen3.6-27B</option>
-                <option value="fusion">Think Longer (Agentic)</option>
-              </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                  className="bg-transparent flex items-center justify-between text-[11.5px] sm:text-[12px] font-semibold text-neutral-700 dark:text-neutral-300 py-1.5 px-2 focus:outline-none cursor-pointer border-0 w-32 sm:w-48 text-left"
+                >
+                  <span className="truncate">
+                    {selectedModel === 'MiniMaxAI/MiniMax-M3:preferred' ? 'MiniMax-M3' :
+                     selectedModel === 'deepseek-ai/DeepSeek-V4-Flash:novita' ? 'DeepSeek-V4-Flash' :
+                     selectedModel === 'Qwen/Qwen3.6-27B:featherless-ai' ? 'Qwen3.6-27B' :
+                     'Think Longer (Agentic)'}
+                  </span>
+                  <svg className={`w-3 h-3 ml-1 text-neutral-500 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                
+                {isModelDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setIsModelDropdownOpen(false)}></div>
+                    <div className="absolute bottom-full left-0 mb-1 w-48 bg-white dark:bg-[#27272a] border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-30 py-1 overflow-hidden">
+                      {[
+                        { id: 'MiniMaxAI/MiniMax-M3:preferred', name: 'MiniMax-M3' },
+                        { id: 'deepseek-ai/DeepSeek-V4-Flash:novita', name: 'DeepSeek-V4-Flash' },
+                        { id: 'Qwen/Qwen3.6-27B:featherless-ai', name: 'Qwen3.6-27B' },
+                        { id: 'fusion', name: 'Think Longer (Agentic)' }
+                      ].map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            if (setSelectedModel) setSelectedModel(m.id);
+                            setIsModelDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 text-[12px] font-medium border-0 cursor-pointer ${selectedModel === m.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
+                        >
+                          {m.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Right side: Options, Voice, Character count and Send */}
@@ -705,7 +735,7 @@ export default function ChatInterface({
           className="flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth pt-2"
           onScroll={handleScroll}
         >
-          <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-4 pb-[190px] min-h-full">
+          <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-4 pb-6 min-h-full">
               
               {isInitialState && (
                 <div className="flex flex-col text-left w-full max-w-3xl mx-auto pt-6 min-h-[300px] justify-center">
@@ -914,7 +944,7 @@ export default function ChatInterface({
         </div>
 
         {/* Custom Composer fixed at bottom - always displayed to be sticky bottom and always visible */}
-        <div className="absolute bottom-0 left-0 right-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 pointer-events-none bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 via-45% to-transparent">
+        <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-[var(--bg-main)] border-t border-[var(--border-subtle)]">
           {renderComposer(true)}
         </div>
 

@@ -175,63 +175,57 @@ app.post('/api/chat', async (req, res) => {
     }));
 
     const openaiClient = getOpenAIClient();
+    const hfClient = new InferenceClient(currentToken);
     const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
 
     if (isThinkMode) {
-      // 1. Reasoning pass
-      const reasoningModel = 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
-      const reasoningPrompt = `Analyze this query and draft a step-by-step plan or core answer:\n\n${message}`;
-      const reasoningCompletion = await openaiClient.chat.completions.create({
-        model: reasoningModel,
-        messages: [{ role: 'user', content: reasoningPrompt }],
+      // 1. Initial Answer pass (Model A)
+      const modelA = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+      const promptA = `Please provide a comprehensive answer to the following query:\n\n${message}`;
+      
+      const completionA = await hfClient.chatCompletion({
+        model: modelA,
+        messages: [{ role: 'user', content: promptA }],
+      }).catch(async () => {
+         // Fallback if Novita DeepSeek is not accessible on the provided token
+         return await openaiClient.chat.completions.create({
+           model: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',
+           messages: [{ role: 'user', content: promptA }]
+         });
       });
-      const reasoningResult = reasoningCompletion.choices[0]?.message?.content || "";
+      const resultA = (completionA as any).choices?.[0]?.message?.content || "";
 
-      // 2. Math & code pass (Run in parallel with search?)
-      const codeModel = 'Qwen/Qwen2.5-Coder-32B-Instruct';
-      const codePrompt = `Write any code or math derivation needed for this query: ${message}. If none is needed, say 'No code or math required.'`;
-      const codePromise = openaiClient.chat.completions.create({
-        model: codeModel,
-        messages: [{ role: 'user', content: codePrompt }],
+      // 2. Critique pass (Model B)
+      const modelB = 'Qwen/Qwen3.6-27B:featherless-ai';
+      const promptB = `You are an expert critic. Review the following query and the proposed answer. Identify any errors, missing information, or areas for improvement. Be concise and specific.\n\nQuery: ${message}\n\nProposed Answer:\n${resultA}`;
+      const completionB = await openaiClient.chat.completions.create({
+        model: modelB,
+        messages: [{ role: 'user', content: promptB }],
+      }).catch(async () => {
+        // Fallback for Qwen
+        return await openaiClient.chat.completions.create({
+          model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
+          messages: [{ role: 'user', content: promptB }]
+        });
       });
+      const resultB = completionB.choices[0]?.message?.content || "";
 
-      // 3. Optional live-data pass
-      let searchResult = "No live search performed.";
-      if (process.env.SEARCH_API_KEY) {
-         try {
-            const response = await fetch('https://api.tavily.com/search', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ api_key: process.env.SEARCH_API_KEY, query: message })
-            });
-            const data = await response.json();
-            searchResult = JSON.stringify(data.results || data);
-         } catch (e) {
-            searchResult = "Search failed or not available.";
-         }
-      }
-
-      const codeCompletion = await codePromise;
-      const codeResult = codeCompletion.choices[0]?.message?.content || "";
-
-      // 4. Synthesis pass
-      const synthesisPrompt = `You are CodeMind Assistant. Combine these inputs to answer the user's query perfectly.
+      // 3. Synthesis pass (Model C)
+      const modelC = 'meta-llama/Llama-3.3-70B-Instruct';
+      const synthesisPrompt = `You are CodeMind Assistant. You are orchestrating a team of AI models to provide the best answer to the user.
       
 User Query: ${message}
 
-Reasoning Draft:
-${reasoningResult}
+Initial Answer (Model A):
+${resultA}
 
-Math & Code Output:
-${codeResult}
+Critique & Improvements (Model B):
+${resultB}
 
-Search Data:
-${searchResult}
-
-Synthesize a single polished final answer. Do not expose the internal reasoning or search details directly unless useful.`;
+Synthesize the final, polished, and highly accurate answer. Incorporate the improvements from the critique. Ensure the final response flows naturally and directly addresses the user's query without mentioning the internal review process.`;
       
       const finalCompletion = await openaiClient.chat.completions.create({
-        model: 'meta-llama/Llama-3.3-70B-Instruct',
+        model: modelC,
         messages: [
           { role: 'system', content: activeSystemPrompt },
           ...formattedHistory,

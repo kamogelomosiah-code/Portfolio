@@ -89,6 +89,7 @@ export default function MobileApp({
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
   // Smart Clarification / Follow-up Questions State
   const [activeClarifications, setActiveClarifications] = useState<string[]>([]);
@@ -201,22 +202,51 @@ export default function MobileApp({
           {/* Bottom Row: Actions & Send in DeepSeek Style */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
             {/* Left side: Think Pill */}
-            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full overflow-hidden max-w-[140px]">
+            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full max-w-[140px]">
               <div className="flex items-center pl-2 text-neutral-500">
                 <Brain size={14} />
               </div>
-              <select
-                value={selectedModel}
-                onChange={(e) => {
-                  if (setSelectedModel) setSelectedModel(e.target.value);
-                }}
-                className="bg-transparent text-[11px] font-bold text-neutral-700 dark:text-neutral-300 py-1.5 pr-2 focus:outline-none cursor-pointer border-0 w-full text-ellipsis"
-              >
-                <option value="MiniMaxAI/MiniMax-M3:preferred">MiniMax-M3</option>
-                <option value="deepseek-ai/DeepSeek-V4-Flash:novita">DeepSeek-V4-Flash</option>
-                <option value="Qwen/Qwen3.6-27B:featherless-ai">Qwen3.6-27B</option>
-                <option value="fusion">Think Longer (Agentic)</option>
-              </select>
+              <div className="relative w-full">
+                <button
+                  type="button"
+                  onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                  className="bg-transparent flex items-center justify-between text-[11px] font-bold text-neutral-700 dark:text-neutral-300 py-1.5 px-2 focus:outline-none cursor-pointer border-0 w-full text-left"
+                >
+                  <span className="truncate">
+                    {selectedModel === 'MiniMaxAI/MiniMax-M3:preferred' ? 'MiniMax-M3' :
+                     selectedModel === 'deepseek-ai/DeepSeek-V4-Flash:novita' ? 'DeepSeek-V4-Flash' :
+                     selectedModel === 'Qwen/Qwen3.6-27B:featherless-ai' ? 'Qwen3.6-27B' :
+                     'Think Longer (Agentic)'}
+                  </span>
+                  <svg className={`w-3 h-3 ml-1 shrink-0 text-neutral-500 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                
+                {isModelDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setIsModelDropdownOpen(false)}></div>
+                    <div className="absolute bottom-full left-0 mb-1 w-48 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg shadow-xl z-30 py-1 overflow-hidden">
+                      {[
+                        { id: 'MiniMaxAI/MiniMax-M3:preferred', name: 'MiniMax-M3' },
+                        { id: 'deepseek-ai/DeepSeek-V4-Flash:novita', name: 'DeepSeek-V4-Flash' },
+                        { id: 'Qwen/Qwen3.6-27B:featherless-ai', name: 'Qwen3.6-27B' },
+                        { id: 'fusion', name: 'Think Longer (Agentic)' }
+                      ].map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            if (setSelectedModel) setSelectedModel(m.id);
+                            setIsModelDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 text-[12px] font-medium border-0 cursor-pointer ${selectedModel === m.id ? 'bg-[var(--color-accent-light)] text-[var(--color-accent)]' : 'bg-transparent text-[var(--text-main)] hover:bg-[var(--bg-main)]'}`}
+                        >
+                          {m.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Right side: Options, Voice, Counter and Send */}
@@ -578,7 +608,7 @@ export default function MobileApp({
                 {/* Scrollable Conversation Block */}
                 <div 
                   ref={scrollContainerRef}
-                  className="flex-1 overflow-y-auto w-full px-4 pt-3 pb-[170px] scroll-smooth"
+                  className="flex-1 overflow-y-auto w-full px-4 pt-3 pb-4 scroll-smooth"
                 >
                   {isInitialState ? (
                     <div className="flex flex-col text-left w-full py-6 px-1 min-h-[280px] justify-center">
@@ -765,7 +795,7 @@ export default function MobileApp({
                 </div>
 
                 {/* Keyboard-Aware Pinned Composer bar - always visible and sticky bottom */}
-                <div className="absolute bottom-0 inset-x-0 pt-3 pb-4 px-4 bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/95 to-transparent z-10">
+                <div className="w-full pt-3 pb-4 px-4 shrink-0 bg-[var(--bg-main)] z-10 border-t border-[var(--border-subtle)]">
                   {renderComposer(true)}
                 </div>
               </div>
