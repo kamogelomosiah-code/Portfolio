@@ -553,7 +553,7 @@ export default function ChatInterface({
                     handleSend(input);
                  }
               }}
-              placeholder="Type a message or hold to speak..." 
+              placeholder="Type a message..." 
               ref={textareaRef}
               className="flex-1 bg-transparent text-[var(--text-main)] py-1.5 px-1 focus:outline-none resize-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading || isTranscribing}
@@ -593,39 +593,6 @@ export default function ChatInterface({
               <span className="text-[11.5px] text-[var(--text-muted)] font-mono hidden sm:inline select-none pr-1">
                 {input.length}/1000
               </span>
-
-              {/* Unconditional Microphone button */}
-              <button
-                type="button"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  startRecording();
-                }}
-                onPointerUp={(e) => {
-                  e.preventDefault();
-                  stopRecording();
-                }}
-                onPointerLeave={(e) => {
-                  e.preventDefault();
-                  stopRecording();
-                }}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  startRecording();
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  stopRecording();
-                }}
-                className={`w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
-                  isRecording 
-                    ? "bg-rose-500 text-white animate-pulse border-transparent shadow-md"
-                    : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-[var(--color-accent)]"
-                }`}
-                title="Hold to speak"
-              >
-                <Mic size={18} strokeWidth={2.2} />
-              </button>
 
               {/* Send button */}
               <button

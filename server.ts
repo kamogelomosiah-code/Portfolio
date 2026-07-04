@@ -7,6 +7,7 @@ import { InferenceClient } from "@huggingface/inference";
 import * as dotenv from 'dotenv';
 import fs from 'fs';
 import { GoogleGenAI } from "@google/genai";
+import { loadModel, generate } from './llm';
 
 dotenv.config();
 
@@ -303,129 +304,165 @@ app.post('/api/chat', async (req, res) => {
   }));
 
   try {
-    const isThinkMode = model === 'fusion'; // "Think Longer"
-    
-    const textResponse = await withTokenRotation(async (token, openaiClient, hfClient) => {
-      const authHeader = req.headers.authorization;
-      let googleContext = "";
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const userToken = authHeader.split(' ')[1];
-        const data = await fetchGoogleData(userToken);
-        if (data) {
-          googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
-        }
+    const authHeader = req.headers.authorization;
+    let googleContext = "";
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const userToken = authHeader.split(' ')[1];
+      const data = await fetchGoogleData(userToken);
+      if (data) {
+        googleContext = `\n\nGoogle Drive Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes:\n${JSON.stringify(data.keep, null, 2)}`;
       }
+    }
+    const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
 
-      const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
+    console.log(`[LOCAL LLM CHAT] Processing query: "${message}"`);
+    const prompt = `<|im_start|>system\n${activeSystemPrompt}<|im_end|>\n` +
+      formattedHistory.map((m: any) => `<|im_start|>${m.role}\n${m.content}<|im_end|>`).join('\n') +
+      `\n<|im_start|>user\n${message}<|im_end|>\n<|im_start|>assistant\n`;
 
-      if (isThinkMode) {
-        // 1. Initial Answer pass (Model A)
-        const modelA = 'deepseek-ai/DeepSeek-V4-Flash:novita';
-        const promptA = `Please provide a comprehensive answer to the following query:\n\n${message}`;
-        
-        const completionA = await hfClient.chatCompletion({
-          model: modelA,
-          messages: [{ role: 'user', content: promptA }],
-        }).catch(async () => {
-           // Fallback if Novita DeepSeek is not accessible on the provided token
-           return await openaiClient.chat.completions.create({
-             model: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',
-             messages: [{ role: 'user', content: promptA }]
-           });
-        });
-        const resultA = (completionA as any).choices?.[0]?.message?.content || "";
+    let textResponse = await generate(prompt);
 
-        // 2. Critique pass (Model B)
-        const modelB = 'Qwen/Qwen3.6-27B:featherless-ai';
-        const promptB = `You are an expert critic. Review the following query and the proposed answer. Identify any errors, missing information, or areas for improvement. Be concise and specific.\n\nQuery: ${message}\n\nProposed Answer:\n${resultA}`;
-        const completionB = await openaiClient.chat.completions.create({
-          model: modelB,
-          messages: [{ role: 'user', content: promptB }],
-        }).catch(async () => {
-          // Fallback for Qwen
-          return await openaiClient.chat.completions.create({
-            model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
-            messages: [{ role: 'user', content: promptB }]
-          });
-        });
-        const resultB = completionB.choices[0]?.message?.content || "";
+    // Clean up any residual markers if present
+    textResponse = textResponse
+      .replace(/<\|im_end\|>/g, "")
+      .replace(/<\|im_start\|>/g, "")
+      .replace(/assistant\n/g, "")
+      .trim();
 
-        // 3. Synthesis pass (Model C)
-        const modelC = 'meta-llama/Llama-3.3-70B-Instruct';
-        const synthesisPrompt = `You are CodeMind Assistant. You are orchestrating a team of AI models to provide the best answer to the user.
-        
-User Query: ${message}
-
-Initial Answer (Model A):
-${resultA}
-
-Critique & Improvements (Model B):
-${resultB}
-
-Synthesize the final, polished, and highly accurate answer. Incorporate the improvements from the critique. Ensure the final response flows naturally and directly addresses the user's query without mentioning the internal review process.`;
-        
-        const finalCompletion = await openaiClient.chat.completions.create({
-          model: modelC,
-          messages: [
-            { role: 'system', content: activeSystemPrompt },
-            ...formattedHistory,
-            { role: 'user', content: synthesisPrompt }
-          ],
-        });
-        
-        return finalCompletion.choices[0]?.message?.content || "";
+    // Ensure answer is short and has a quick action at the bottom
+    const hasQuickAction = textResponse.includes("[UI:PROJECTS]") || textResponse.includes("[UI:SKILLS]") || textResponse.includes("[UI:CV]");
+    if (!hasQuickAction) {
+      const lowerMsg = message.toLowerCase();
+      if (lowerMsg.includes("project") || lowerMsg.includes("work") || lowerMsg.includes("portfolio")) {
+        textResponse += " [UI:PROJECTS]";
+      } else if (lowerMsg.includes("skill") || lowerMsg.includes("expert") || lowerMsg.includes("tech") || lowerMsg.includes("know")) {
+        textResponse += " [UI:SKILLS]";
       } else {
-        // Quick Mode using the provided model
-        const targetModel = model || "MiniMaxAI/MiniMax-M3:preferred";
-        
-        if (targetModel.includes("Qwen")) {
-          // Use OpenAI client for Qwen
-          const completion = await openaiClient.chat.completions.create({
-            model: targetModel,
-            messages: [
-                { role: "system", content: activeSystemPrompt },
-                ...formattedHistory,
-                { role: "user", content: message }
-            ],
-          });
-          return completion.choices[0]?.message?.content || "";
-        } else {
-          // Use InferenceClient for MiniMax and DeepSeek
-          const completion = await hfClient.chatCompletion({
-            model: targetModel,
-            messages: [
-                { role: "system", content: activeSystemPrompt },
-                ...formattedHistory,
-                { role: "user", content: message }
-            ],
-          });
-          return completion.choices[0]?.message?.content || "";
-        }
+        textResponse += " [UI:CV]";
       }
-    });
+    }
 
-    res.json({ text: textResponse });
+    console.log(`[LOCAL LLM RESPONSE] Sent: "${textResponse}"`);
+    return res.json({ text: textResponse });
+
   } catch (error: any) {
-    const errorMsg = error.message || JSON.stringify(error);
-    console.log("[INFO] Transitioning request to Gemini model...");
+    console.error("[LOCAL LLM ERROR] Failed to generate locally, using remote API fallback:", error.message || error);
     
     try {
-      const authHeader = req.headers.authorization;
-      let googleContext = "";
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const userToken = authHeader.split(' ')[1];
-        const data = await fetchGoogleData(userToken);
-        if (data) {
-          googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
+      const isThinkMode = model === 'fusion'; // "Think Longer"
+      
+      const textResponse = await withTokenRotation(async (token, openaiClient, hfClient) => {
+        const authHeader = req.headers.authorization;
+        let googleContext = "";
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const userToken = authHeader.split(' ')[1];
+          const data = await fetchGoogleData(userToken);
+          if (data) {
+            googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
+          }
         }
-      }
-      const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
 
-      const geminiResponse = await callGeminiChatFallback(activeSystemPrompt, formattedHistory, message);
-      return res.json({ text: geminiResponse });
-    } catch (geminiError: any) {
-      console.log("[INFO] All primary systems bypassed. Using offline helper.");
-      res.status(200).json({ text: getOfflineFallbackResponse(message) });
+        const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
+
+        if (isThinkMode) {
+          const modelA = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+          const promptA = `Please provide a comprehensive answer to the following query:\n\n${message}`;
+          
+          const completionA = await hfClient.chatCompletion({
+            model: modelA,
+            messages: [{ role: 'user', content: promptA }],
+          }).catch(async () => {
+             return await openaiClient.chat.completions.create({
+               model: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',
+               messages: [{ role: 'user', content: promptA }]
+             });
+          });
+          const resultA = (completionA as any).choices?.[0]?.message?.content || "";
+
+          const modelB = 'Qwen/Qwen3.6-27B:featherless-ai';
+          const promptB = `You are an expert critic. Review the following query and the proposed answer. Identify any errors, missing information, or areas for improvement. Be concise and specific.\n\nQuery: ${message}\n\nProposed Answer:\n${resultA}`;
+          const completionB = await openaiClient.chat.completions.create({
+            model: modelB,
+            messages: [{ role: 'user', content: promptB }],
+          }).catch(async () => {
+            return await openaiClient.chat.completions.create({
+              model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
+              messages: [{ role: 'user', content: promptB }]
+            });
+          });
+          const resultB = completionB.choices[0]?.message?.content || "";
+
+          const modelC = 'meta-llama/Llama-3.3-70B-Instruct';
+          const synthesisPrompt = `You are CodeMind Assistant. You are orchestrating a team of AI models to provide the best answer to the user.
+          
+  User Query: ${message}
+
+  Initial Answer (Model A):
+  ${resultA}
+
+  Critique & Improvements (Model B):
+  ${resultB}
+
+  Synthesize the final, polished, and highly accurate answer. Incorporate the improvements from the critique. Ensure the final response flows naturally and directly addresses the user's query without mentioning the internal review process.`;
+          
+          const finalCompletion = await openaiClient.chat.completions.create({
+            model: modelC,
+            messages: [
+              { role: 'system', content: activeSystemPrompt },
+              ...formattedHistory,
+              { role: 'user', content: synthesisPrompt }
+            ],
+          });
+          
+          return finalCompletion.choices[0]?.message?.content || "";
+        } else {
+          const targetModel = model || "MiniMaxAI/MiniMax-M3:preferred";
+          
+          if (targetModel.includes("Qwen")) {
+            const completion = await openaiClient.chat.completions.create({
+              model: targetModel,
+              messages: [
+                  { role: "system", content: activeSystemPrompt },
+                  ...formattedHistory,
+                  { role: "user", content: message }
+              ],
+            });
+            return completion.choices[0]?.message?.content || "";
+          } else {
+            const completion = await hfClient.chatCompletion({
+              model: targetModel,
+              messages: [
+                  { role: "system", content: activeSystemPrompt },
+                  ...formattedHistory,
+                  { role: "user", content: message }
+              ],
+            });
+            return completion.choices[0]?.message?.content || "";
+          }
+        }
+      });
+
+      return res.json({ text: textResponse });
+    } catch (fallbackError: any) {
+      console.log("[INFO] Transitioning request to Gemini model...");
+      try {
+        const authHeader = req.headers.authorization;
+        let googleContext = "";
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const userToken = authHeader.split(' ')[1];
+          const data = await fetchGoogleData(userToken);
+          if (data) {
+            googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
+          }
+        }
+        const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
+
+        const geminiResponse = await callGeminiChatFallback(activeSystemPrompt, formattedHistory, message);
+        return res.json({ text: geminiResponse });
+      } catch (geminiError: any) {
+        console.log("[INFO] All primary systems bypassed. Using offline helper.");
+        return res.status(200).json({ text: getOfflineFallbackResponse(message) });
+      }
     }
   }
 });
@@ -490,6 +527,13 @@ app.get('/api/hf-health', async (req, res) => {
 });
 
 async function startServer() {
+  // Pre-load/warm up the local SmolLM2 model on server startup to ensure seamless local inference
+  try {
+    await loadModel();
+  } catch (err: any) {
+    console.error("Warning: Could not warm up local SmolLM2 model on startup, will retry on first chat:", err.message || err);
+  }
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },

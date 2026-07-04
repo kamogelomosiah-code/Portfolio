@@ -18,7 +18,10 @@ const ContactPage = lazy(() => import("./ContactPage"));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-[var(--bg-main)]">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+    <div className="flex flex-col items-center gap-3">
+      <div className="animate-spin rounded-full h-10 w-10 border-4 border-neutral-200 border-t-[var(--accent-color,var(--color-accent))]"></div>
+      <span className="text-xs text-[var(--text-muted)] font-medium tracking-wider uppercase animate-pulse">Loading Page...</span>
+    </div>
   </div>
 );
 
@@ -194,7 +197,7 @@ export default function MobileApp({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
-              placeholder="Type a message or hold to speak..." 
+              placeholder="Type a message..." 
               className="flex-1 bg-transparent text-[var(--text-main)] py-1.5 px-1 focus:outline-none resize-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 font-normal text-[15px] leading-relaxed max-h-[100px] overflow-y-auto border-0"
               disabled={isLoading || isTranscribing}
               rows={2}
@@ -233,39 +236,6 @@ export default function MobileApp({
               <span className="text-[11px] text-[var(--text-muted)] font-mono hidden sm:inline select-none pr-1">
                 {input.length}/1000
               </span>
-
-              {/* Unconditional Microphone button */}
-              <button
-                type="button"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  startRecording();
-                }}
-                onPointerUp={(e) => {
-                  e.preventDefault();
-                  stopRecording();
-                }}
-                onPointerLeave={(e) => {
-                  e.preventDefault();
-                  stopRecording();
-                }}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  startRecording();
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  stopRecording();
-                }}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
-                  isRecording 
-                    ? "bg-rose-500 text-white animate-pulse border-transparent shadow-md"
-                    : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-[var(--color-accent)]"
-                }`}
-                title="Hold to speak"
-              >
-                <Mic size={15} strokeWidth={2.2} />
-              </button>
 
               {/* Send button */}
               <button
@@ -563,16 +533,16 @@ export default function MobileApp({
       x: 0,
       opacity: 1,
       transition: {
-        x: { type: "spring" as const, stiffness: 350, damping: 32 },
-        opacity: { duration: 0.15 }
+        x: { type: "spring" as const, stiffness: 500, damping: 38 },
+        opacity: { duration: 0.12 }
       }
     },
     exit: (dir: number) => ({
       x: dir > 0 ? "-100%" : "100%",
       opacity: 0,
       transition: {
-        x: { type: "spring" as const, stiffness: 350, damping: 32 },
-        opacity: { duration: 0.15 }
+        x: { type: "spring" as const, stiffness: 500, damping: 38 },
+        opacity: { duration: 0.12 }
       }
     })
   };
