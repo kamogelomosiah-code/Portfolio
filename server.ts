@@ -27,10 +27,13 @@ function decryptHFToken(encrypted: string) {
 
 const HF_TOKEN_FALLBACK = decryptHFToken(ENCRYPTED_TOKENS[0]);
 
-const client = new OpenAI({
-	baseURL: "https://router.huggingface.co/v1",
-	apiKey: process.env.HF_TOKEN || HF_TOKEN_FALLBACK,
-});
+function getOpenAIClient() {
+  const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
+  return new OpenAI({
+    baseURL: "https://router.huggingface.co/v1",
+    apiKey: currentToken,
+  });
+}
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -170,11 +173,11 @@ app.post('/api/chat', async (req, res) => {
   try {
     let resolvedModel = model || 'swift';
     if (resolvedModel === 'swift') {
-      resolvedModel = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+      resolvedModel = 'meta-llama/Llama-3.3-70B-Instruct';
     } else if (resolvedModel === 'fusion') {
-      resolvedModel = 'deepseek-ai/DeepSeek-V4-Pro:novita';
+      resolvedModel = 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
     } else if (resolvedModel === 'zai-org/GLM-5.2:novita') {
-      resolvedModel = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+      resolvedModel = 'meta-llama/Llama-3.3-70B-Instruct';
     }
     const targetModel = resolvedModel;
     
@@ -188,7 +191,7 @@ app.post('/api/chat', async (req, res) => {
         content: msg.text
     }));
 
-    const isHfInference = targetModel.includes("VibeThinker") || targetModel.includes("DeepSeek-V4-Pro");
+    const isHfInference = targetModel.includes("VibeThinker") || targetModel.includes("DeepSeek-V4-Pro") || targetModel.includes("DeepSeek-R1");
     
     let textResponse = "";
 
@@ -204,7 +207,8 @@ app.post('/api/chat', async (req, res) => {
       });
       textResponse = completion.choices[0]?.message?.content || "";
     } else {
-      const completion = await client.chat.completions.create({
+      const openaiClient = getOpenAIClient();
+      const completion = await openaiClient.chat.completions.create({
         model: targetModel,
         messages: [
             { role: "system", content: PORTFOLIO_CONTEXT },
@@ -219,10 +223,10 @@ app.post('/api/chat', async (req, res) => {
   } catch (error: any) {
     const errorMsg = error.message || JSON.stringify(error);
     if (errorMsg.includes("401") || errorMsg.includes("Invalid username or password")) {
-        return res.status(200).json({ text: "The configured HF_TOKEN is invalid. Please update it in your environment settings." });
+      return res.status(200).json({ text: "The configured HF_TOKEN is invalid. Please update it in your environment settings." });
     }
     if (errorMsg.includes("402") || errorMsg.includes("depleted your monthly included credits")) {
-        return res.status(200).json({ text: "The configured HF_TOKEN has depleted its monthly included credits. Please purchase pre-paid credits or upgrade your account." });
+      return res.status(200).json({ text: "The configured HF_TOKEN has depleted its monthly included credits. Please purchase pre-paid credits or upgrade your account." });
     }
     console.log("Model API Error:", error.message || error);
     res.status(200).json({ text: getOfflineFallbackResponse(message) });
@@ -234,11 +238,11 @@ app.post('/api/ping-model', async (req, res) => {
   try {
     let resolvedModel = model || 'swift';
     if (resolvedModel === 'swift') {
-      resolvedModel = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+      resolvedModel = 'meta-llama/Llama-3.3-70B-Instruct';
     } else if (resolvedModel === 'fusion') {
-      resolvedModel = 'deepseek-ai/DeepSeek-V4-Pro:novita';
+      resolvedModel = 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
     }
-    const isHfInference = resolvedModel.includes("VibeThinker") || resolvedModel.includes("DeepSeek-V4-Pro");
+    const isHfInference = resolvedModel.includes("VibeThinker") || resolvedModel.includes("DeepSeek-V4-Pro") || resolvedModel.includes("DeepSeek-R1");
     if (isHfInference) {
       const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
       const hfClient = new InferenceClient(currentToken);
@@ -248,7 +252,8 @@ app.post('/api/ping-model', async (req, res) => {
         max_tokens: 1
       });
     } else {
-      await client.chat.completions.create({
+      const openaiClient = getOpenAIClient();
+      await openaiClient.chat.completions.create({
         model: resolvedModel,
         messages: [{ role: "user", content: "ping" }],
         max_tokens: 1
@@ -266,8 +271,9 @@ app.get('/api/hf-health', async (req, res) => {
     if (!currentToken) {
       return res.json({ connected: false });
     }
-    await client.chat.completions.create({
-      model: "deepseek-ai/DeepSeek-V4-Flash:novita",
+    const openaiClient = getOpenAIClient();
+    await openaiClient.chat.completions.create({
+      model: "meta-llama/Llama-3.3-70B-Instruct",
       messages: [{ role: "user", content: "ping" }],
       max_tokens: 1
     });

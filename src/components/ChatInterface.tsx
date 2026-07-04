@@ -487,9 +487,9 @@ export default function ChatInterface({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_4px_20px_rgba(26,115,232,0.15)]' : 'border-neutral-200 dark:border-neutral-800 shadow-sm'} rounded-[24px] focus-within:shadow-[0_4px_16px_rgba(26,115,232,0.08)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-3 sm:p-4 pb-2.5 relative`}>
+        <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_6px_24px_rgba(30,142,62,0.15)]' : 'border-neutral-200 dark:border-neutral-800 shadow-sm'} rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative`}>
           {isTranscribing && (
-            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[24px] flex items-center justify-center gap-3">
+            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[32px] flex items-center justify-center gap-3">
                <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -519,7 +519,7 @@ export default function ChatInterface({
           </div>
 
           {/* Bottom Row: Actions & Send */}
-          <div className="flex items-center justify-between mt-2 px-1 w-full gap-2 select-none">
+          <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
             {/* Left side: Think & Search Pills in DeepSeek Style */}
             <div className="flex items-center gap-1.5">
               {/* Think Pill */}
@@ -530,14 +530,14 @@ export default function ChatInterface({
                     setSelectedModel(selectedModel === "fusion" ? "swift" : "fusion");
                   }
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border-0 cursor-pointer ${
                   selectedModel === "fusion"
-                    ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] border-[var(--color-accent)]/30 font-bold"
-                    : "bg-transparent text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-[#ebf3fe] dark:bg-blue-950/40 text-[#1a73e8] dark:text-blue-400 font-bold"
+                    : "bg-[#f4f4f5] dark:bg-[#27272a] text-neutral-500 dark:text-neutral-400 hover:bg-[#e4e4e7] dark:hover:bg-[#3f3f46]"
                 }`}
                 title="Reasoning Mode"
               >
-                <Brain size={12.5} className={selectedModel === "fusion" ? "animate-pulse" : ""} />
+                <Brain size={15} strokeWidth={2.2} className={selectedModel === "fusion" ? "animate-pulse text-[#1a73e8] dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"} />
                 <span>Think</span>
               </button>
 
@@ -545,14 +545,14 @@ export default function ChatInterface({
               <button
                 type="button"
                 onClick={() => setSearchEnabled(prev => !prev)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border-0 cursor-pointer ${
                   searchEnabled
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold"
-                    : "bg-transparent text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-[#ebf3fe] dark:bg-blue-950/40 text-[#1a73e8] dark:text-blue-400 font-bold"
+                    : "bg-[#f4f4f5] dark:bg-[#27272a] text-neutral-500 dark:text-neutral-400 hover:bg-[#e4e4e7] dark:hover:bg-[#3f3f46]"
                 }`}
                 title="Grounding Search Mode"
               >
-                <Globe size={12.5} />
+                <Globe size={15} strokeWidth={2.2} className={searchEnabled ? "text-[#1a73e8] dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"} />
                 <span>Search</span>
               </button>
             </div>
@@ -563,46 +563,18 @@ export default function ChatInterface({
                 {input.length}/1000
               </span>
 
-              {/* Add attachment/model options button */}
-              <button
-                type="button"
-                onClick={() => setModelSelectorOpen(true)}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-850 text-neutral-500 dark:text-neutral-400 cursor-pointer transition-colors"
-                title="Options & Models"
-              >
-                <span className="text-base font-bold leading-none -mt-0.5">+</span>
-              </button>
-
-              {/* Voice button */}
-              <button
-                onPointerDown={startRecording}
-                onPointerUp={stopRecording}
-                onPointerLeave={stopRecording}
-                onTouchStart={startRecording}
-                onTouchEnd={stopRecording}
-                type="button"
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all cursor-pointer border-0 ${
-                  isRecording 
-                    ? "bg-red-500 text-white animate-pulse" 
-                    : "bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400"
-                }`}
-                title="Hold to speak"
-              >
-                <Mic size={14} />
-              </button>
-
               {/* Send button */}
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isLoading || isTranscribing}
-                className={`w-8 h-8 flex items-center justify-center rounded-full border-0 transition-all cursor-pointer ${
+                className={`w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
                   input.trim() && !isLoading && !isTranscribing
-                    ? "bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95"
-                    : "bg-neutral-100 dark:bg-neutral-800 text-neutral-300 dark:text-neutral-600 cursor-not-allowed"
+                    ? "border-transparent bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 shadow-sm"
+                    : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-300 dark:text-neutral-600 cursor-not-allowed"
                 }`}
                 title="Send message"
               >
-                <Send size={12} className="-ml-0.5" />
+                <Send size={18} strokeWidth={2.2} className="-ml-0.5" />
               </button>
             </div>
           </div>
