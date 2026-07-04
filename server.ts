@@ -6,6 +6,7 @@ import multer from 'multer';
 import { InferenceClient } from "@huggingface/inference";
 import * as dotenv from 'dotenv';
 import fs from 'fs';
+import { GoogleGenAI } from "@google/genai";
 
 dotenv.config();
 
@@ -66,6 +67,77 @@ function getOpenAIClient() {
     baseURL: "https://router.huggingface.co/v1",
     apiKey: tokens[activeTokenIndex % tokens.length],
   });
+}
+
+let geminiClient: GoogleGenAI | null = null;
+function getGeminiClient() {
+  if (!geminiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      geminiClient = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+    }
+  }
+  return geminiClient;
+}
+
+async function callGeminiChatFallback(activeSystemPrompt: string, formattedHistory: any[], message: string): Promise<string> {
+  const client = getGeminiClient();
+  if (!client) {
+    throw new Error("Gemini client is not initialized.");
+  }
+
+  const contents = [
+    ...formattedHistory.map((msg: any) => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }]
+    })),
+    {
+      role: 'user',
+      parts: [{ text: message }]
+    }
+  ];
+
+  const response = await client.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents,
+    config: {
+      systemInstruction: activeSystemPrompt,
+    }
+  });
+
+  return response.text || "";
+}
+
+async function callGeminiTranscriptionFallback(buffer: Buffer, mimetype: string): Promise<string> {
+  const client = getGeminiClient();
+  if (!client) {
+    throw new Error("Gemini client is not initialized.");
+  }
+
+  const base64Data = buffer.toString('base64');
+  const response = await client.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: [
+      {
+        inlineData: {
+          mimeType: mimetype || 'audio/wav',
+          data: base64Data
+        }
+      },
+      {
+        text: "Please transcribe this audio file. Return ONLY the transcription text, without any added commentary, introduction, or markdown styling."
+      }
+    ]
+  });
+
+  return response.text || "";
 }
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -134,15 +206,26 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       return res.status(400).json({ error: "No audio file provided." });
     }
 
-    const outputText = await withTokenRotation(async (token, openaiClient, hfClient) => {
-      // @ts-ignore - The user's snippet uses 'data' but the types request 'inputs'
-      const output = await hfClient.automaticSpeechRecognition({
-        data: req.file!.buffer,
-        model: "nvidia/nemotron-3.5-asr-streaming-0.6b:fastest",
-        provider: "auto",
-      } as any);
-      return output.text;
-    });
+    let outputText = "";
+    try {
+      outputText = await withTokenRotation(async (token, openaiClient, hfClient) => {
+        // @ts-ignore - The user's snippet uses 'data' but the types request 'inputs'
+        const output = await hfClient.automaticSpeechRecognition({
+          data: req.file!.buffer,
+          model: "nvidia/nemotron-3.5-asr-streaming-0.6b:fastest",
+          provider: "auto",
+        } as any);
+        return output.text;
+      });
+    } catch (hfError: any) {
+      console.warn("Hugging Face transcription failed. Falling back to Gemini:", hfError.message || hfError);
+      try {
+        outputText = await callGeminiTranscriptionFallback(req.file!.buffer, req.file!.mimetype);
+      } catch (geminiError: any) {
+        console.error("Gemini transcription fallback also failed:", geminiError.message || geminiError);
+        throw hfError;
+      }
+    }
 
     return res.status(200).json({ text: outputText });
   } catch (error: any) {
@@ -184,14 +267,15 @@ function getOfflineFallbackResponse(message: string): string {
 
 app.post('/api/chat', async (req, res) => {
   const { history, message, model } = req.body || {};
+  
+  const formattedHistory = (history || []).map((msg: any) => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.text
+  }));
+
   try {
     const isThinkMode = model === 'fusion'; // "Think Longer"
     
-    const formattedHistory = history.map((msg: any) => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.text
-    }));
-
     const textResponse = await withTokenRotation(async (token, openaiClient, hfClient) => {
       const authHeader = req.headers.authorization;
       let googleContext = "";
@@ -294,14 +378,26 @@ Synthesize the final, polished, and highly accurate answer. Incorporate the impr
     res.json({ text: textResponse });
   } catch (error: any) {
     const errorMsg = error.message || JSON.stringify(error);
-    if (errorMsg.includes("401") || errorMsg.includes("Invalid username or password")) {
-      return res.status(200).json({ text: "The configured HF_TOKEN is invalid. Please update it in your environment settings." });
+    console.warn("[API ERROR] Hugging Face / OpenAI inference failed. Falling back to Gemini...", errorMsg);
+    
+    try {
+      const authHeader = req.headers.authorization;
+      let googleContext = "";
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const userToken = authHeader.split(' ')[1];
+        const data = await fetchGoogleData(userToken);
+        if (data) {
+          googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
+        }
+      }
+      const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
+
+      const geminiResponse = await callGeminiChatFallback(activeSystemPrompt, formattedHistory, message);
+      return res.json({ text: geminiResponse });
+    } catch (geminiError: any) {
+      console.error("[GEMINI ERROR] Gemini fallback also failed:", geminiError.message || geminiError);
+      res.status(200).json({ text: getOfflineFallbackResponse(message) });
     }
-    if (errorMsg.includes("402") || errorMsg.includes("depleted your monthly included credits")) {
-      return res.status(200).json({ text: "The configured HF_TOKEN has depleted its monthly included credits. Please purchase pre-paid credits or upgrade your account." });
-    }
-    console.log("Model API Error:", error.message || error);
-    res.status(200).json({ text: getOfflineFallbackResponse(message) });
   }
 });
 
