@@ -18,20 +18,53 @@ try {
 
 const ENCRYPTED_TOKENS = [
   "ckdJcFVteUVxRGxmREtDdnlEZ2VKRGpSbklCRHdTSmxQYV9maA==",
-  "bmtWSVRqWFlMQkZodGdubHZ6cEFYeXRnU1BqQnRtUktKbV9maA=="
+  "bmtWSVRqWFlMQkZodGdubHZ6cEFYeXRnU1BqQnRtUktKbV9maA==",
+  "VUlldVV2U21iWHJMcE5TZEZ4R0lyb1pLZldxcEpjamlseF9maA=="
 ];
 
 function decryptHFToken(encrypted: string) {
   return Buffer.from(encrypted, 'base64').toString('utf-8').split('').reverse().join('');
 }
 
-const HF_TOKEN_FALLBACK = decryptHFToken(ENCRYPTED_TOKENS[0]);
+let activeTokenIndex = 0;
+
+async function withTokenRotation<T>(fn: (token: string, openai: OpenAI, hf: InferenceClient) => Promise<T>): Promise<T> {
+  const tokens = [
+    ...(process.env.HF_TOKEN ? [process.env.HF_TOKEN] : []),
+    ...ENCRYPTED_TOKENS.map(decryptHFToken)
+  ];
+  
+  let lastError: any = null;
+  for (let i = 0; i < tokens.length; i++) {
+    const tokenIndex = (activeTokenIndex + i) % tokens.length;
+    const token = tokens[tokenIndex];
+    
+    try {
+      const openai = new OpenAI({
+        baseURL: "https://router.huggingface.co/v1",
+        apiKey: token,
+      });
+      const hf = new InferenceClient(token);
+      
+      const result = await fn(token, openai, hf);
+      activeTokenIndex = tokenIndex;
+      return result;
+    } catch (error: any) {
+      console.warn(`[TOKEN ROTATION] Token index ${tokenIndex} failed:`, error.message || error);
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("All tokens exhausted");
+}
 
 function getOpenAIClient() {
-  const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
+  const tokens = [
+    ...(process.env.HF_TOKEN ? [process.env.HF_TOKEN] : []),
+    ...ENCRYPTED_TOKENS.map(decryptHFToken)
+  ];
   return new OpenAI({
     baseURL: "https://router.huggingface.co/v1",
-    apiKey: currentToken,
+    apiKey: tokens[activeTokenIndex % tokens.length],
   });
 }
 
@@ -101,20 +134,17 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       return res.status(400).json({ error: "No audio file provided." });
     }
 
-    const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
-    if (!currentToken) {
-      return res.status(500).json({ error: "HF_TOKEN environment variable is missing. Please configure it in the application settings to use voice transcription." });
-    }
+    const outputText = await withTokenRotation(async (token, openaiClient, hfClient) => {
+      // @ts-ignore - The user's snippet uses 'data' but the types request 'inputs'
+      const output = await hfClient.automaticSpeechRecognition({
+        data: req.file!.buffer,
+        model: "nvidia/nemotron-3.5-asr-streaming-0.6b:fastest",
+        provider: "auto",
+      } as any);
+      return output.text;
+    });
 
-    const hfClient = new InferenceClient(currentToken);
-    // @ts-ignore - The user's snippet uses 'data' but the types request 'inputs'
-    const output = await hfClient.automaticSpeechRecognition({
-      data: req.file.buffer,
-      model: "nvidia/nemotron-3.5-asr-streaming-0.6b:fastest",
-      provider: "auto",
-    } as any);
-
-    return res.status(200).json({ text: output.text });
+    return res.status(200).json({ text: outputText });
   } catch (error: any) {
     console.error("Transcription Error:", error.message || "Unknown error");
     let errorMessage = "Failed to transcribe audio.";
@@ -156,67 +186,61 @@ app.post('/api/chat', async (req, res) => {
   const { history, message, model } = req.body || {};
   try {
     const isThinkMode = model === 'fusion'; // "Think Longer"
-    const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
     
-    if (!currentToken) {
-      return res.status(200).json({ text: "HF_TOKEN is not configured yet. Please configure it in settings." });
-    }
-
-    const authHeader = req.headers.authorization;
-    let googleContext = "";
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const userToken = authHeader.split(' ')[1];
-      const data = await fetchGoogleData(userToken);
-      if (data) {
-        googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
-      }
-    }
-
     const formattedHistory = history.map((msg: any) => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.text
     }));
 
-    const openaiClient = getOpenAIClient();
-    const hfClient = new InferenceClient(currentToken);
-    const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
+    const textResponse = await withTokenRotation(async (token, openaiClient, hfClient) => {
+      const authHeader = req.headers.authorization;
+      let googleContext = "";
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const userToken = authHeader.split(' ')[1];
+        const data = await fetchGoogleData(userToken);
+        if (data) {
+          googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
+        }
+      }
 
-    if (isThinkMode) {
-      // 1. Initial Answer pass (Model A)
-      const modelA = 'deepseek-ai/DeepSeek-V4-Flash:novita';
-      const promptA = `Please provide a comprehensive answer to the following query:\n\n${message}`;
-      
-      const completionA = await hfClient.chatCompletion({
-        model: modelA,
-        messages: [{ role: 'user', content: promptA }],
-      }).catch(async () => {
-         // Fallback if Novita DeepSeek is not accessible on the provided token
-         return await openaiClient.chat.completions.create({
-           model: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',
-           messages: [{ role: 'user', content: promptA }]
-         });
-      });
-      const resultA = (completionA as any).choices?.[0]?.message?.content || "";
+      const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
 
-      // 2. Critique pass (Model B)
-      const modelB = 'Qwen/Qwen3.6-27B:featherless-ai';
-      const promptB = `You are an expert critic. Review the following query and the proposed answer. Identify any errors, missing information, or areas for improvement. Be concise and specific.\n\nQuery: ${message}\n\nProposed Answer:\n${resultA}`;
-      const completionB = await openaiClient.chat.completions.create({
-        model: modelB,
-        messages: [{ role: 'user', content: promptB }],
-      }).catch(async () => {
-        // Fallback for Qwen
-        return await openaiClient.chat.completions.create({
-          model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
-          messages: [{ role: 'user', content: promptB }]
+      if (isThinkMode) {
+        // 1. Initial Answer pass (Model A)
+        const modelA = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+        const promptA = `Please provide a comprehensive answer to the following query:\n\n${message}`;
+        
+        const completionA = await hfClient.chatCompletion({
+          model: modelA,
+          messages: [{ role: 'user', content: promptA }],
+        }).catch(async () => {
+           // Fallback if Novita DeepSeek is not accessible on the provided token
+           return await openaiClient.chat.completions.create({
+             model: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',
+             messages: [{ role: 'user', content: promptA }]
+           });
         });
-      });
-      const resultB = completionB.choices[0]?.message?.content || "";
+        const resultA = (completionA as any).choices?.[0]?.message?.content || "";
 
-      // 3. Synthesis pass (Model C)
-      const modelC = 'meta-llama/Llama-3.3-70B-Instruct';
-      const synthesisPrompt = `You are CodeMind Assistant. You are orchestrating a team of AI models to provide the best answer to the user.
-      
+        // 2. Critique pass (Model B)
+        const modelB = 'Qwen/Qwen3.6-27B:featherless-ai';
+        const promptB = `You are an expert critic. Review the following query and the proposed answer. Identify any errors, missing information, or areas for improvement. Be concise and specific.\n\nQuery: ${message}\n\nProposed Answer:\n${resultA}`;
+        const completionB = await openaiClient.chat.completions.create({
+          model: modelB,
+          messages: [{ role: 'user', content: promptB }],
+        }).catch(async () => {
+          // Fallback for Qwen
+          return await openaiClient.chat.completions.create({
+            model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
+            messages: [{ role: 'user', content: promptB }]
+          });
+        });
+        const resultB = completionB.choices[0]?.message?.content || "";
+
+        // 3. Synthesis pass (Model C)
+        const modelC = 'meta-llama/Llama-3.3-70B-Instruct';
+        const synthesisPrompt = `You are CodeMind Assistant. You are orchestrating a team of AI models to provide the best answer to the user.
+        
 User Query: ${message}
 
 Initial Answer (Model A):
@@ -226,47 +250,48 @@ Critique & Improvements (Model B):
 ${resultB}
 
 Synthesize the final, polished, and highly accurate answer. Incorporate the improvements from the critique. Ensure the final response flows naturally and directly addresses the user's query without mentioning the internal review process.`;
-      
-      const finalCompletion = await openaiClient.chat.completions.create({
-        model: modelC,
-        messages: [
-          { role: 'system', content: activeSystemPrompt },
-          ...formattedHistory,
-          { role: 'user', content: synthesisPrompt }
-        ],
-      });
-      
-      const textResponse = finalCompletion.choices[0]?.message?.content || "";
-      res.json({ text: textResponse });
-    } else {
-      // Quick Mode using the provided model
-      const targetModel = model || "MiniMaxAI/MiniMax-M3:preferred";
-      
-      if (targetModel.includes("Qwen")) {
-        // Use OpenAI client for Qwen
-        const completion = await openaiClient.chat.completions.create({
-          model: targetModel,
+        
+        const finalCompletion = await openaiClient.chat.completions.create({
+          model: modelC,
           messages: [
-              { role: "system", content: activeSystemPrompt },
-              ...formattedHistory,
-              { role: "user", content: message }
+            { role: 'system', content: activeSystemPrompt },
+            ...formattedHistory,
+            { role: 'user', content: synthesisPrompt }
           ],
         });
-        res.json({ text: completion.choices[0]?.message?.content || "" });
+        
+        return finalCompletion.choices[0]?.message?.content || "";
       } else {
-        // Use InferenceClient for MiniMax and DeepSeek
-        const hfClient = new InferenceClient(currentToken);
-        const completion = await hfClient.chatCompletion({
-          model: targetModel,
-          messages: [
-              { role: "system", content: activeSystemPrompt },
-              ...formattedHistory,
-              { role: "user", content: message }
-          ],
-        });
-        res.json({ text: completion.choices[0]?.message?.content || "" });
+        // Quick Mode using the provided model
+        const targetModel = model || "MiniMaxAI/MiniMax-M3:preferred";
+        
+        if (targetModel.includes("Qwen")) {
+          // Use OpenAI client for Qwen
+          const completion = await openaiClient.chat.completions.create({
+            model: targetModel,
+            messages: [
+                { role: "system", content: activeSystemPrompt },
+                ...formattedHistory,
+                { role: "user", content: message }
+            ],
+          });
+          return completion.choices[0]?.message?.content || "";
+        } else {
+          // Use InferenceClient for MiniMax and DeepSeek
+          const completion = await hfClient.chatCompletion({
+            model: targetModel,
+            messages: [
+                { role: "system", content: activeSystemPrompt },
+                ...formattedHistory,
+                { role: "user", content: message }
+            ],
+          });
+          return completion.choices[0]?.message?.content || "";
+        }
       }
-    }
+    });
+
+    res.json({ text: textResponse });
   } catch (error: any) {
     const errorMsg = error.message || JSON.stringify(error);
     if (errorMsg.includes("401") || errorMsg.includes("Invalid username or password")) {
@@ -290,23 +315,25 @@ app.post('/api/ping-model', async (req, res) => {
       resolvedModel = 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
     }
     const isHfInference = resolvedModel.includes("VibeThinker") || resolvedModel.includes("DeepSeek-V4-Pro") || resolvedModel.includes("DeepSeek-R1") || resolvedModel.includes("MiniMaxAI");
-    if (isHfInference) {
-      const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
-      const hfClient = new InferenceClient(currentToken);
-      await hfClient.chatCompletion({
-        model: resolvedModel,
-        messages: [{ role: "user", content: "ping" }],
-        max_tokens: 1
-      });
-    } else {
-      const openaiClient = getOpenAIClient();
-      await openaiClient.chat.completions.create({
-        model: resolvedModel,
-        messages: [{ role: "user", content: "ping" }],
-        max_tokens: 1
-      });
-    }
-    res.json({ success: true });
+    
+    const success = await withTokenRotation(async (token, openaiClient, hfClient) => {
+      if (isHfInference) {
+        await hfClient.chatCompletion({
+          model: resolvedModel,
+          messages: [{ role: "user", content: "ping" }],
+          max_tokens: 1
+        });
+      } else {
+        await openaiClient.chat.completions.create({
+          model: resolvedModel,
+          messages: [{ role: "user", content: "ping" }],
+          max_tokens: 1
+        });
+      }
+      return true;
+    }).catch(() => false);
+
+    res.json({ success });
   } catch (error) {
     res.json({ success: false });
   }
@@ -314,17 +341,16 @@ app.post('/api/ping-model', async (req, res) => {
 
 app.get('/api/hf-health', async (req, res) => {
   try {
-    const currentToken = process.env.HF_TOKEN || HF_TOKEN_FALLBACK;
-    if (!currentToken) {
-      return res.json({ connected: false });
-    }
-    const openaiClient = getOpenAIClient();
-    await openaiClient.chat.completions.create({
-      model: "meta-llama/Llama-3.3-70B-Instruct",
-      messages: [{ role: "user", content: "ping" }],
-      max_tokens: 1
-    });
-    res.json({ connected: true });
+    const connected = await withTokenRotation(async (token, openaiClient, hfClient) => {
+      await openaiClient.chat.completions.create({
+        model: "meta-llama/Llama-3.3-70B-Instruct",
+        messages: [{ role: "user", content: "ping" }],
+        max_tokens: 1
+      });
+      return true;
+    }).catch(() => false);
+    
+    res.json({ connected });
   } catch (error: any) {
     res.json({ connected: false });
   }
