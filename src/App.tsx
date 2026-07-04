@@ -8,7 +8,6 @@ import { AnimatePresence, motion } from "motion/react";
 import Sidebar from "./components/Sidebar";
 import ChatInterface, { Message } from "./components/ChatInterface";
 import MenuDrawer from "./components/MenuDrawer";
-import SettingsModal from "./components/SettingsModal";
 import MobileApp from "./components/MobileApp";
 
 const ProjectsPage = lazy(() => import("./components/ProjectsPage"));
@@ -32,7 +31,6 @@ const getDefaultAccentColor = () => {
 export default function App() {
   const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [accentColor, setAccentColor] = useState(getDefaultAccentColor());
   const [selectedModel, setSelectedModel] = useState("swift");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -140,7 +138,6 @@ export default function App() {
           {currentTab === "chat" && (
             <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 w-full h-full flex flex-col">
               <ChatInterface 
-                onOpenSettings={() => setSettingsOpen(true)} 
                 selectedModel={selectedModel} 
                 setSelectedModel={setSelectedModel}
                 onToggleDrawer={() => setDrawerOpen(!drawerOpen)}
@@ -180,15 +177,6 @@ export default function App() {
         onTabChange={setCurrentTab}
         isOpen={drawerOpen}
         onToggle={() => setDrawerOpen(!drawerOpen)}
-      />
-
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        accentColor={accentColor}
-        setAccentColor={setAccentColor}
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
       />
     </div>
   );

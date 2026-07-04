@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { 
-  Send, Sparkles, Settings, Mic, User, Mail, 
+  Send, Sparkles, Mic, User, Mail, 
   GraduationCap, FileText, MessageSquare, AlertCircle, 
   Code2, Download, Phone, MapPin, Globe, ExternalLink, Github, Menu,
   Cpu, RotateCw, List, ChevronDown, Image as ImageIcon, Database, Layers, Linkedin, Paperclip, Zap, X, Brain
@@ -10,7 +10,6 @@ import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
 import { Message, Attachment } from "./ChatInterface";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import SettingsModal from "./SettingsModal";
 import ProjectsPage from "./ProjectsPage";
 import CvPage from "./CvPage";
 import ContactPage from "./ContactPage";
@@ -86,7 +85,6 @@ export default function MobileApp({
 }: MobileAppProps) {
   const [activeTab, setActiveTab] = useState<TabType>("chat");
   const [direction, setDirection] = useState<number>(0);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
@@ -202,7 +200,7 @@ export default function MobileApp({
 
           {/* Bottom Row: Actions & Send in DeepSeek Style */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
-            {/* Left side: Think & Search Pills */}
+            {/* Left side: Think Pill */}
             <div className="flex items-center gap-1.5">
               {/* Think Pill */}
               <button
@@ -221,21 +219,6 @@ export default function MobileApp({
               >
                 <Brain size={14} strokeWidth={2.2} className={selectedModel === "fusion" ? "animate-pulse text-[#1a73e8] dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"} />
                 <span>Think</span>
-              </button>
-
-              {/* Search Pill */}
-              <button
-                type="button"
-                onClick={() => setSearchEnabled(prev => !prev)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border-0 cursor-pointer ${
-                  searchEnabled
-                    ? "bg-[#ebf3fe] dark:bg-blue-950/40 text-[#1a73e8] dark:text-blue-400 font-bold"
-                    : "bg-[#f4f4f5] dark:bg-[#27272a] text-neutral-500 dark:text-neutral-400 hover:bg-[#e4e4e7] dark:hover:bg-[#3f3f46]"
-                }`}
-                title="Grounding Search Mode"
-              >
-                <Globe size={14} strokeWidth={2.2} className={searchEnabled ? "text-[#1a73e8] dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"} />
-                <span>Search</span>
               </button>
             </div>
 
@@ -299,7 +282,6 @@ export default function MobileApp({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
-  const [searchEnabled, setSearchEnabled] = useState(false);
 
   useEffect(() => {
     const checkHfHealth = async () => {
@@ -579,15 +561,6 @@ export default function MobileApp({
               </span>
             </div>
           </div>
-          
-          <button 
-            onClick={() => setSettingsOpen(true)}
-            className="flex items-center justify-center w-11 h-11 rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 transition-colors cursor-pointer border-0 bg-transparent shrink-0"
-            style={{ minWidth: "44px", minHeight: "44px" }}
-            title="Settings"
-          >
-            <Settings size={18} />
-          </button>
         </header>
       )}
 
@@ -923,16 +896,6 @@ export default function MobileApp({
           </>
         )}
       </AnimatePresence>
-
-      {/* Settings Modal Integration */}
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        accentColor={accentColor}
-        setAccentColor={setAccentColor}
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
-      />
 
       {/* Menu Drawer Integration */}
       <MenuDrawer

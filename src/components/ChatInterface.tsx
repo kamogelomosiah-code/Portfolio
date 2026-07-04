@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, UIEvent } from "react";
 import { 
-  Send, Sparkles, Settings, Mic, Link as LinkIcon, User, Mail, 
+  Send, Sparkles, Mic, Link as LinkIcon, User, Mail, 
   GraduationCap, FileText, Menu, MessageSquare, PlusCircle, X, 
   AlertCircle, ChevronRight, CornerDownLeft, Plus,
-  List, Cpu, RotateCw, Globe, Paperclip, ChevronDown, Zap,
+  List, Cpu, RotateCw, Paperclip, ChevronDown, Zap,
   Image as ImageIcon, Database, Layers, Code2, Brain
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -76,7 +76,6 @@ function renderPromptIcon(iconName: string) {
 }
 
 export default function ChatInterface({ 
-  onOpenSettings, 
   selectedModel = "gemini-2.5-flash",
   setSelectedModel,
   onToggleDrawer,
@@ -84,7 +83,6 @@ export default function ChatInterface({
   setMessages,
   onViewCv
 }: { 
-  onOpenSettings?: () => void, 
   selectedModel?: string,
   setSelectedModel?: (model: string) => void,
   onToggleDrawer?: () => void,
@@ -101,7 +99,6 @@ export default function ChatInterface({
   const [isScrolled, setIsScrolled] = useState(false);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
-  const [searchEnabled, setSearchEnabled] = useState(false);
 
   useEffect(() => {
     const checkHfHealth = async () => {
@@ -520,7 +517,7 @@ export default function ChatInterface({
 
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
-            {/* Left side: Think & Search Pills in DeepSeek Style */}
+            {/* Left side: Think Pill in DeepSeek Style */}
             <div className="flex items-center gap-1.5">
               {/* Think Pill */}
               <button
@@ -539,21 +536,6 @@ export default function ChatInterface({
               >
                 <Brain size={15} strokeWidth={2.2} className={selectedModel === "fusion" ? "animate-pulse text-[#1a73e8] dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"} />
                 <span>Think</span>
-              </button>
-
-              {/* Search Pill */}
-              <button
-                type="button"
-                onClick={() => setSearchEnabled(prev => !prev)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-semibold transition-all border-0 cursor-pointer ${
-                  searchEnabled
-                    ? "bg-[#ebf3fe] dark:bg-blue-950/40 text-[#1a73e8] dark:text-blue-400 font-bold"
-                    : "bg-[#f4f4f5] dark:bg-[#27272a] text-neutral-500 dark:text-neutral-400 hover:bg-[#e4e4e7] dark:hover:bg-[#3f3f46]"
-                }`}
-                title="Grounding Search Mode"
-              >
-                <Globe size={15} strokeWidth={2.2} className={searchEnabled ? "text-[#1a73e8] dark:text-blue-400" : "text-neutral-400 dark:text-neutral-500"} />
-                <span>Search</span>
               </button>
             </div>
 
@@ -647,15 +629,6 @@ export default function ChatInterface({
             </div>
           </div>
           
-          <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
-            <button 
-              onClick={() => onOpenSettings?.()}
-              className="flex items-center justify-center w-[38px] h-[38px] rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer border-0 bg-transparent"
-              title="Configuration"
-            >
-              <Settings size={18} />
-            </button>
-          </div>
         </div>
 
         {/* Scrollable chat body */}
