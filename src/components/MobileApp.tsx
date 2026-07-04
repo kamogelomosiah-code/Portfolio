@@ -234,6 +234,39 @@ export default function MobileApp({
                 {input.length}/1000
               </span>
 
+              {/* Unconditional Microphone button */}
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  startRecording();
+                }}
+                onPointerUp={(e) => {
+                  e.preventDefault();
+                  stopRecording();
+                }}
+                onPointerLeave={(e) => {
+                  e.preventDefault();
+                  stopRecording();
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  startRecording();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  stopRecording();
+                }}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
+                  isRecording 
+                    ? "bg-rose-500 text-white animate-pulse border-transparent shadow-md"
+                    : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-[var(--color-accent)]"
+                }`}
+                title="Hold to speak"
+              >
+                <Mic size={15} strokeWidth={2.2} />
+              </button>
+
               {/* Send button */}
               <button
                 onClick={() => handleSend(input)}
@@ -726,14 +759,35 @@ export default function MobileApp({
                                 <div className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm">
                                   <WatermelonIcon className="w-4 h-4 text-[var(--color-accent)]" />
                                 </div>
-                                <div className="flex-1 min-w-0">
+                                 <div className="flex-1 min-w-0">
                                   {isFirst && (
                                     <span className="block font-semibold text-[11px] text-[var(--text-muted)] mb-0.5">
-                                      CodeMind Assistant
+                                      Kamogelo Mosiah
                                     </span>
                                   )}
                                   <div className="text-[14px] leading-relaxed text-[var(--text-main)] w-full">
                                     <MarkdownRenderer content={msg.text} />
+                                  </div>
+
+                                  <div className="flex flex-wrap gap-1.5 mt-2 mb-1 select-none">
+                                    <button
+                                      onClick={() => handleSend("Tell me about your software projects")}
+                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                    >
+                                      <span>📂 View Projects</span>
+                                    </button>
+                                    <button
+                                      onClick={() => handleSend("What are your core technical skills?")}
+                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                    >
+                                      <span>🛠️ Check Skills</span>
+                                    </button>
+                                    <button
+                                      onClick={() => handleSend("Can I see your CV / Resume?")}
+                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                    >
+                                      <span>📄 Download CV</span>
+                                    </button>
                                   </div>
                                   
                                   {msg.uiBlock && (
@@ -757,7 +811,7 @@ export default function MobileApp({
                           </div>
                           <div className="flex-1">
                             <span className="block font-semibold text-[11px] text-[var(--text-muted)] mb-0.5">
-                              CodeMind Assistant
+                              Kamogelo Mosiah
                             </span>
                             <div className="flex items-center gap-1.5 text-[var(--text-muted)] py-1.5">
                               <span className="text-[13px] italic">

@@ -88,7 +88,7 @@ PROFESSIONAL PROFILE
 ==================================================
 I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
 
-Graduated from the University of Johannesburg in February 2026 with a BSc in Information Technology (Computer Science & Informatics double major).
+Completed theoretical coursework for a BSc in Information Technology (Computer Science & Informatics double major) at the University of Johannesburg, with degree conferral pending.
 
 ==================================================
 TECHNICAL SKILLS
@@ -104,8 +104,8 @@ TECHNICAL SKILLS
 ==================================================
 EDUCATION
 ==================================================
-* University of Johannesburg (2019 - 2024, Degree Awarded Feb 2026)
-  BSc Information Technology in Computer Science and Informatics (NQF Level 7)
+* University of Johannesburg (2019 - 2024, Coursework Completed, Conferral Pending)
+  BSc Information Technology in Computer Science and Informatics (NQF Level 7 - Pending)
   SAQA Reg 80372 • Student No 217004345
   - Informatics 1A and IT Management 1A passed with distinction.
 

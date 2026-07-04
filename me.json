@@ -3,13 +3,13 @@
   "nickname": "Kamo",
   "email": "kamogelomosiah@gmail.com",
   "profession": "Software & IT Solutions Engineer",
-  "overview": "IT Intern and BSc IT Double Major Graduate from UJ. Passionate about software system configurations, hardware diagnostic troubleshooting, web applications development, and AI tools integration.",
+  "overview": "IT Internship Candidate and final-year BSc IT Student (coursework completed, degree conferral pending). Passionate about software system configurations, hardware diagnostic troubleshooting, web applications development, and AI tools integration.",
   "education": [
     {
-      "degree": "BSc Information Technology: Informatics & Computer Science",
+      "degree": "BSc Information Technology in Computer Science & Informatics",
       "years": "2019 - 2024",
       "institution": "University of Johannesburg (UJ)",
-      "details": "Completed core modules in Algorithms, DBMS, Software Engineering, Networks, and System Design with a 60% average."
+      "details": "Completed theoretical coursework. Degree conferral pending. Key modules: Software Engineering, DBMS, Networking, Systems Design, OOP, Algorithms. Passed Informatics 1A and IT Management 1A with distinction."
     },
     {
       "degree": "National Senior Certificate with Bachelor's Pass",
@@ -57,5 +57,17 @@
       "description": "A full-stack resume platform with voice transcription and interactive Firestore sandboxes."
     }
   ],
-  "skills": ["React", "Laravel", "Express", "Node.js", "TypeScript", "PHP", "SQL (MySQL, PostgreSQL)", "Git", "System and hardware configurations"]
+  "skills": [
+    "JavaScript, TypeScript, PHP, Python (in progress)",
+    "SQL (MySQL, PostgreSQL), database schema design, data structuring & validation",
+    "React.js, Node.js, Express, Laravel, Flask (in progress)",
+    "Desktop & laptop setup, peripheral setup, hardware diagnostics & troubleshooting",
+    "Windows 10/11 OS installation, basic Linux exposure, software configuration",
+    "TCP/IP, DNS, DHCP, HTTP/HTTPS, subnetting, VPN configuration, wireless troubleshooting",
+    "First-line IT support, helpdesk ticketing awareness, issue logging & follow-up",
+    "IT asset records, equipment registers, technical documentation, file management",
+    "Basic cybersecurity & security policy adherence, data backup awareness",
+    "Git, GitHub, VS Code, Postman, Chrome DevTools (Google Certified), Docker (in progress)",
+    "Customer service orientation, professional client communication, time management"
+  ]
 }

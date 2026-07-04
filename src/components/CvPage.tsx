@@ -156,7 +156,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
                   I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
                 </p>
                 <p>
-                  I graduated from the University of Johannesburg in February 2026 with a BSc in Information Technology, double majoring in Computer Science and Informatics. This comprehensive training equipped me with deep knowledge in software engineering paradigms, DBMS administration, networks, system analysis, and IT project management.
+                  I have completed the theoretical coursework for a BSc in Information Technology at the University of Johannesburg, double majoring in Computer Science and Informatics, with degree conferral pending. This comprehensive training equipped me with deep knowledge in software engineering paradigms, DBMS administration, networks, system analysis, and IT project management.
                 </p>
                 <p>
                   My passion lies in leveraging modern technologies to build robust systems. I actively expand my competence beyond academic boundaries, and I am currently completing practical certifications in Python scripting, Docker containerization, and Flask web frameworks to ensure my skills remain at the forefront of the IT industry.
@@ -299,11 +299,11 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
                     <span className="text-[16px] sm:text-[17px] font-bold text-[var(--text-main)]">University of Johannesburg</span>
-                    <span className="text-[12px] sm:text-[13px] text-[var(--text-muted)] font-mono shrink-0">2019 to 2024 (Degree Awarded February 2026)</span>
+                    <span className="text-[12px] sm:text-[13px] text-[var(--text-muted)] font-mono shrink-0">2019 to 2024 (Coursework Completed, Conferral Pending)</span>
                   </div>
                   <div className="text-[14px] font-semibold text-[var(--color-accent)] mt-0.5 flex items-center flex-wrap gap-2">
                     <span>BSc Information Technology in Computer Science and Informatics</span>
-                    <span className="text-[12px] px-2 py-0.5 rounded bg-[var(--color-accent-light)] border border-[var(--color-accent)]/20 text-[var(--color-accent)]">NQF Level 7</span>
+                    <span className="text-[12px] px-2 py-0.5 rounded bg-[var(--color-accent-light)] border border-[var(--color-accent)]/20 text-[var(--color-accent)]">NQF Level 7 (Pending)</span>
                   </div>
                   <div className="text-[12px] sm:text-[13px] text-[var(--text-muted)] font-mono mt-1">
                     SAQA Reg 80372 <span className="mx-1.5">•</span> Student No 217004345
