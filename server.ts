@@ -131,22 +131,25 @@ function getOfflineFallbackResponse(message: string): string {
     const text = message.toLowerCase();
     
     if (text.includes("hello") || text.includes("hi") || text.includes("hey")) {
-        return "Hi there! I am currently in offline mode, but I can still answer simple requests. Would you like to see my [UI:PROJECTS], [UI:SKILLS], or [UI:CV]?";
+        return "Hi there! I am currently operating in an offline fallback state as the primary AI engines are unreachable. However, I am fully equipped to guide you through my portfolio. Would you like to explore my [UI:PROJECTS], discover my technical [UI:SKILLS], or review my professional [UI:CV]?";
     }
-    if (text.includes("project") || text.includes("work")) {
-        return "The AI is offline for now, but here is a quick look at my projects! [UI:PROJECTS]";
+    if (text.includes("project") || text.includes("work") || text.includes("portfolio")) {
+        return "Although my primary neural networks are currently resting, I can provide you with direct access to my portfolio of work. I specialize in building robust, scalable web applications and full-stack solutions. Here is an interactive overview of my latest work: [UI:PROJECTS]";
     }
-    if (text.includes("skill") || text.includes("tool")) {
-        return "I am currently offline, but here is my technical skillset: [UI:SKILLS]";
+    if (text.includes("skill") || text.includes("tool") || text.includes("tech") || text.includes("stack")) {
+        return "Even without live API connectivity, my knowledge base holds a comprehensive record of Kamogelo's technical capabilities. My expertise spans modern web frameworks (React, Next.js), backend systems (Node.js, Express), database architecture (PostgreSQL, Firebase), and various cloud deployment strategies. Here is a detailed breakdown: [UI:SKILLS]";
     }
-    if (text.includes("cv") || text.includes("resume") || text.includes("contact")) {
-        return "Even though my AI engine is resting, you can still get my contact details or download my CV right here: [UI:CV]";
+    if (text.includes("cv") || text.includes("resume") || text.includes("contact") || text.includes("hire")) {
+        return "I might be offline, but career progression never stops! You can easily access my contact details, review my employment history, or download my complete Curriculum Vitae. Please proceed here: [UI:CV]";
     }
-    if (text.includes("about") || text.includes("background")) {
-        return "In my offline state, I can summarize: Kamogelo is an IT Solutions Engineer who graduated from UJ with a BSc in IT. I'm passionate about web apps and systems.";
+    if (text.includes("about") || text.includes("background") || text.includes("who")) {
+        return "I am currently functioning on local heuristics. To summarize: Kamogelo is an IT Solutions Engineer who graduated from the University of Johannesburg with a BSc in IT. I am deeply passionate about architecting scalable web applications, optimizing systems, and leveraging emerging technologies to solve complex problems.";
+    }
+    if (text.includes("math") || text.includes("calculate") || text.includes("+") || text.includes("-")) {
+        return "I am currently operating in fallback mode and my computational and reasoning engines are disabled. Please wait for connectivity to be restored for complex logic or mathematics.";
     }
 
-    return "I am currently offline and my reasoning engine is unavailable. My capabilities are restricted to simple answers. Try asking about my 'projects', 'skills', or 'cv'.";
+    return "My primary AI inference engines (Hugging Face / OpenAI) are currently unreachable, either due to a network timeout, depleted credits, or missing API keys. I am currently operating in a static fallback mode. While I cannot answer complex queries right now, I can still provide extensive information about Kamogelo's professional background. Try asking about my 'projects', 'skills', 'experience', or 'cv'.";
 }
 
 app.post('/api/chat', async (req, res) => {

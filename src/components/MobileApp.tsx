@@ -202,17 +202,17 @@ export default function MobileApp({
           {/* Bottom Row: Actions & Send in DeepSeek Style */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
             {/* Left side: Think Pill */}
-            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full max-w-[140px]">
+            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full shrink-0">
               <div className="flex items-center pl-2 text-neutral-500">
                 <Brain size={14} />
               </div>
-              <div className="relative w-full">
+              <div className="relative">
                 <button
                   type="button"
                   onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                  className="bg-transparent flex items-center justify-between text-[11px] font-bold text-neutral-700 dark:text-neutral-300 py-1.5 px-2 focus:outline-none cursor-pointer border-0 w-full text-left"
+                  className="bg-transparent flex items-center justify-between text-[11px] font-bold text-neutral-700 dark:text-neutral-300 py-1.5 px-2 focus:outline-none cursor-pointer border-0 w-auto min-w-[140px] text-left"
                 >
-                  <span className="truncate">
+                  <span className="whitespace-nowrap">
                     {selectedModel === 'MiniMaxAI/MiniMax-M3:preferred' ? 'MiniMax-M3' :
                      selectedModel === 'deepseek-ai/DeepSeek-V4-Flash:novita' ? 'DeepSeek-V4-Flash' :
                      selectedModel === 'Qwen/Qwen3.6-27B:featherless-ai' ? 'Qwen3.6-27B' :
@@ -224,7 +224,7 @@ export default function MobileApp({
                 {isModelDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-20" onClick={() => setIsModelDropdownOpen(false)}></div>
-                    <div className="absolute bottom-full left-0 mb-1 w-48 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg shadow-xl z-30 py-1 overflow-hidden">
+                    <div className="absolute bottom-full left-0 mb-1 w-auto min-w-[180px] bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg shadow-xl z-30 py-1 overflow-hidden">
                       {[
                         { id: 'MiniMaxAI/MiniMax-M3:preferred', name: 'MiniMax-M3' },
                         { id: 'deepseek-ai/DeepSeek-V4-Flash:novita', name: 'DeepSeek-V4-Flash' },
@@ -238,7 +238,7 @@ export default function MobileApp({
                             if (setSelectedModel) setSelectedModel(m.id);
                             setIsModelDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-3 py-2 text-[12px] font-medium border-0 cursor-pointer ${selectedModel === m.id ? 'bg-[var(--color-accent-light)] text-[var(--color-accent)]' : 'bg-transparent text-[var(--text-main)] hover:bg-[var(--bg-main)]'}`}
+                          className={`w-full text-left px-3 py-2 text-[12px] font-medium border-0 cursor-pointer whitespace-nowrap ${selectedModel === m.id ? 'bg-[var(--color-accent-light)] text-[var(--color-accent)]' : 'bg-transparent text-[var(--text-main)] hover:bg-[var(--bg-main)]'}`}
                         >
                           {m.name}
                         </button>

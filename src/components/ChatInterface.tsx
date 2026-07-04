@@ -567,7 +567,7 @@ export default function ChatInterface({
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
             {/* Left side: Think Pill in DeepSeek Style */}
-            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full">
+            <div className="flex items-center gap-1.5 bg-[#f4f4f5] dark:bg-[#27272a] p-0.5 rounded-full shrink-0">
               <div className="flex items-center pl-2 text-neutral-500">
                 <Brain size={14} />
               </div>
@@ -575,9 +575,9 @@ export default function ChatInterface({
                 <button
                   type="button"
                   onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                  className="bg-transparent flex items-center justify-between text-[11.5px] sm:text-[12px] font-semibold text-neutral-700 dark:text-neutral-300 py-1.5 px-2 focus:outline-none cursor-pointer border-0 w-32 sm:w-48 text-left"
+                  className="bg-transparent flex items-center justify-between text-[11.5px] sm:text-[12px] font-semibold text-neutral-700 dark:text-neutral-300 py-1.5 px-2 focus:outline-none cursor-pointer border-0 w-auto min-w-[150px] text-left"
                 >
-                  <span className="truncate">
+                  <span className="whitespace-nowrap">
                     {selectedModel === 'MiniMaxAI/MiniMax-M3:preferred' ? 'MiniMax-M3' :
                      selectedModel === 'deepseek-ai/DeepSeek-V4-Flash:novita' ? 'DeepSeek-V4-Flash' :
                      selectedModel === 'Qwen/Qwen3.6-27B:featherless-ai' ? 'Qwen3.6-27B' :
@@ -589,7 +589,7 @@ export default function ChatInterface({
                 {isModelDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-20" onClick={() => setIsModelDropdownOpen(false)}></div>
-                    <div className="absolute bottom-full left-0 mb-1 w-48 bg-white dark:bg-[#27272a] border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-30 py-1 overflow-hidden">
+                    <div className="absolute bottom-full left-0 mb-1 w-auto min-w-[180px] bg-white dark:bg-[#27272a] border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-30 py-1 overflow-hidden">
                       {[
                         { id: 'MiniMaxAI/MiniMax-M3:preferred', name: 'MiniMax-M3' },
                         { id: 'deepseek-ai/DeepSeek-V4-Flash:novita', name: 'DeepSeek-V4-Flash' },
@@ -603,7 +603,7 @@ export default function ChatInterface({
                             if (setSelectedModel) setSelectedModel(m.id);
                             setIsModelDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-3 py-2 text-[12px] font-medium border-0 cursor-pointer ${selectedModel === m.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
+                          className={`w-full text-left px-3 py-2 text-[12px] font-medium border-0 cursor-pointer whitespace-nowrap ${selectedModel === m.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
                         >
                           {m.name}
                         </button>
