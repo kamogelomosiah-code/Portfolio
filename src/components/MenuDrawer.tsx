@@ -56,7 +56,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                 </p>
               </div>
 
-              <div className="h-px bg-gray-200 my-1 mx-2" />
+              <div className="h-px bg-[var(--border-light)] my-1 mx-2" />
 
               {/* Main Options List */}
               <div className="flex flex-col gap-1 w-full">
@@ -71,8 +71,8 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                       }}
                       className={`text-left px-5 py-4 w-full rounded-none flex items-center gap-4 transition-colors cursor-pointer border-0 ${
                         isActive
-                          ? "bg-[var(--color-accent-light)] text-accent"
-                          : "bg-transparent hover:bg-gray-100 text-[#444746]"
+                          ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]"
+                          : "bg-transparent hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 text-[var(--text-main)]"
                       }`}
                     >
                       <div className="shrink-0 flex items-center justify-center">
@@ -102,7 +102,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://github.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="GitHub Profile"
                 >
                   <MaterialIcon name="terminal" className="text-[20px]" />
@@ -111,14 +111,14 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="LinkedIn Profile"
                 >
                   <MaterialIcon name="work" className="text-[20px]" />
                 </a>
                 <a
                   href="mailto:kamogelomosiah@gmail.com"
-                  className="w-10 h-10 flex items-center justify-center bg-[var(--color-accent-light)] hover:bg-[#D2E3FC] text-[var(--color-accent)] rounded-none transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-[var(--color-accent-light)] hover:opacity-90 text-[var(--color-accent)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="Direct Contact"
                 >
                   <MaterialIcon name="mail" className="text-[20px]" />
