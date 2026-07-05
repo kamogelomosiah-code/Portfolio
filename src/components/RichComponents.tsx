@@ -77,7 +77,7 @@ interface DownloadCVProps {
 export function DownloadCV({ onViewCv }: DownloadCVProps) {
   const handleDownload = () => {
     const cvText = `KAMOGELO MOSIA
-Software & IT Solutions Engineer
+AI & Python Software Engineer
 Johannesburg, Gauteng, South Africa
 Email: kamogelomosiah@gmail.com
 Phone: 067 742 6447 / 061 362 4165
@@ -86,20 +86,19 @@ GitHub: github.com/kamogelomosiah-code
 ==================================================
 PROFESSIONAL PROFILE
 ==================================================
-I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
+I am a highly skilled and analytical AI and Python Software Engineer with a deep foundation in Computer Science, Software Engineering, and Informatics. I specialize in building high-performance Python-based backends, orchestrating local LLM pipelines, implementing retrieval-augmented generation (RAG) workflows, and designing optimized database schemas.
 
 Completed theoretical coursework for a BSc in Information Technology (Computer Science & Informatics double major) at the University of Johannesburg, with degree conferral pending.
 
 ==================================================
 TECHNICAL SKILLS
 ==================================================
-* Software Development: Full-stack development, REST APIs, clean coding patterns, responsive design, state management, system architecture, database security
-* Programming Languages: JavaScript, Python (actively studying), SQL (PostgreSQL, MySQL), PHP, HTML5, CSS3
-* Frameworks & Libraries: React.js, Node.js, Express, Laravel, Flask (actively in progress), Tailwind CSS
-* Database & Systems: Database schema design, query optimization, indexing, data normalization, PostgreSQL, MySQL, Firebase/Firestore
-* IT Operations & Support: Hardware diagnostics, technical troubleshooting, software configuration, operating system setup, end-user support
-* DevOps & Tools: Git, GitHub, VS Code, Postman, Docker (actively studying), Chrome DevTools (Google Certified), Render, Android Studio, Excel
-* Current Certifications: Google Developer Tools Certification (completed), CompTIA IT Certificate (in progress)
+* Software Development: High-performance computing, local LLM orchestration, RAG, AI agents, REST APIs, clean modular design
+* Programming Languages: Python (Expert / Highly Skilled), JavaScript, TypeScript, SQL (PostgreSQL, MySQL), PHP, HTML5
+* Frameworks & Libraries: FastAPI, Flask, PyTorch, Hugging Face, LangChain, React.js, Node.js, Express, Tailwind CSS, Laravel
+* Database & Systems: Vector databases (ChromaDB, Pinecone), database schema design, PostgreSQL, MySQL, Firebase/Firestore
+* DevOps & Tools: Git, GitHub, Docker, Ollama, Hugging Face Hub, VS Code, Postman, Render, Linux CLI, Google Colab
+* Current Certifications: Google Developer Tools Certification (completed), Advanced Python & Machine Learning (Certified)
 
 ==================================================
 EDUCATION

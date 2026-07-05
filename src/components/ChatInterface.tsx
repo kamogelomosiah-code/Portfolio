@@ -327,7 +327,7 @@ export default function ChatInterface({
       return "I can't fetch live data right now, but here are some of Kamogelo's highlighted projects: [UI:PROJECTS]";
     }
     if (lower.includes("skill") || lower.includes("tech") || lower.includes("stack")) {
-      return "Kamogelo is an IT Engineer. Here is an overview of his technical skills: [UI:SKILLS]";
+      return "Kamogelo is a highly skilled AI & Python Software Engineer. Here is an overview of his technical skills: [UI:SKILLS]";
     }
     if (lower.includes("cv") || lower.includes("resume") || lower.includes("hire") || lower.includes("download")) {
       return "You can download Kamogelo's full CV right here: [UI:CV]";

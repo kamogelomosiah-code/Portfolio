@@ -108,7 +108,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
               </h1>
               
               <div className="text-[14px] sm:text-[15px] text-[var(--text-muted)] font-medium tracking-wide mb-4">
-                Software & IT Solutions Engineer <span className="mx-1 text-[var(--color-accent)]">•</span> Johannesburg, Gauteng
+                AI & Python Software Engineer <span className="mx-1 text-[var(--color-accent)]">•</span> Johannesburg, Gauteng
               </div>
 
               <div className="flex flex-col gap-1.5 text-[13px] sm:text-[14px] text-[var(--text-muted)] font-medium">
@@ -153,13 +153,13 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
               <div className="w-full h-0.5 bg-[var(--color-accent)] mb-4" />
               <div className="text-[14px] sm:text-[15px] text-[var(--text-main)] leading-relaxed flex flex-col gap-4">
                 <p>
-                  I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
+                  I am a highly analytical, detail-oriented AI and Python Software Engineer with a deep foundation in Computer Science, Software Engineering, and Informatics. I specialize in building high-performance Python backends, orchestrating local LLM pipelines, implementing retrieval-augmented generation (RAG) workflows, and designing scalable database solutions.
                 </p>
                 <p>
-                  I have completed the theoretical coursework for a BSc in Information Technology at the University of Johannesburg, double majoring in Computer Science and Informatics, with degree conferral pending. This comprehensive training equipped me with deep knowledge in software engineering paradigms, DBMS administration, networks, system analysis, and IT project management.
+                  I have completed the theoretical coursework for a BSc in Information Technology at the University of Johannesburg, double majoring in Computer Science and Informatics, with degree conferral pending. This comprehensive academic training equipped me with robust systems design, DBMS optimization, software engineering paradigms, and advanced analytics.
                 </p>
                 <p>
-                  My passion lies in leveraging modern technologies to build robust systems. I actively expand my competence beyond academic boundaries, and I am currently completing practical certifications in Python scripting, Docker containerization, and Flask web frameworks to ensure my skills remain at the forefront of the IT industry.
+                  My passion lies in constructing state-of-the-art intelligent systems. I possess a deep practical mastery of local language models, vector search spaces, and modular codebases, allowing me to build robust, secure, and highly functional software systems that are smart, fast, and secure.
                 </p>
               </div>
             </div>
