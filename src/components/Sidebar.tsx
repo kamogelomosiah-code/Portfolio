@@ -3,8 +3,8 @@ import { MaterialIcon } from "./MaterialIcon";
 import { WatermelonIcon } from "./WatermelonIcon";
 
 interface SidebarProps {
-  currentTab: "chat" | "projects" | "cv" | "contact";
-  onTabChange: (tab: "chat" | "projects" | "cv" | "contact") => void;
+  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace";
+  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace") => void;
 }
 
 const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps) {
@@ -79,6 +79,36 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
                <MaterialIcon name="mail" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Contact</span>
+          </button>
+
+          <button 
+            onClick={() => onTabChange("workspace")}
+            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
+              currentTab === "workspace" 
+                ? "text-[var(--color-accent)] font-semibold" 
+                : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] font-normal"
+            }`}
+            title="Google Workspace Hub"
+          >
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "workspace" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+               <MaterialIcon name="apps" className="text-[22px]" />
+            </div>
+            <span className="text-[11px] font-sans text-center leading-none mt-1">Workspace</span>
+          </button>
+
+          <button 
+            onClick={() => onTabChange("changelog")}
+            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
+              currentTab === "changelog" 
+                ? "text-[var(--color-accent)] font-semibold" 
+                : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] font-normal"
+            }`}
+            title="System Updates Log"
+          >
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "changelog" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+               <MaterialIcon name="history" className="text-[22px]" />
+            </div>
+            <span className="text-[11px] font-sans text-center leading-none mt-1">Updates</span>
           </button>
         </div>
       </div>

@@ -3,19 +3,21 @@ import { MaterialIcon } from "./MaterialIcon";
 import { WatermelonIcon } from "./WatermelonIcon";
 
 interface MenuDrawerProps {
-  currentTab: "chat" | "projects" | "cv" | "contact";
-  onTabChange: (tab: "chat" | "projects" | "cv" | "contact") => void;
+  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace";
+  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace") => void;
   isOpen: boolean;
   onToggle: () => void;
 }
 
 export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }: MenuDrawerProps) {
-  const menuItems = [
+  const menuItems: Array<{ id: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace"; label: string; icon: React.ReactNode; desc: string }> = [
     { id: "chat", label: "Chat Assistant", icon: <MaterialIcon name="forum" className="text-[20px]" />, desc: "Ask the AI anything" },
     { id: "projects", label: "Projects", icon: <MaterialIcon name="code" className="text-[20px]" />, desc: "Explore Live Projects" },
     { id: "cv", label: "Resume / CV", icon: <MaterialIcon name="description" className="text-[20px]" />, desc: "Career history & skills" },
-    { id: "contact", label: "Contact", icon: <MaterialIcon name="mail" className="text-[20px]" />, desc: "Get in touch directly" }
-  ] as const;
+    { id: "contact", label: "Contact", icon: <MaterialIcon name="mail" className="text-[20px]" />, desc: "Get in touch directly" },
+    { id: "workspace", label: "Google Hub", icon: <MaterialIcon name="apps" className="text-[20px]" />, desc: "Manage Gmail, Calendar, & Keep" },
+    { id: "changelog", label: "System Updates", icon: <MaterialIcon name="history" className="text-[20px]" />, desc: "View version history & logs" }
+  ];
 
   return (
     <>

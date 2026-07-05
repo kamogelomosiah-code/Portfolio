@@ -162,6 +162,42 @@ const PORT = 3000;
 
 const SYSTEM_PROMPT = `You are Kamo's GPT, a specialized AI assistant focusing on Mathematics and Software Engineering/Coding (especially front-end development). You speak on behalf of Kamogelo (Kamo) Mosiah and know his background, but your primary expertise is helping users solve complex mathematical equations, explain computer science concepts, and build interactive front-end applications.
 
+Additionally, you are the "Goal Achievement Coach" — a premium feature inside my portfolio app.
+
+**YOUR JOB AS GOAL COACH:**
+When a user comes to you and says "I want to achieve X" — you take full ownership of helping them accomplish it.
+
+**HOW YOU WORK:**
+
+1. **DETECT THE GOAL**
+   - User says: "I want to..." / "My goal is..." / "Help me..." / "I need to..."
+   - Immediately switch into "Coach Mode"
+
+2. **CLARIFY (Ask 2-3 Questions)**
+   - Make the goal SPECIFIC: "What exactly does success look like?"
+   - Make it MEASURABLE: "How will you know you've achieved it?"
+   - Set a DEADLINE: "By when do you want this done?"
+
+3. **BUILD THE PLAN**
+   - Break it into WEEKLY milestones
+   - Break each milestone into DAILY actions (20-30 min each)
+   - Structure it so it feels achievable
+
+4. **SHOW THE PLAN TO THE USER**
+   - Display the full plan clearly
+   - Ask: "Shall I add this to your Google Calendar, Keep, and set up email reminders?"
+
+5. **IF USER SAYS YES → AUTOMATE EVERYTHING:**
+   - Instead of just saying you will do it, you MUST output a special JSON block at the end of your message to trigger the automation.
+   - Output format MUST BE EXACTLY:
+     [AUTOMATE_GOAL: {"keep_note": "Full goal breakdown with steps", "calendar_events": [{"title":"Event Name", "date":"YYYY-MM-DD", "time":"HH:MM", "description":"..."}], "email": {"subject":"Goal Plan", "body":"..."}}]
+   - The server will intercept this block, execute the Google APIs, and remove the block before showing the message to the user.
+   - Then append your confirmation text, e.g., "Done! ✅ Your first action: ..."
+
+6. **TRACK PROGRESS & ADJUST**
+   - Each day, ask: "Did you complete today's action?"
+   - Adjust timelines if the user falls behind.
+
 When a user greets you or asks who you are, introduce yourself as Kamo's GPT, a math and coding specialist.
 
 Kamo's Background Details:
@@ -177,13 +213,10 @@ MATH AND CODING OUTPUT INSTRUCTIONS:
    - You must format all mathematical equations, symbols, and formulas using standard LaTeX delimiters so they are rendered beautifully by KaTeX in the chat UI:
      - Use "$$ <equation> $$" (on separate lines) for block/display math.
      - Use "$ <symbol or equation> $" or "\\( <symbol or equation> \\)" for inline math.
-   - Example display math: $$ f(x) = \int_{-\infty}^{\infty} e^{-x^2} dx $$
-   - Example inline math: Let $x$ be a real number where $x > 0$.
 
 2. FRONT-END CODE PREVIEWS:
    - When asked to write, design, or show any front-end component, UI, web page, widget, or layout, you MUST output the complete, self-contained code inside a triple-backtick html code block.
    - Within this block, combine the HTML structure, CSS (you can import Tailwind via '<script src="https://unpkg.com/@tailwindcss/browser@4"></script>' or CDN for a high-fidelity look), and any interactive JavaScript.
-   - This ensures the chat interface's interactive Preview tool compiles and displays the rendered, live, interactive front-end right inside the user's message bubble!
 
 RESPONSE CONSTRAINTS:
 - Keep your explanations extremely concise, clear, and structured. Avoid unnecessary conversational filler or fluff.
@@ -216,6 +249,111 @@ async function fetchGoogleData(token: string) {
     console.error("Google API Error", e);
     return null;
   }
+}
+
+async function processAutomationRequests(text: string, token?: string): Promise<string> {
+  const automateRegex = /\[AUTOMATE_GOAL:\s*({[\s\S]*?})\s*\]/;
+  const match = text.match(automateRegex);
+  
+  if (!match) return text;
+  
+  const jsonStr = match[1];
+  let newText = text.replace(automateRegex, "").trim();
+
+  if (!token) {
+    console.log("No token provided to process automation requests.");
+    return newText + "\n\n⚠️ *I couldn't automate this because you aren't logged into the Google Workspace Hub. Please log in via the Workspace tab and try again!*";
+  }
+
+  try {
+    const data = JSON.parse(jsonStr);
+    
+    // 1. Google Keep Note
+    if (data.keep_note) {
+      try {
+        await fetch("https://keep.googleapis.com/v1/notes", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            title: "Goal Achievement Plan",
+            body: { text: { text: data.keep_note } }
+          })
+        });
+        console.log("Keep note created automatically.");
+      } catch (err) {
+        console.error("Automated Keep note failed:", err);
+      }
+    }
+
+    // 2. Google Calendar Events
+    if (data.calendar_events && Array.isArray(data.calendar_events)) {
+      for (const event of data.calendar_events) {
+        try {
+          // If time is missing, default to 09:00
+          const time = event.time || "09:00";
+          const startDateTime = new Date(`${event.date}T${time}:00`).toISOString();
+          const endDateTime = new Date(new Date(startDateTime).getTime() + 60 * 60000).toISOString(); // 1 hour later
+          
+          await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              summary: event.title,
+              description: event.description || "Goal Action Item",
+              start: { dateTime: startDateTime },
+              end: { dateTime: endDateTime }
+            })
+          });
+          console.log(`Calendar event '${event.title}' created automatically.`);
+        } catch (err) {
+          console.error("Automated Calendar event failed:", err);
+        }
+      }
+    }
+
+    // 3. Gmail Notification
+    if (data.email && data.email.subject && data.email.body) {
+      try {
+        // Need to fetch user profile to send to "me" or just send to "me"
+        const emailContent = [
+          `To: me`,
+          `Subject: ${data.email.subject}`,
+          'Content-Type: text/plain; charset="UTF-8"',
+          '',
+          data.email.body
+        ].join('\\n');
+
+        const base64Safe = Buffer.from(emailContent)
+          .toString("base64")
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ raw: base64Safe })
+        });
+        console.log("Email notification sent automatically.");
+      } catch (err) {
+        console.error("Automated Email failed:", err);
+      }
+    }
+
+  } catch (error) {
+    console.error("Failed to parse AUTOMATE_GOAL JSON or execute APIs:", error);
+  }
+
+  return newText;
 }
 
 app.post('/api/contact', async (req, res) => {
@@ -413,16 +551,23 @@ Synthesize the final, polished, and highly accurate answer. Incorporate the impr
       }
     });
 
-    res.json({ text: textResponse });
+    const authHeader = req.headers.authorization;
+    let userToken = "";
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userToken = authHeader.split(' ')[1];
+    }
+    const finalResponse = await processAutomationRequests(textResponse, userToken);
+    res.json({ text: finalResponse });
   } catch (error: any) {
     const errorMsg = error.message || JSON.stringify(error);
     console.log("[INFO] Transitioning request to Gemini model...");
     
     try {
       const authHeader = req.headers.authorization;
+      let userToken = "";
       let googleContext = "";
       if (authHeader && authHeader.startsWith('Bearer ')) {
-        const userToken = authHeader.split(' ')[1];
+        userToken = authHeader.split(' ')[1];
         const data = await fetchGoogleData(userToken);
         if (data) {
           googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
@@ -431,7 +576,8 @@ Synthesize the final, polished, and highly accurate answer. Incorporate the impr
       const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
 
       const geminiResponse = await callGeminiChatFallback(activeSystemPrompt, formattedHistory, message);
-      return res.json({ text: geminiResponse });
+      const finalResponse = await processAutomationRequests(geminiResponse, userToken);
+      return res.json({ text: finalResponse });
     } catch (geminiError: any) {
       console.log("[INFO] All primary systems bypassed. Using offline helper.");
       res.status(200).json({ text: getOfflineFallbackResponse(message) });

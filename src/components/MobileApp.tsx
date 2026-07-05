@@ -10,6 +10,8 @@ import MenuDrawer from "./MenuDrawer";
 const ProjectsPage = lazy(() => import("./ProjectsPage"));
 const CvPage = lazy(() => import("./CvPage"));
 const ContactPage = lazy(() => import("./ContactPage"));
+const ChangelogPage = lazy(() => import("./ChangelogPage"));
+const WorkspacePage = lazy(() => import("./WorkspacePage"));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-[var(--bg-main)]">
@@ -24,7 +26,7 @@ interface MobileAppProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
-const TABS = ["chat", "projects", "cv", "contact"] as const;
+const TABS = ["chat", "projects", "cv", "contact", "workspace", "changelog"] as const;
 type TabType = typeof TABS[number];
 
 const PROMPT_SETS = [
@@ -736,6 +738,24 @@ export default function MobileApp({
             {activeTab === "contact" && (
               <Suspense fallback={<FallbackLoader />}>
                 <ContactPage 
+                  onBackToChat={() => handleTabChange("chat")} 
+                  onToggleDrawer={() => setDrawerOpen(true)}
+                />
+              </Suspense>
+            )}
+
+            {activeTab === "workspace" && (
+              <Suspense fallback={<FallbackLoader />}>
+                <WorkspacePage 
+                  onBackToChat={() => handleTabChange("chat")} 
+                  onToggleDrawer={() => setDrawerOpen(true)}
+                />
+              </Suspense>
+            )}
+
+            {activeTab === "changelog" && (
+              <Suspense fallback={<FallbackLoader />}>
+                <ChangelogPage 
                   onBackToChat={() => handleTabChange("chat")} 
                   onToggleDrawer={() => setDrawerOpen(true)}
                 />

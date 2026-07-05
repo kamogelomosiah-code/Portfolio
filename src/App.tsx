@@ -13,6 +13,8 @@ import MobileApp from "./components/MobileApp";
 const ProjectsPage = lazy(() => import("./components/ProjectsPage"));
 const CvPage = lazy(() => import("./components/CvPage"));
 const ContactPage = lazy(() => import("./components/ContactPage"));
+const ChangelogPage = lazy(() => import("./components/ChangelogPage"));
+const WorkspacePage = lazy(() => import("./components/WorkspacePage"));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-[var(--bg-main)]">
@@ -29,7 +31,7 @@ const getDefaultAccentColor = () => {
 };
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact">("chat");
+  const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "workspace">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [accentColor, setAccentColor] = useState(getDefaultAccentColor());
   const [selectedModel, setSelectedModel] = useState("MiniMaxAI/MiniMax-M3:preferred");
@@ -140,6 +142,20 @@ export default function App() {
             <motion.div key="contact" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
               <Suspense fallback={<FallbackLoader />}>
                 <ContactPage onBackToChat={() => setCurrentTab("chat")} onToggleDrawer={() => setDrawerOpen(!drawerOpen)} />
+              </Suspense>
+            </motion.div>
+          )}
+          {currentTab === "workspace" && (
+            <motion.div key="workspace" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
+              <Suspense fallback={<FallbackLoader />}>
+                <WorkspacePage onBackToChat={() => setCurrentTab("chat")} onToggleDrawer={() => setDrawerOpen(!drawerOpen)} />
+              </Suspense>
+            </motion.div>
+          )}
+          {currentTab === "changelog" && (
+            <motion.div key="changelog" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
+              <Suspense fallback={<FallbackLoader />}>
+                <ChangelogPage onBackToChat={() => setCurrentTab("chat")} onToggleDrawer={() => setDrawerOpen(!drawerOpen)} />
               </Suspense>
             </motion.div>
           )}
