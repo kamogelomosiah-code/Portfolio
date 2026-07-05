@@ -30,7 +30,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             }`}
             title="Kamo AI Chatbot Agent"
           >
-            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "chat" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "chat" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-[var(--bg-elevated)]"}`}>
                <MaterialIcon name="forum" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Chat</span>
@@ -45,7 +45,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             }`}
             title="My Live Projects"
           >
-            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "projects" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "projects" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-[var(--bg-elevated)]"}`}>
                <MaterialIcon name="code" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Projects</span>
@@ -60,7 +60,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             }`}
             title="Interactive CV / Resume"
           >
-            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "cv" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "cv" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-[var(--bg-elevated)]"}`}>
                <MaterialIcon name="description" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">CV</span>
@@ -75,7 +75,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             }`}
             title="Get In Touch"
           >
-            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "contact" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "contact" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-[var(--bg-elevated)]"}`}>
                <MaterialIcon name="mail" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Contact</span>
@@ -90,7 +90,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             }`}
             title="Google Workspace Hub"
           >
-            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "workspace" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "workspace" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-[var(--bg-elevated)]"}`}>
                <MaterialIcon name="apps" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Workspace</span>
@@ -105,7 +105,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             }`}
             title="System Updates Log"
           >
-            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "changelog" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "changelog" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-[var(--bg-elevated)]"}`}>
                <MaterialIcon name="history" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Updates</span>
@@ -119,7 +119,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
           href="https://github.com" 
           target="_blank" 
           rel="noreferrer" 
-          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 transition-colors shrink-0 cursor-pointer" 
+          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-colors shrink-0 cursor-pointer" 
           title="GitHub Account"
         >
           <MaterialIcon name="terminal" className="text-[20px]" />
@@ -128,7 +128,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
           href="https://linkedin.com" 
           target="_blank" 
           rel="noreferrer" 
-          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 transition-colors shrink-0 cursor-pointer" 
+          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-colors shrink-0 cursor-pointer" 
           title="LinkedIn Profile"
         >
           <MaterialIcon name="work" className="text-[20px]" />

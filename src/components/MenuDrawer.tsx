@@ -73,19 +73,19 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                       }}
                       className={`text-left px-5 py-4 w-full rounded-none flex items-center gap-4 transition-colors cursor-pointer border-0 ${
                         isActive
-                          ? "bg-[var(--color-accent)] text-white"
-                          : "bg-transparent hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
+                          ? "bg-[var(--color-accent)] text-[var(--bg-main)]"
+                          : "bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-main)]"
                       }`}
                     >
-                      <div className={`shrink-0 flex items-center justify-center ${isActive ? 'text-white' : 'text-neutral-500 dark:text-neutral-400'}`}>
+                      <div className={`shrink-0 flex items-center justify-center ${isActive ? 'text-[var(--bg-main)]' : 'text-[var(--text-muted)]'}`}>
                         {item.icon}
                       </div>
                       <div className="flex-1 flex flex-col">
-                        <span className={`text-[15px] font-medium leading-tight mb-0.5 ${isActive ? 'text-white font-bold' : ''}`}>
+                        <span className={`text-[15px] font-medium leading-tight mb-0.5 ${isActive ? 'text-[var(--bg-main)] font-bold' : ''}`}>
                           {item.label}
                         </span>
                         {!isActive && (
-                           <span className="text-[13px] text-neutral-500 dark:text-neutral-400 leading-tight">
+                           <span className="text-[13px] text-[var(--text-muted)] leading-tight">
                              {item.desc}
                            </span>
                         )}
@@ -104,7 +104,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://github.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--border-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="GitHub Profile"
                 >
                   <MaterialIcon name="terminal" className="text-[20px]" />
@@ -113,7 +113,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--border-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="LinkedIn Profile"
                 >
                   <MaterialIcon name="work" className="text-[20px]" />

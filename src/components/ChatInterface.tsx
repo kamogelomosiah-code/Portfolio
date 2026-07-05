@@ -254,13 +254,6 @@ export default function ChatInterface({
             ...prev,
             [lastMsg.id]: fullText
           }));
-          
-          setTimeout(() => {
-            const msgEl = document.getElementById(`message-${lastMsg.id}`);
-            if (msgEl) {
-              msgEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }, 100);
         }
       }, 15); // lightning fast word streaming
 
