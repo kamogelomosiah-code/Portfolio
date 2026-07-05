@@ -125,8 +125,10 @@ export default function ChatInterface({
         setUser(result.user);
         setNeedsAuth(false);
       }
-    } catch (err) {
-      console.error('Login failed:', err);
+    } catch (err: any) {
+      if (err?.code !== 'auth/popup-closed-by-user' && !err?.message?.includes('popup-closed-by-user')) {
+        console.error('Login failed:', err);
+      }
     } finally {
       setIsLoggingIn(false);
     }

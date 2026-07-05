@@ -113,7 +113,11 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
       }
     } catch (err: any) {
       console.error("Login failed:", err);
-      setErrorMsg("Failed to sign in. Please try again.");
+      if (err?.code === 'auth/popup-closed-by-user' || err?.message?.includes('popup-closed-by-user')) {
+        setErrorMsg("Sign in was cancelled.");
+      } else {
+        setErrorMsg("Failed to sign in. Please try again.");
+      }
     } finally {
       setIsLoggingIn(false);
     }
