@@ -18,6 +18,7 @@
 :root {
   --bg-main: #F8F9FA;
   --bg-card: #FFFFFF;
+  --bg-elevated: #F1F3F4;
   --text-main: #202124;
   --text-muted: #5F6368;
   --border-light: #E8EAED;
@@ -26,6 +27,7 @@
 .dark {
   --bg-main: #121212;
   --bg-card: #1E1E1E;
+  --bg-elevated: #282A2C;
   --text-main: #E8EAED;
   --text-muted: #9AA0A6;
   --border-light: #3C4043;

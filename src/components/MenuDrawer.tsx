@@ -42,7 +42,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-[var(--bg-main)] rounded-none z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r border-[var(--border-light)]"
+            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-[var(--bg-card)] rounded-none z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r border-[var(--border-light)]"
           >
             <div className="flex flex-col gap-6 flex-1">
               {/* Header */}
@@ -73,15 +73,15 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                       }}
                       className={`text-left px-5 py-4 w-full rounded-none flex items-center gap-4 transition-colors cursor-pointer border-0 ${
                         isActive
-                          ? "bg-[var(--color-accent)] text-[var(--bg-main)]"
+                          ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]"
                           : "bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-main)]"
                       }`}
                     >
-                      <div className={`shrink-0 flex items-center justify-center ${isActive ? 'text-[var(--bg-main)]' : 'text-[var(--text-muted)]'}`}>
+                      <div className={`shrink-0 flex items-center justify-center ${isActive ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)]'}`}>
                         {item.icon}
                       </div>
                       <div className="flex-1 flex flex-col">
-                        <span className={`text-[15px] font-medium leading-tight mb-0.5 ${isActive ? 'text-[var(--bg-main)] font-bold' : ''}`}>
+                        <span className={`text-[15px] font-medium leading-tight mb-0.5 ${isActive ? 'text-[var(--color-accent)] font-bold' : ''}`}>
                           {item.label}
                         </span>
                         {!isActive && (
@@ -104,7 +104,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://github.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--border-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-colors shrink-0 cursor-pointer"
                   title="GitHub Profile"
                 >
                   <MaterialIcon name="terminal" className="text-[20px]" />
@@ -113,14 +113,14 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--border-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-colors shrink-0 cursor-pointer"
                   title="LinkedIn Profile"
                 >
                   <MaterialIcon name="work" className="text-[20px]" />
                 </a>
                 <a
                   href="mailto:kamogelomosiah@gmail.com"
-                  className="w-10 h-10 flex items-center justify-center bg-[var(--color-accent-light)] hover:opacity-90 text-[var(--color-accent)] rounded-none transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-accent-light)] hover:opacity-90 text-[var(--color-accent)] transition-colors shrink-0 cursor-pointer"
                   title="Direct Contact"
                 >
                   <MaterialIcon name="mail" className="text-[20px]" />

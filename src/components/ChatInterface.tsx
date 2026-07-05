@@ -212,7 +212,7 @@ export default function ChatInterface({
       if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
         const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        if (isNearBottom || isLoading) {
+        if (isNearBottom && !currentlyStreamingId) {
           scrollToBottom('smooth');
         }
       }
@@ -220,7 +220,7 @@ export default function ChatInterface({
 
     resizeObserver.observe(scrollContentRef.current);
     return () => resizeObserver.disconnect();
-  }, [isLoading]);
+  }, [currentlyStreamingId]);
 
   // Progressive Token/Word streaming effect
   useEffect(() => {
@@ -228,6 +228,14 @@ export default function ChatInterface({
     if (lastMsg && lastMsg.role === "agent" && !streamedTexts[lastMsg.id] && currentlyStreamingId !== lastMsg.id) {
       setCurrentlyStreamingId(lastMsg.id);
       
+      // Scroll to the start of the message
+      setTimeout(() => {
+        const msgEl = document.getElementById(`message-${lastMsg.id}`);
+        if (msgEl) {
+          msgEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
+
       const fullText = lastMsg.text;
       const words = fullText.split(/(\s+)/); // keep spaces
       let currentWordIndex = 0;
@@ -241,12 +249,6 @@ export default function ChatInterface({
             ...prev,
             [lastMsg.id]: currentText
           }));
-          
-          if (scrollContainerRef.current) {
-            const container = scrollContainerRef.current;
-            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-            if (isNearBottom) scrollToBottom('auto');
-          }
         } else {
           clearInterval(interval);
           setCurrentlyStreamingId(null);
@@ -259,7 +261,7 @@ export default function ChatInterface({
 
       return () => clearInterval(interval);
     }
-  }, [messages]);
+  }, [messages, streamedTexts, currentlyStreamingId]);
 
   // Auto-resize textarea
   useEffect(() => {
