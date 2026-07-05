@@ -73,19 +73,19 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                       }}
                       className={`text-left px-5 py-4 w-full rounded-none flex items-center gap-4 transition-colors cursor-pointer border-0 ${
                         isActive
-                          ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]"
-                          : "bg-transparent hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 text-[var(--text-main)]"
+                          ? "bg-[var(--color-accent)] text-white"
+                          : "bg-transparent hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
                       }`}
                     >
-                      <div className="shrink-0 flex items-center justify-center">
+                      <div className={`shrink-0 flex items-center justify-center ${isActive ? 'text-white' : 'text-neutral-500 dark:text-neutral-400'}`}>
                         {item.icon}
                       </div>
                       <div className="flex-1 flex flex-col">
-                        <span className="text-[14px] font-medium leading-tight mb-0.5">
+                        <span className={`text-[15px] font-medium leading-tight mb-0.5 ${isActive ? 'text-white font-bold' : ''}`}>
                           {item.label}
                         </span>
                         {!isActive && (
-                           <span className="text-[12px] text-[var(--text-muted)] leading-tight">
+                           <span className="text-[13px] text-neutral-500 dark:text-neutral-400 leading-tight">
                              {item.desc}
                            </span>
                         )}

@@ -192,16 +192,16 @@ export default function ChatInterface({
 
   // High-reliability scrolling on message shifts
   useEffect(() => {
-    scrollToBottom('auto');
-    const t1 = setTimeout(() => scrollToBottom('smooth'), 40);
-    const t2 = setTimeout(() => scrollToBottom('smooth'), 150);
-    const t3 = setTimeout(() => scrollToBottom('smooth'), 300);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    // Only auto scroll to bottom if user is sending a message or it's loading
+    if (isLoading || input) {
+      scrollToBottom('auto');
+      const t1 = setTimeout(() => scrollToBottom('smooth'), 40);
+      const t2 = setTimeout(() => scrollToBottom('smooth'), 150);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
   }, [messages, isLoading, input]);
 
   // Resize observer to scroll when bubble height increases dynamically
@@ -211,8 +211,8 @@ export default function ChatInterface({
     const resizeObserver = new ResizeObserver(() => {
       if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
-        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 500;
-        if (isNearBottom || isLoading || currentlyStreamingId) {
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        if (isNearBottom || isLoading) {
           scrollToBottom('smooth');
         }
       }
@@ -220,7 +220,7 @@ export default function ChatInterface({
 
     resizeObserver.observe(scrollContentRef.current);
     return () => resizeObserver.disconnect();
-  }, [isLoading, currentlyStreamingId]);
+  }, [isLoading]);
 
   // Progressive Token/Word streaming effect
   useEffect(() => {
@@ -241,7 +241,12 @@ export default function ChatInterface({
             ...prev,
             [lastMsg.id]: currentText
           }));
-          scrollToBottom('auto');
+          
+          if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+            if (isNearBottom) scrollToBottom('auto');
+          }
         } else {
           clearInterval(interval);
           setCurrentlyStreamingId(null);
@@ -249,6 +254,13 @@ export default function ChatInterface({
             ...prev,
             [lastMsg.id]: fullText
           }));
+          
+          setTimeout(() => {
+            const msgEl = document.getElementById(`message-${lastMsg.id}`);
+            if (msgEl) {
+              msgEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
         }
       }, 15); // lightning fast word streaming
 
@@ -718,6 +730,7 @@ export default function ChatInterface({
 
                     return (
                       <div 
+                        id={`message-${msg.id}`}
                         key={msg.id} 
                         className={`flex w-full ${isUser ? "justify-end" : "justify-start"} ${isFirstInGroup ? "mt-6" : "mt-2"}`}
                       >
