@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X, Sparkles, Code2, FileText, Mail, PlusCircle, Github, Linkedin } from "lucide-react";
+import { MaterialIcon } from "./MaterialIcon";
 import { WatermelonIcon } from "./WatermelonIcon";
 
 interface MenuDrawerProps {
@@ -11,10 +11,10 @@ interface MenuDrawerProps {
 
 export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }: MenuDrawerProps) {
   const menuItems = [
-    { id: "chat", label: "Chat Assistant", icon: <Sparkles size={20} />, desc: "Ask the AI anything" },
-    { id: "projects", label: "Projects", icon: <Code2 size={20} />, desc: "Explore Live Projects" },
-    { id: "cv", label: "Resume / CV", icon: <FileText size={20} />, desc: "Career history & skills" },
-    { id: "contact", label: "Contact", icon: <Mail size={20} />, desc: "Get in touch directly" }
+    { id: "chat", label: "Chat Assistant", icon: <MaterialIcon name="forum" className="text-[20px]" />, desc: "Ask the AI anything" },
+    { id: "projects", label: "Projects", icon: <MaterialIcon name="code" className="text-[20px]" />, desc: "Explore Live Projects" },
+    { id: "cv", label: "Resume / CV", icon: <MaterialIcon name="description" className="text-[20px]" />, desc: "Career history & skills" },
+    { id: "contact", label: "Contact", icon: <MaterialIcon name="mail" className="text-[20px]" />, desc: "Get in touch directly" }
   ] as const;
 
   return (
@@ -75,7 +75,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                           : "bg-transparent hover:bg-gray-100 text-[#444746]"
                       }`}
                     >
-                      <div className="shrink-0">
+                      <div className="shrink-0 flex items-center justify-center">
                         {item.icon}
                       </div>
                       <div className="flex-1 flex flex-col">
@@ -105,7 +105,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="GitHub Profile"
                 >
-                  <Github size={20} strokeWidth={2} />
+                  <MaterialIcon name="terminal" className="text-[20px]" />
                 </a>
                 <a
                   href="https://linkedin.com"
@@ -114,14 +114,14 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="LinkedIn Profile"
                 >
-                  <Linkedin size={20} strokeWidth={2} />
+                  <MaterialIcon name="work" className="text-[20px]" />
                 </a>
                 <a
                   href="mailto:kamogelomosiah@gmail.com"
                   className="w-10 h-10 flex items-center justify-center bg-[var(--color-accent-light)] hover:bg-[#D2E3FC] text-[var(--color-accent)] rounded-none transition-colors shrink-0 cursor-pointer"
                   title="Direct Contact"
                 >
-                  <Mail size={20} strokeWidth={2} />
+                  <MaterialIcon name="mail" className="text-[20px]" />
                 </a>
               </div>
             </div>

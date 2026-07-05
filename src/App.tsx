@@ -16,10 +16,7 @@ const ContactPage = lazy(() => import("./components/ContactPage"));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-[var(--bg-main)]">
-    <div className="flex flex-col items-center gap-3">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-neutral-200 border-t-[var(--accent-color,var(--color-accent))]"></div>
-      <span className="text-xs text-[var(--text-muted)] font-medium tracking-wider uppercase animate-pulse">Loading Page...</span>
-    </div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
   </div>
 );
 
@@ -106,7 +103,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex bg-[var(--bg-card)] h-dvh text-black w-full font-sans antialiased relative overflow-hidden">
+    <div className="flex bg-[var(--bg-card)] h-dvh text-[var(--text-main)] w-full font-sans antialiased relative overflow-hidden">
       {/* Sidebar - Desktop Only */}
       <Sidebar currentTab={currentTab} onTabChange={setCurrentTab} />
 
@@ -114,7 +111,7 @@ export default function App() {
       <div className="flex-1 h-dvh md:pl-20 lg:pl-[88px] w-full relative flex flex-col bg-[var(--bg-main)]">
         <AnimatePresence mode="wait">
           {currentTab === "chat" && (
-            <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15, ease: "easeInOut" }} className="absolute inset-0 md:static md:flex-1 w-full h-full flex flex-col">
+            <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 w-full h-full flex flex-col">
               <ChatInterface 
                 selectedModel={selectedModel} 
                 setSelectedModel={setSelectedModel}
@@ -126,21 +123,21 @@ export default function App() {
             </motion.div>
           )}
           {currentTab === "projects" && (
-            <motion.div key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15, ease: "easeInOut" }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
+            <motion.div key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
               <Suspense fallback={<FallbackLoader />}>
                 <ProjectsPage onBackToChat={() => setCurrentTab("chat")} onToggleDrawer={() => setDrawerOpen(!drawerOpen)} />
               </Suspense>
             </motion.div>
           )}
           {currentTab === "cv" && (
-            <motion.div key="cv" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15, ease: "easeInOut" }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
+            <motion.div key="cv" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
               <Suspense fallback={<FallbackLoader />}>
                 <CvPage onBackToChat={() => setCurrentTab("chat")} onToggleDrawer={() => setDrawerOpen(!drawerOpen)} />
               </Suspense>
             </motion.div>
           )}
           {currentTab === "contact" && (
-            <motion.div key="contact" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15, ease: "easeInOut" }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
+            <motion.div key="contact" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
               <Suspense fallback={<FallbackLoader />}>
                 <ContactPage onBackToChat={() => setCurrentTab("chat")} onToggleDrawer={() => setDrawerOpen(!drawerOpen)} />
               </Suspense>

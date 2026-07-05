@@ -2,8 +2,8 @@
   "name": "Kamogelo Mosia",
   "nickname": "Kamo",
   "email": "kamogelomosiah@gmail.com",
-  "profession": "AI & Python Software Engineer",
-  "overview": "Highly skilled AI and Python Software Engineer and final-year BSc IT Student (coursework completed, degree conferral pending). Deeply passionate about and experienced in constructing high-performance Python backends, local LLM orchestration, RAG pipelines, and integrating state-of-the-art AI systems.",
+  "profession": "Software & IT Solutions Engineer",
+  "overview": "IT Internship Candidate and final-year BSc IT Student (coursework completed, degree conferral pending). Passionate about software system configurations, hardware diagnostic troubleshooting, web applications development, and AI tools integration.",
   "education": [
     {
       "degree": "BSc Information Technology in Computer Science & Informatics",
@@ -19,12 +19,6 @@
     }
   ],
   "experience": [
-    {
-      "title": "AI & Python Engineer (Personal Projects & Freelance)",
-      "year": "2024 - Present",
-      "company": "Autonomous/Freelance",
-      "details": "Designing and deploying specialized retrieval-augmented generation (RAG) systems, building high-throughput FastAPI and Flask backend microservices, and orchestrating local models with Hugging Face."
-    },
     {
       "title": "Cashier and Customer Service Representative",
       "year": "2021",
@@ -64,15 +58,16 @@
     }
   ],
   "skills": [
-    "Python (Expert / Highly Skilled), JavaScript, TypeScript, PHP",
-    "FastAPI, Flask, PyTorch, Hugging Face, LangChain, React.js, Node.js, Express, Laravel, Tailwind CSS",
-    "SQL (MySQL, PostgreSQL), database schema design, vector search databases (ChromaDB, Pinecone), data structuring & validation",
-    "Local LLM deployment & orchestration, prompt engineering, RAG pipelines, fine-tuning methodologies",
-    "Git, GitHub, Docker, Ollama, Hugging Face Hub, VS Code, Postman, Chrome DevTools (Google Certified), Render, Linux CLI, Google Colab",
-    "Windows 10/11 OS installation, advanced Linux configuration & software deployment",
+    "JavaScript, TypeScript, PHP, Python (in progress)",
+    "SQL (MySQL, PostgreSQL), database schema design, data structuring & validation",
+    "React.js, Node.js, Express, Laravel, Flask (in progress)",
+    "Desktop & laptop setup, peripheral setup, hardware diagnostics & troubleshooting",
+    "Windows 10/11 OS installation, basic Linux exposure, software configuration",
     "TCP/IP, DNS, DHCP, HTTP/HTTPS, subnetting, VPN configuration, wireless troubleshooting",
+    "First-line IT support, helpdesk ticketing awareness, issue logging & follow-up",
     "IT asset records, equipment registers, technical documentation, file management",
     "Basic cybersecurity & security policy adherence, data backup awareness",
+    "Git, GitHub, VS Code, Postman, Chrome DevTools (Google Certified), Docker (in progress)",
     "Customer service orientation, professional client communication, time management"
   ]
 }

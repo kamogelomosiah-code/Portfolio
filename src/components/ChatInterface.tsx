@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import { MaterialIcon } from "./MaterialIcon";
 import { initAuth, googleSignIn, logout, getAccessToken } from "../lib/auth";
 import type { User as FirebaseUser } from "firebase/auth";
 
@@ -95,8 +96,6 @@ export default function ChatInterface({
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
@@ -174,8 +173,6 @@ export default function ChatInterface({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const lastScrollY = useRef(0);
 
   // Smart Clarification / Follow-up Questions State
@@ -203,7 +200,7 @@ export default function ChatInterface({
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [messages, isLoading, isTranscribing, input]);
+  }, [messages, isLoading, input]);
 
   // Resize observer to scroll when bubble height increases dynamically
   useEffect(() => {
@@ -271,55 +268,7 @@ export default function ChatInterface({
     lastScrollY.current = currentScrollY;
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setIsTranscribing(true);
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'record.webm');
-
-        try {
-          const res = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await res.json();
-          if (res.ok && data.text) {
-            setInput((prev) => prev + (prev.length > 0 ? " " : "") + data.text);
-          } else if (data.error) {
-            alert(data.error);
-          }
-        } catch (error) {
-          console.error("Transcription failed", error);
-        } finally {
-          setIsTranscribing(false);
-        }
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Microphone access error:", error);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
+  // Microphone recording removed
 
   const getOfflineResponse = (text: string) => {
     const lower = text.toLowerCase();
@@ -327,7 +276,7 @@ export default function ChatInterface({
       return "I can't fetch live data right now, but here are some of Kamogelo's highlighted projects: [UI:PROJECTS]";
     }
     if (lower.includes("skill") || lower.includes("tech") || lower.includes("stack")) {
-      return "Kamogelo is a highly skilled AI & Python Software Engineer. Here is an overview of his technical skills: [UI:SKILLS]";
+      return "Kamogelo is an IT Engineer. Here is an overview of his technical skills: [UI:SKILLS]";
     }
     if (lower.includes("cv") || lower.includes("resume") || lower.includes("hire") || lower.includes("download")) {
       return "You can download Kamogelo's full CV right here: [UI:CV]";
@@ -460,30 +409,6 @@ export default function ChatInterface({
   const renderComposer = (isFixed: boolean) => {
     return (
       <div className={`${isFixed ? 'w-full max-w-3xl' : 'w-full max-w-2xl mx-auto mt-4'} relative flex flex-col items-center pointer-events-auto`}>
-        {/* Audio recording layout overlay */}
-        <AnimatePresence>
-          {isRecording && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="absolute inset-x-0 bottom-full mb-4 z-20 bg-[var(--bg-card)] border border-[var(--color-accent)]/30 rounded-none flex items-center justify-center p-6 cursor-pointer shadow-xl overflow-hidden touch-none select-none text-[var(--text-main)]"
-              onPointerUp={stopRecording}
-              onPointerLeave={stopRecording}
-              onTouchEnd={stopRecording}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              <div className="absolute inset-0 bg-[var(--color-accent-light)] animate-pulse"></div>
-              <div className="flex flex-col items-center justify-center gap-3 z-10">
-                <div className="w-16 h-16 bg-[var(--color-accent)] rounded-none flex items-center justify-center animate-bounce shadow-md">
-                  <Mic size={30} className="text-white" />
-                </div>
-                <span className="font-semibold text-[13.5px] tracking-wide">Listening... Release to transcribe</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Smart Clarification Questions Popup */}
         <AnimatePresence>
           {activeClarifications.length > 0 && (
@@ -495,16 +420,17 @@ export default function ChatInterface({
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5 text-[var(--color-accent)] font-semibold text-[13px] sm:text-[14px]">
-                  <Sparkles size={14} className="animate-pulse" />
+                  <MaterialIcon name="auto_awesome" className="text-[16px] animate-pulse" />
                   <span>Interactive Follow-up Questions</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveClarifications([])}
-                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors p-0.5 border-0 bg-transparent cursor-pointer"
+                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  style={{ minWidth: "44px", minHeight: "44px" }}
                   title="Dismiss suggestions"
                 >
-                  <X size={14} />
+                  <MaterialIcon name="close" className="text-[18px]" />
                 </button>
               </div>
               <p className="text-[12.5px] text-[var(--text-muted)] mb-3 leading-relaxed">
@@ -519,7 +445,7 @@ export default function ChatInterface({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-3.5 py-2 text-[13px] sm:text-[13.5px] font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/60 hover:bg-[var(--color-accent-light)] hover:text-[var(--color-accent)] border border-neutral-200 dark:border-neutral-800 hover:border-[var(--color-accent)]/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer"
+                    className="w-full text-left px-3.5 py-2.5 text-[13px] sm:text-[13.5px] font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/60 hover:bg-[var(--color-accent-light)] hover:text-[var(--color-accent)] border border-neutral-200 dark:border-neutral-800 hover:border-[var(--color-accent)]/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
                   >
                     {question}
                   </button>
@@ -530,17 +456,7 @@ export default function ChatInterface({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_6px_24px_rgba(30,142,62,0.15)]' : 'border-neutral-200 dark:border-neutral-800 shadow-sm'} rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative`}>
-          {isTranscribing && (
-            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[32px] flex items-center justify-center gap-3">
-               <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-               </svg>
-               <span className="font-semibold text-[14.5px] text-[var(--color-accent)]">Transcribing voice input...</span>
-            </div>
-          )}
-
+        <div className="w-full bg-[var(--bg-card)] border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
           {/* Top Row: text area */}
           <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
             <textarea
@@ -549,14 +465,14 @@ export default function ChatInterface({
               onFocus={() => { if (introStage !== "options") setIntroStage("options"); }}
               onKeyDown={(e) => {
                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend(input);
+                     e.preventDefault();
+                     handleSend(input);
                  }
               }}
-              placeholder="Type a message..." 
+              placeholder="Ask me about math or coding!" 
               ref={textareaRef}
               className="flex-1 bg-transparent text-[var(--text-main)] py-1.5 px-1 focus:outline-none resize-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
-              disabled={isLoading || isTranscribing}
+              disabled={isLoading}
               rows={2}
             />
           </div>
@@ -571,14 +487,15 @@ export default function ChatInterface({
                   setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
                 }
               }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 border cursor-pointer shrink-0 ${
-                selectedModel === "fusion"
-                  ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/50 shadow-sm"
-                  : "bg-[#f4f4f5] dark:bg-[#27272a] text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
-              }`}
+              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-[12px] font-semibold transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
+              style={{
+                backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
+                borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
+                color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)"
+              }}
               title={selectedModel === "fusion" ? "Thinking Mode Active" : "Enable Thinking Mode for advanced responses"}
             >
-              <Brain size={14} className={selectedModel === "fusion" ? "animate-pulse" : ""} />
+              <MaterialIcon name="psychology" className={`text-[18px] ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
               <span>Thinking Mode</span>
               {selectedModel === "fusion" && (
                 <span className="relative flex h-1.5 w-1.5">
@@ -588,24 +505,25 @@ export default function ChatInterface({
               )}
             </button>
 
-            {/* Right side: Options, Voice, Character count and Send */}
+            {/* Right side: Character count and Send */}
             <div className="flex items-center gap-2">
               <span className="text-[11.5px] text-[var(--text-muted)] font-mono hidden sm:inline select-none pr-1">
                 {input.length}/1000
               </span>
 
-              {/* Send button */}
+              {/* Send button (Sized appropriately for Touch Target requirements) */}
               <button
                 onClick={() => handleSend(input)}
-                disabled={!input.trim() || isLoading || isTranscribing}
-                className={`w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
-                  input.trim() && !isLoading && !isTranscribing
+                disabled={!input.trim() || isLoading}
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
+                  input.trim() && !isLoading
                     ? "border-transparent bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 shadow-sm"
                     : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-300 dark:text-neutral-600 cursor-not-allowed"
                 }`}
+                style={{ minWidth: "44px", minHeight: "44px" }}
                 title="Send message"
               >
-                <Send size={18} strokeWidth={2.2} className="-ml-0.5" />
+                <MaterialIcon name="send" className="text-[18px]" />
               </button>
             </div>
           </div>
@@ -664,10 +582,11 @@ export default function ChatInterface({
           <div className="flex items-center gap-2.5">
             <button 
               onClick={onToggleDrawer} 
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+              className="md:hidden flex items-center justify-center w-11 h-11 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+              style={{ minWidth: "44px", minHeight: "44px" }}
               title="Navigation Menu"
             >
-              <Menu size={20} />
+              <MaterialIcon name="menu" className="text-[24px]" />
             </button>
             
             <div className="flex items-center gap-2">
@@ -773,9 +692,9 @@ export default function ChatInterface({
                         <div className="mt-3.5 flex justify-start mb-8">
                           <button
                             onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                            className="flex items-center gap-1.5 text-[12.5px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-medium transition-colors bg-transparent border-0 cursor-pointer p-1"
+                            className="flex items-center gap-1.5 text-[12.5px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-semibold transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
                           >
-                            <RotateCw size={13} />
+                            <MaterialIcon name="refresh" className="text-[14px]" />
                             <span>Refresh Suggestions</span>
                           </button>
                         </div>
@@ -829,7 +748,7 @@ export default function ChatInterface({
                                           />
                                         ) : (
                                           <div className="flex items-center gap-2.5 px-3 py-2 bg-white/60 dark:bg-black/30 border border-black/5 dark:border-white/5 rounded-lg select-none text-left">
-                                            <FileText size={15} className="text-[var(--color-accent)] shrink-0" />
+                                            <MaterialIcon name="description" className="text-[16px] text-[var(--color-accent)] shrink-0" />
                                             <div className="flex flex-col min-w-0">
                                               <span className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-200 truncate max-w-[160px]">{attachment.name}</span>
                                               <span className="text-[10px] text-neutral-500 font-mono">{(attachment.size / 1024).toFixed(1)} KB</span>
@@ -845,9 +764,9 @@ export default function ChatInterface({
                             {msg.status === "error" && (
                               <button 
                                 onClick={() => handleSend(msg.text)} 
-                                className="mt-1.5 text-red-500 hover:text-red-600 flex items-center gap-1.5 text-[12px] font-medium bg-transparent border-0 cursor-pointer"
+                                className="mt-1.5 text-red-500 hover:text-red-600 flex items-center gap-1.5 text-[12px] font-semibold bg-transparent border-0 cursor-pointer min-h-[44px]"
                               >
-                                <AlertCircle size={13} />
+                                <MaterialIcon name="error" className="text-[14px] text-red-500 mr-1" />
                                 <span>Failed to send. Click to retry</span>
                               </button>
                             )}
@@ -878,19 +797,19 @@ export default function ChatInterface({
                                   <div className="flex flex-wrap gap-2 mt-3 mb-1 select-none">
                                     <button
                                       onClick={() => handleSend("Tell me about your software projects")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-850 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-350 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-750/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>📂 View Projects</span>
                                     </button>
                                     <button
                                       onClick={() => handleSend("What are your core technical skills?")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-850 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-350 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-750/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>🛠️ Check Skills</span>
                                     </button>
                                     <button
                                       onClick={() => handleSend("Can I see your CV / Resume?")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-850 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-350 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-750/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>📄 Download CV</span>
                                     </button>

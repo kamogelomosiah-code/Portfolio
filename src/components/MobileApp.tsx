@@ -1,10 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
-import { 
-  Send, Sparkles, Mic, User, Mail, 
-  GraduationCap, FileText, MessageSquare, AlertCircle, 
-  Code2, Download, Phone, MapPin, Globe, ExternalLink, Github, Menu,
-  Cpu, RotateCw, List, ChevronDown, Image as ImageIcon, Database, Layers, Linkedin, Paperclip, Zap, X, Brain
-} from "lucide-react";
+import { MaterialIcon } from "./MaterialIcon";
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { WatermelonIcon } from "./WatermelonIcon";
@@ -18,10 +13,7 @@ const ContactPage = lazy(() => import("./ContactPage"));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-[var(--bg-main)]">
-    <div className="flex flex-col items-center gap-3">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-neutral-200 border-t-[var(--accent-color,var(--color-accent))]"></div>
-      <span className="text-xs text-[var(--text-muted)] font-medium tracking-wider uppercase animate-pulse">Loading Page...</span>
-    </div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
   </div>
 );
 
@@ -59,27 +51,27 @@ const PROMPT_SETS = [
 function renderPromptIcon(iconName: string) {
   switch (iconName) {
     case "list":
-      return <List size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="list" className="text-[var(--color-accent)] text-[16px]" />;
     case "mail":
-      return <Mail size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="mail" className="text-[var(--color-accent)] text-[16px]" />;
     case "text":
-      return <FileText size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="description" className="text-[var(--color-accent)] text-[16px]" />;
     case "cpu":
-      return <Cpu size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="memory" className="text-[var(--color-accent)] text-[16px]" />;
     case "sparkles":
-      return <Sparkles size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="auto_awesome" className="text-[var(--color-accent)] text-[16px]" />;
     case "code":
-      return <Code2 size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="code" className="text-[var(--color-accent)] text-[16px]" />;
     case "user":
-      return <User size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="person" className="text-[var(--color-accent)] text-[16px]" />;
     case "cap":
-      return <GraduationCap size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="school" className="text-[var(--color-accent)] text-[16px]" />;
     case "layers":
-      return <Layers size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="layers" className="text-[var(--color-accent)] text-[16px]" />;
     case "database":
-      return <Database size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="storage" className="text-[var(--color-accent)] text-[16px]" />;
     default:
-      return <MessageSquare size={16} className="text-[var(--color-accent)]" />;
+      return <MaterialIcon name="chat" className="text-[var(--color-accent)] text-[16px]" />;
   }
 }
 
@@ -114,27 +106,7 @@ export default function MobileApp({
   const renderComposer = (isFixed: boolean) => {
     return (
       <div className={`${isFixed ? 'w-full' : 'w-full mt-4'} relative flex flex-col items-center pointer-events-auto`}>
-        {/* Audio recording Layout */}
-        <AnimatePresence>
-          {isRecording && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="absolute inset-x-0 bottom-full mb-3 z-20 bg-[var(--bg-card)] border border-[var(--color-accent)]/30 rounded-none flex items-center justify-center p-5 shadow-lg overflow-hidden touch-none select-none text-[var(--text-main)]"
-              onPointerUp={stopRecording}
-              onTouchEnd={stopRecording}
-            >
-              <div className="absolute inset-0 bg-[var(--color-accent-light)] animate-pulse"></div>
-              <div className="flex flex-col items-center justify-center gap-2 z-10">
-                <div className="w-12 h-12 bg-[var(--color-accent)] rounded-none flex items-center justify-center animate-bounce shadow-sm">
-                  <Mic size={22} className="text-white" />
-                </div>
-                <span className="font-semibold text-[12px]">Listening... Release to transcribe</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Microphone audio recording removed */}
 
         {/* Smart Clarification Questions Popup */}
         <AnimatePresence>
@@ -147,16 +119,17 @@ export default function MobileApp({
             >
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1 text-[var(--color-accent)] font-semibold text-[12px] sm:text-[13px]">
-                  <Sparkles size={12} className="animate-pulse" />
+                  <MaterialIcon name="auto_awesome" className="text-[14px] animate-pulse" />
                   <span>Interactive Follow-up Questions</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveClarifications([])}
-                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors p-0.5 border-0 bg-transparent cursor-pointer"
+                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center"
+                  style={{ minWidth: "44px", minHeight: "44px" }}
                   title="Dismiss suggestions"
                 >
-                  <X size={12} />
+                  <MaterialIcon name="close" className="text-[16px]" />
                 </button>
               </div>
               <div className="flex flex-col gap-1.5 max-h-[130px] overflow-y-auto pr-0.5">
@@ -179,17 +152,7 @@ export default function MobileApp({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className={`w-full bg-[var(--bg-card)] border ${isTranscribing ? 'border-[var(--color-accent)] shadow-[0_6px_24px_rgba(30,142,62,0.15)]' : 'border-neutral-200 dark:border-neutral-800 shadow-sm'} rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative`}>
-          {isTranscribing && (
-            <div className="absolute inset-0 bg-[var(--bg-card)]/95 backdrop-blur-sm z-10 rounded-[32px] flex items-center justify-center gap-3">
-               <svg className="animate-spin h-5 w-5 text-[var(--color-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-               </svg>
-               <span className="font-semibold text-[13.5px] text-[var(--color-accent)]">Transcribing audio...</span>
-            </div>
-          )}
-
+        <div className="w-full bg-[var(--bg-card)] border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative">
           {/* Top Row: text area */}
           <div className="flex items-start justify-between gap-2.5 w-full min-h-[44px]">
             <textarea
@@ -197,9 +160,9 @@ export default function MobileApp({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
-              placeholder="Type a message..." 
+              placeholder="Ask me about math or coding!" 
               className="flex-1 bg-transparent text-[var(--text-main)] py-1.5 px-1 focus:outline-none resize-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 font-normal text-[15px] leading-relaxed max-h-[100px] overflow-y-auto border-0"
-              disabled={isLoading || isTranscribing}
+              disabled={isLoading}
               rows={2}
             />
           </div>
@@ -214,41 +177,43 @@ export default function MobileApp({
                   setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
                 }
               }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 border cursor-pointer shrink-0 ${
-                selectedModel === "fusion"
-                  ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/50 shadow-sm"
-                  : "bg-[#f4f4f5] dark:bg-[#27272a] text-neutral-600 dark:text-neutral-400 border-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
-              }`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[11px] font-bold transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
+              style={{
+                backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
+                borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
+                color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)"
+              }}
               title={selectedModel === "fusion" ? "Thinking Mode Active" : "Enable Thinking Mode for advanced responses"}
             >
-              <Brain size={13} className={selectedModel === "fusion" ? "animate-pulse" : ""} />
+              <MaterialIcon name="psychology" className={`text-[16px] ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
               <span>Thinking Mode</span>
               {selectedModel === "fusion" && (
-                <span className="relative flex h-1 w-1">
+                <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1 w-1 bg-purple-500"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
                 </span>
               )}
             </button>
 
-            {/* Right side: Options, Voice, Counter and Send */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Right side: Character count and Send */}
+            <div className="flex items-center gap-2">
               <span className="text-[11px] text-[var(--text-muted)] font-mono hidden sm:inline select-none pr-1">
                 {input.length}/1000
               </span>
 
-              {/* Send button */}
+              {/* Send button (Enlarged for Mobile Touch Targets) */}
               <button
                 onClick={() => handleSend(input)}
-                disabled={!input.trim() || isLoading || isTranscribing}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
-                  input.trim() && !isLoading && !isTranscribing
+                disabled={!input.trim() || isLoading}
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
+                  input.trim() && !isLoading
                     ? "border-transparent bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 shadow-sm"
                     : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-300 dark:text-neutral-600 cursor-not-allowed"
                 }`}
+                style={{ minWidth: "44px", minHeight: "44px" }}
                 title="Send message"
               >
-                <Send size={16} strokeWidth={2.2} className="-ml-0.5" />
+                <MaterialIcon name="send" className="text-[18px]" />
               </button>
             </div>
           </div>
@@ -287,8 +252,6 @@ export default function MobileApp({
     );
   };
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -308,8 +271,6 @@ export default function MobileApp({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   // Page index helper to determine animation direction
   const getTabIndex = (tab: TabType) => TABS.indexOf(tab);
@@ -342,56 +303,7 @@ export default function MobileApp({
     }, 150);
   };
 
-  // Recording Logic (Web Audio API)
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setIsTranscribing(true);
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'record.webm');
-
-        try {
-          const res = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await res.json();
-          if (res.ok && data.text) {
-            setInput((prev) => prev + (prev.length > 0 ? " " : "") + data.text);
-          } else if (data.error) {
-            alert(data.error);
-          }
-        } catch (error) {
-          console.error("Transcription failed", error);
-        } finally {
-          setIsTranscribing(false);
-        }
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Microphone access error:", error);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
+  // Recording Logic removed
 
   const getOfflineResponse = (text: string) => {
     const lower = text.toLowerCase();
@@ -533,16 +445,16 @@ export default function MobileApp({
       x: 0,
       opacity: 1,
       transition: {
-        x: { type: "spring" as const, stiffness: 500, damping: 38 },
-        opacity: { duration: 0.12 }
+        x: { type: "spring" as const, stiffness: 350, damping: 32 },
+        opacity: { duration: 0.15 }
       }
     },
     exit: (dir: number) => ({
       x: dir > 0 ? "-100%" : "100%",
       opacity: 0,
       transition: {
-        x: { type: "spring" as const, stiffness: 500, damping: 38 },
-        opacity: { duration: 0.12 }
+        x: { type: "spring" as const, stiffness: 350, damping: 32 },
+        opacity: { duration: 0.15 }
       }
     })
   };
@@ -556,11 +468,11 @@ export default function MobileApp({
           <div className="flex items-center gap-2.5">
             <button 
               onClick={() => setDrawerOpen(true)}
-              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent shrink-0"
-              style={{ minWidth: "40px", minHeight: "40px" }}
+              className="flex items-center justify-center w-11 h-11 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent shrink-0"
+              style={{ minWidth: "44px", minHeight: "44px" }}
               title="Menu"
             >
-              <Menu size={20} />
+              <MaterialIcon name="menu" className="text-[24px]" />
             </button>
             <div className="flex items-center gap-2">
               <WatermelonIcon className="w-5 h-5 text-[var(--color-accent)] animate-pulse" />
@@ -653,9 +565,9 @@ export default function MobileApp({
                             <div className="mt-3.5 flex justify-start mb-6">
                               <button
                                 onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                                className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-medium transition-colors bg-transparent border-0 cursor-pointer p-1"
+                                className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-semibold transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
                               >
-                                <RotateCw size={12} />
+                                <MaterialIcon name="refresh" className="text-[14px]" />
                                 <span>Refresh Suggestions</span>
                               </button>
                             </div>
@@ -702,7 +614,7 @@ export default function MobileApp({
                                               />
                                             ) : (
                                               <div className="flex items-center gap-2 px-2.5 py-1.5 bg-white/60 dark:bg-black/30 border border-black/5 dark:border-white/5 rounded-lg select-none text-left">
-                                                <FileText size={13} className="text-[var(--color-accent)] shrink-0" />
+                                                <MaterialIcon name="description" className="text-[14px] text-[var(--color-accent)] shrink-0" />
                                                 <div className="flex flex-col min-w-0">
                                                   <span className="text-[11px] font-semibold text-neutral-800 dark:text-neutral-200 truncate max-w-[120px]">{attachment.name}</span>
                                                   <span className="text-[9px] text-neutral-500 font-mono leading-none mt-0.5">{(attachment.size / 1024).toFixed(1)} KB</span>
@@ -718,9 +630,9 @@ export default function MobileApp({
                                 {msg.status === "error" && (
                                   <button 
                                     onClick={() => handleSend(msg.text)} 
-                                    className="mt-1 text-red-500 flex items-center gap-1 text-[11px] bg-transparent border-0"
+                                    className="mt-1 text-red-500 flex items-center gap-1 text-[11px] bg-transparent border-0 min-h-[44px]"
                                   >
-                                    <AlertCircle size={12} /> Retry
+                                    <MaterialIcon name="error" className="text-[14px] text-red-500 mr-1" /> Retry
                                   </button>
                                 )}
                               </div>

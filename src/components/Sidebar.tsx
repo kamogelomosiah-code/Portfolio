@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Github, Linkedin, Mail, FileText, Code2, LayoutDashboard } from "lucide-react";
+import { MaterialIcon } from "./MaterialIcon";
 import { WatermelonIcon } from "./WatermelonIcon";
 
 interface SidebarProps {
@@ -25,13 +25,13 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             onClick={() => onTabChange("chat")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "chat" 
-                ? "bg-[var(--color-accent-light)] text-accent font-medium" 
-                : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
+                ? "text-[var(--color-accent)] font-semibold" 
+                : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] font-normal"
             }`}
             title="Kamo AI Chatbot Agent"
           >
-            <div className={`px-4 py-1 rounded-none ${currentTab === "chat" ? "bg-[#d2e3fc]" : ""}`}>
-               <LayoutDashboard size={22} className="stroke-[2px]" />
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "chat" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+               <MaterialIcon name="forum" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Chat</span>
           </button>
@@ -40,13 +40,13 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             onClick={() => onTabChange("projects")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "projects" 
-                ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-medium" 
-                : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
+                ? "text-[var(--color-accent)] font-semibold" 
+                : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] font-normal"
             }`}
             title="My Live Projects"
           >
-            <div className={`px-4 py-1 rounded-none ${currentTab === "projects" ? "bg-[#d2e3fc]" : ""}`}>
-               <Code2 size={22} className="stroke-[2px]" />
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "projects" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+               <MaterialIcon name="code" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Projects</span>
           </button>
@@ -55,13 +55,13 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             onClick={() => onTabChange("cv")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "cv" 
-                ? "bg-[var(--bg-accent-light)] text-[var(--color-accent)] font-medium" 
-                : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
+                ? "text-[var(--color-accent)] font-semibold" 
+                : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] font-normal"
             }`}
             title="Interactive CV / Resume"
           >
-            <div className={`px-4 py-1 rounded-none ${currentTab === "cv" ? "bg-[#d2e3fc]" : ""}`}>
-               <FileText size={22} className="stroke-[2px]" />
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "cv" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+               <MaterialIcon name="description" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">CV</span>
           </button>
@@ -70,13 +70,13 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             onClick={() => onTabChange("contact")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
               currentTab === "contact" 
-                ? "bg-[var(--bg-accent-light)] text-[var(--color-accent)] font-medium" 
-                : "bg-transparent text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text-main)] font-normal"
+                ? "text-[var(--color-accent)] font-semibold" 
+                : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] font-normal"
             }`}
             title="Get In Touch"
           >
-            <div className={`px-4 py-1 rounded-none ${currentTab === "contact" ? "bg-[#d2e3fc]" : ""}`}>
-               <Mail size={22} className="stroke-[2px]" />
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "contact" ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]" : "text-inherit group-hover:bg-neutral-200/50 dark:group-hover:bg-neutral-800/50"}`}>
+               <MaterialIcon name="mail" className="text-[22px]" />
             </div>
             <span className="text-[11px] font-sans text-center leading-none mt-1">Contact</span>
           </button>
@@ -89,19 +89,19 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
           href="https://github.com" 
           target="_blank" 
           rel="noreferrer" 
-          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-black/5 transition-colors shrink-0 cursor-pointer" 
+          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 transition-colors shrink-0 cursor-pointer" 
           title="GitHub Account"
         >
-          <Github size={20} strokeWidth={2} />
+          <MaterialIcon name="terminal" className="text-[20px]" />
         </a>
         <a 
           href="https://linkedin.com" 
           target="_blank" 
           rel="noreferrer" 
-          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-black/5 transition-colors shrink-0 cursor-pointer" 
+          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 transition-colors shrink-0 cursor-pointer" 
           title="LinkedIn Profile"
         >
-          <Linkedin size={20} strokeWidth={2} />
+          <MaterialIcon name="work" className="text-[20px]" />
         </a>
       </div>
     </div>

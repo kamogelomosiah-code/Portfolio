@@ -7,7 +7,6 @@ import { InferenceClient } from "@huggingface/inference";
 import * as dotenv from 'dotenv';
 import fs from 'fs';
 import { GoogleGenAI } from "@google/genai";
-import { loadModel, generate } from './llm';
 
 dotenv.config();
 
@@ -161,26 +160,35 @@ const app = express();
 app.use(express.json());
 const PORT = 3000;
 
-const SYSTEM_PROMPT = `You are Kamogelo (Kamo) Mosiah himself, but the virtual platform of him. You must strictly respond as though you are Kamogelo Mosiah, using the first person ("I", "me", "my"). Do not refer to yourself as "CodeMind Assistant" or an AI assistant representing Kamo. You are Kamo.
-When a user greets you or asks who you are, introduce yourself by saying: "Hey, I'm Kamogelo." or "Hey, I'm Kamo." or "Hey, I'm Kamogelo (Kamo) Mosiah."
+const SYSTEM_PROMPT = `You are Kamo's GPT, a specialized AI assistant focusing on Mathematics and Software Engineering/Coding (especially front-end development). You speak on behalf of Kamogelo (Kamo) Mosiah and know his background, but your primary expertise is helping users solve complex mathematical equations, explain computer science concepts, and build interactive front-end applications.
+
+When a user greets you or asks who you are, introduce yourself as Kamo's GPT, a math and coding specialist.
 
 Kamo's Background Details:
 - Kamo is an IT Internship Candidate and final-year BSc IT student at the University of Johannesburg (double majoring in Computer Science and Informatics). 
 - His degree status: Coursework completed, but degree not fully completed yet (graduation/conferral is pending).
 
-You must know all of Kamo's skills and background in detail:
-1. Programming Languages & Frameworks: JavaScript, TypeScript, PHP, Python (in progress), SQL (PostgreSQL, MySQL). React.js, Node.js, Express, Laravel, Flask (in progress), HTML5, CSS3/Tailwind.
-2. Hardware & IT Support: Desktop/laptop diagnostics & setup, printer installation and configuration, peripheral setup, device and hardware troubleshooting, operating system installation (Windows 10/11), basic Linux exposure, software installation and configuration.
-3. Networking Basics: Connectivity checks, TCP/IP, DNS, DHCP, HTTP/HTTPS, subnetting, VPN configuration, wireless troubleshooting, connectivity fault-finding, escalation of unresolved network issues.
-4. Helpdesk & Administration: First-line IT support, issue logging and follow-up, helpdesk and ticketing awareness, escalation to senior technicians. IT asset records, equipment registers, documentation, file management, data backup awareness, cash bookkeeping.
-5. Security & Soft Skills: Basic cybersecurity awareness, confidentiality practices, safe technology use, info security policy adherence. Patient, detail-oriented, clear communicator, time management, works well under supervision or independently, team player.
-6. Projects: MasterAPI (central REST API backend), Resume Maker (ResumeCraft - full stack resume builder with PostgreSQL), UJ Stock Manager, Portfolio Website, Real-Time Chat App (using WebSockets).
-7. Certifications & Active Study: Google Developer Tools Certification (completed), CompTIA IT Certificate (in progress), Python Programming Certificate (in progress), Docker Certificate (in progress), Flask Certificate (in progress).
+You must know Kamo's technical details:
+1. Programming Languages & Frameworks: JavaScript, TypeScript, PHP, Python, SQL (PostgreSQL, MySQL). React.js, Node.js, Express, Laravel, HTML5, CSS3/Tailwind.
+2. Projects: MasterAPI, Resume Maker (ResumeCraft), UJ Stock Manager, Portfolio Website, Real-Time Chat App.
+
+MATH AND CODING OUTPUT INSTRUCTIONS:
+1. MATHEMATICS FORMATTING:
+   - You must format all mathematical equations, symbols, and formulas using standard LaTeX delimiters so they are rendered beautifully by KaTeX in the chat UI:
+     - Use "$$ <equation> $$" (on separate lines) for block/display math.
+     - Use "$ <symbol or equation> $" or "\\( <symbol or equation> \\)" for inline math.
+   - Example display math: $$ f(x) = \int_{-\infty}^{\infty} e^{-x^2} dx $$
+   - Example inline math: Let $x$ be a real number where $x > 0$.
+
+2. FRONT-END CODE PREVIEWS:
+   - When asked to write, design, or show any front-end component, UI, web page, widget, or layout, you MUST output the complete, self-contained code inside a triple-backtick html code block.
+   - Within this block, combine the HTML structure, CSS (you can import Tailwind via '<script src="https://unpkg.com/@tailwindcss/browser@4"></script>' or CDN for a high-fidelity look), and any interactive JavaScript.
+   - This ensures the chat interface's interactive Preview tool compiles and displays the rendered, live, interactive front-end right inside the user's message bubble!
 
 RESPONSE CONSTRAINTS:
-- Keep your answers very short, concise, and direct. Avoid fluff and long-winded paragraphs.
-- Always speak in the first person ("I", "my", "me") because you are Kamo himself.
-- You should always have a quick action at the bottom of your answers by appending one of these exact tokens at the end:
+- Keep your explanations extremely concise, clear, and structured. Avoid unnecessary conversational filler or fluff.
+- DO NOT use excessive emojis. Limit emojis to at most 1 or 2 per response (or none at all). Keep the tone professional, direct, and focused.
+- Always include a quick action at the bottom of your answers by appending one of these exact tokens:
   - For projects or work: "[UI:PROJECTS]"
   - For skills or expertise: "[UI:SKILLS]"
   - For CV/resume/contact: "[UI:CV]"
@@ -304,165 +312,129 @@ app.post('/api/chat', async (req, res) => {
   }));
 
   try {
-    const authHeader = req.headers.authorization;
-    let googleContext = "";
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const userToken = authHeader.split(' ')[1];
-      const data = await fetchGoogleData(userToken);
-      if (data) {
-        googleContext = `\n\nGoogle Drive Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes:\n${JSON.stringify(data.keep, null, 2)}`;
-      }
-    }
-    const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
-
-    console.log(`[LOCAL LLM CHAT] Processing query: "${message}"`);
-    const prompt = `<|im_start|>system\n${activeSystemPrompt}<|im_end|>\n` +
-      formattedHistory.map((m: any) => `<|im_start|>${m.role}\n${m.content}<|im_end|>`).join('\n') +
-      `\n<|im_start|>user\n${message}<|im_end|>\n<|im_start|>assistant\n`;
-
-    let textResponse = await generate(prompt);
-
-    // Clean up any residual markers if present
-    textResponse = textResponse
-      .replace(/<\|im_end\|>/g, "")
-      .replace(/<\|im_start\|>/g, "")
-      .replace(/assistant\n/g, "")
-      .trim();
-
-    // Ensure answer is short and has a quick action at the bottom
-    const hasQuickAction = textResponse.includes("[UI:PROJECTS]") || textResponse.includes("[UI:SKILLS]") || textResponse.includes("[UI:CV]");
-    if (!hasQuickAction) {
-      const lowerMsg = message.toLowerCase();
-      if (lowerMsg.includes("project") || lowerMsg.includes("work") || lowerMsg.includes("portfolio")) {
-        textResponse += " [UI:PROJECTS]";
-      } else if (lowerMsg.includes("skill") || lowerMsg.includes("expert") || lowerMsg.includes("tech") || lowerMsg.includes("know")) {
-        textResponse += " [UI:SKILLS]";
-      } else {
-        textResponse += " [UI:CV]";
-      }
-    }
-
-    console.log(`[LOCAL LLM RESPONSE] Sent: "${textResponse}"`);
-    return res.json({ text: textResponse });
-
-  } catch (error: any) {
-    console.error("[LOCAL LLM ERROR] Failed to generate locally, using remote API fallback:", error.message || error);
+    const isThinkMode = model === 'fusion'; // "Think Longer"
     
-    try {
-      const isThinkMode = model === 'fusion'; // "Think Longer"
-      
-      const textResponse = await withTokenRotation(async (token, openaiClient, hfClient) => {
-        const authHeader = req.headers.authorization;
-        let googleContext = "";
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          const userToken = authHeader.split(' ')[1];
-          const data = await fetchGoogleData(userToken);
-          if (data) {
-            googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
-          }
+    const textResponse = await withTokenRotation(async (token, openaiClient, hfClient) => {
+      const authHeader = req.headers.authorization;
+      let googleContext = "";
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const userToken = authHeader.split(' ')[1];
+        const data = await fetchGoogleData(userToken);
+        if (data) {
+          googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
         }
+      }
 
-        const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
+      const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
 
-        if (isThinkMode) {
-          const modelA = 'deepseek-ai/DeepSeek-V4-Flash:novita';
-          const promptA = `Please provide a comprehensive answer to the following query:\n\n${message}`;
-          
-          const completionA = await hfClient.chatCompletion({
-            model: modelA,
-            messages: [{ role: 'user', content: promptA }],
-          }).catch(async () => {
-             return await openaiClient.chat.completions.create({
-               model: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',
-               messages: [{ role: 'user', content: promptA }]
-             });
+      if (isThinkMode) {
+        // 1. Initial Answer pass (Model A)
+        const modelA = 'deepseek-ai/DeepSeek-V4-Flash:novita';
+        const promptA = `Please provide a comprehensive answer to the following query:\n\n${message}`;
+        
+        const completionA = await hfClient.chatCompletion({
+          model: modelA,
+          messages: [{ role: 'user', content: promptA }],
+        }).catch(async () => {
+           // Fallback if Novita DeepSeek is not accessible on the provided token
+           return await openaiClient.chat.completions.create({
+             model: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B',
+             messages: [{ role: 'user', content: promptA }]
+           });
+        });
+        const resultA = (completionA as any).choices?.[0]?.message?.content || "";
+
+        // 2. Critique pass (Model B)
+        const modelB = 'Qwen/Qwen3.6-27B:featherless-ai';
+        const promptB = `You are an expert critic. Review the following query and the proposed answer. Identify any errors, missing information, or areas for improvement. Be concise and specific.\n\nQuery: ${message}\n\nProposed Answer:\n${resultA}`;
+        const completionB = await openaiClient.chat.completions.create({
+          model: modelB,
+          messages: [{ role: 'user', content: promptB }],
+        }).catch(async () => {
+          // Fallback for Qwen
+          return await openaiClient.chat.completions.create({
+            model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
+            messages: [{ role: 'user', content: promptB }]
           });
-          const resultA = (completionA as any).choices?.[0]?.message?.content || "";
+        });
+        const resultB = completionB.choices[0]?.message?.content || "";
 
-          const modelB = 'Qwen/Qwen3.6-27B:featherless-ai';
-          const promptB = `You are an expert critic. Review the following query and the proposed answer. Identify any errors, missing information, or areas for improvement. Be concise and specific.\n\nQuery: ${message}\n\nProposed Answer:\n${resultA}`;
-          const completionB = await openaiClient.chat.completions.create({
-            model: modelB,
-            messages: [{ role: 'user', content: promptB }],
-          }).catch(async () => {
-            return await openaiClient.chat.completions.create({
-              model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
-              messages: [{ role: 'user', content: promptB }]
-            });
-          });
-          const resultB = completionB.choices[0]?.message?.content || "";
+        // 3. Synthesis pass (Model C)
+        const modelC = 'meta-llama/Llama-3.3-70B-Instruct';
+        const synthesisPrompt = `You are CodeMind Assistant. You are orchestrating a team of AI models to provide the best answer to the user.
+        
+User Query: ${message}
 
-          const modelC = 'meta-llama/Llama-3.3-70B-Instruct';
-          const synthesisPrompt = `You are CodeMind Assistant. You are orchestrating a team of AI models to provide the best answer to the user.
-          
-  User Query: ${message}
+Initial Answer (Model A):
+${resultA}
 
-  Initial Answer (Model A):
-  ${resultA}
+Critique & Improvements (Model B):
+${resultB}
 
-  Critique & Improvements (Model B):
-  ${resultB}
-
-  Synthesize the final, polished, and highly accurate answer. Incorporate the improvements from the critique. Ensure the final response flows naturally and directly addresses the user's query without mentioning the internal review process.`;
-          
-          const finalCompletion = await openaiClient.chat.completions.create({
-            model: modelC,
+Synthesize the final, polished, and highly accurate answer. Incorporate the improvements from the critique. Ensure the final response flows naturally and directly addresses the user's query without mentioning the internal review process.`;
+        
+        const finalCompletion = await openaiClient.chat.completions.create({
+          model: modelC,
+          messages: [
+            { role: 'system', content: activeSystemPrompt },
+            ...formattedHistory,
+            { role: 'user', content: synthesisPrompt }
+          ],
+        });
+        
+        return finalCompletion.choices[0]?.message?.content || "";
+      } else {
+        // Quick Mode using the provided model
+        const targetModel = model || "MiniMaxAI/MiniMax-M3:preferred";
+        
+        if (targetModel.includes("Qwen")) {
+          // Use OpenAI client for Qwen
+          const completion = await openaiClient.chat.completions.create({
+            model: targetModel,
             messages: [
-              { role: 'system', content: activeSystemPrompt },
-              ...formattedHistory,
-              { role: 'user', content: synthesisPrompt }
+                { role: "system", content: activeSystemPrompt },
+                ...formattedHistory,
+                { role: "user", content: message }
             ],
           });
-          
-          return finalCompletion.choices[0]?.message?.content || "";
+          return completion.choices[0]?.message?.content || "";
         } else {
-          const targetModel = model || "MiniMaxAI/MiniMax-M3:preferred";
-          
-          if (targetModel.includes("Qwen")) {
-            const completion = await openaiClient.chat.completions.create({
-              model: targetModel,
-              messages: [
-                  { role: "system", content: activeSystemPrompt },
-                  ...formattedHistory,
-                  { role: "user", content: message }
-              ],
-            });
-            return completion.choices[0]?.message?.content || "";
-          } else {
-            const completion = await hfClient.chatCompletion({
-              model: targetModel,
-              messages: [
-                  { role: "system", content: activeSystemPrompt },
-                  ...formattedHistory,
-                  { role: "user", content: message }
-              ],
-            });
-            return completion.choices[0]?.message?.content || "";
-          }
+          // Use InferenceClient for MiniMax and DeepSeek
+          const completion = await hfClient.chatCompletion({
+            model: targetModel,
+            messages: [
+                { role: "system", content: activeSystemPrompt },
+                ...formattedHistory,
+                { role: "user", content: message }
+            ],
+          });
+          return completion.choices[0]?.message?.content || "";
         }
-      });
-
-      return res.json({ text: textResponse });
-    } catch (fallbackError: any) {
-      console.log("[INFO] Transitioning request to Gemini model...");
-      try {
-        const authHeader = req.headers.authorization;
-        let googleContext = "";
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          const userToken = authHeader.split(' ')[1];
-          const data = await fetchGoogleData(userToken);
-          if (data) {
-            googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
-          }
-        }
-        const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
-
-        const geminiResponse = await callGeminiChatFallback(activeSystemPrompt, formattedHistory, message);
-        return res.json({ text: geminiResponse });
-      } catch (geminiError: any) {
-        console.log("[INFO] All primary systems bypassed. Using offline helper.");
-        return res.status(200).json({ text: getOfflineFallbackResponse(message) });
       }
+    });
+
+    res.json({ text: textResponse });
+  } catch (error: any) {
+    const errorMsg = error.message || JSON.stringify(error);
+    console.log("[INFO] Transitioning request to Gemini model...");
+    
+    try {
+      const authHeader = req.headers.authorization;
+      let googleContext = "";
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const userToken = authHeader.split(' ')[1];
+        const data = await fetchGoogleData(userToken);
+        if (data) {
+          googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
+        }
+      }
+      const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
+
+      const geminiResponse = await callGeminiChatFallback(activeSystemPrompt, formattedHistory, message);
+      return res.json({ text: geminiResponse });
+    } catch (geminiError: any) {
+      console.log("[INFO] All primary systems bypassed. Using offline helper.");
+      res.status(200).json({ text: getOfflineFallbackResponse(message) });
     }
   }
 });
@@ -527,13 +499,6 @@ app.get('/api/hf-health', async (req, res) => {
 });
 
 async function startServer() {
-  // Pre-load/warm up the local SmolLM2 model on server startup to ensure seamless local inference
-  try {
-    await loadModel();
-  } catch (err: any) {
-    console.error("Warning: Could not warm up local SmolLM2 model on startup, will retry on first chat:", err.message || err);
-  }
-
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
