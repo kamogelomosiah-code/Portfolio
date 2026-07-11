@@ -31,19 +31,19 @@ export function ProjectCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-2xl font-sans">
       {projects.map((project, i) => (
-        <div key={i} className="bg-[var(--bg-card)] border border-[var(--border-light)] rounded-xl p-5 hover:border-[var(--color-accent)] dark:hover:border-[var(--color-accent)] transition-colors flex flex-col justify-between shadow-sm">
+        <div key={i} className="bg-surface border border-outline-variant rounded-xl p-5 hover:border-primary dark:hover:border-primary transition-colors flex flex-col justify-between shadow-sm">
           <div>
-            <h3 className="font-semibold text-base mb-2 text-black dark:text-white">{project.title}</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
+            <h3 className="font-semibold text-base mb-2 text-on-background text-on-background">{project.title}</h3>
+            <p className="text-on-surface-variant text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
             <div className="flex flex-wrap gap-1.5 mb-6">
               {project.tags.map(tag => (
-                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-lg text-gray-700 dark:text-gray-300">
+                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-surface-container-low bg-surface-container-highest border border-gray-100 border-outline rounded-lg text-on-surface dark:text-gray-300">
                   {tag}
                 </span>
                ))}
             </div>
           </div>
-          <a href={project.link} target="_blank" rel="noreferrer" className="flex items-center text-xs sm:text-sm font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors">
+          <a href={project.link} target="_blank" rel="noreferrer" className="flex items-center text-xs sm:text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
             View Project <ExternalLink size={14} className="ml-1" />
           </a>
         </div>
@@ -62,7 +62,7 @@ export function SkillChips() {
   return (
     <div className="flex flex-wrap gap-2 mt-4 max-w-xl font-sans">
       {skills.map(skill => (
-        <div key={skill} className="px-3 py-1.5 border border-[var(--border-light)] bg-gray-50/50 dark:bg-neutral-800 rounded-full text-xs font-semibold text-gray-800 dark:text-neutral-200 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors cursor-default shadow-sm">
+        <div key={skill} className="px-3 py-1.5 border border-outline-variant bg-surface-container-low bg-surface-container-highest rounded-full text-xs font-semibold text-on-surface dark:text-neutral-200 hover:bg-inverse-surface hover:text-on-primary dark:hover:bg-surface dark:hover:text-on-background transition-colors cursor-default shadow-sm">
           {skill}
         </div>
       ))}
@@ -158,7 +158,7 @@ REFERENCES
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg mt-3 gap-4 shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-surface-container-low bg-surface-container-highest/50 border border-outline-variant rounded-xl w-full max-w-lg mt-3 gap-4 shadow-sm hover:border-outline-variant dark:hover:border-outline transition-colors">
       <div className="flex items-center gap-3.5">
         {/* Document Icon Graphic */}
         <div className="w-12 h-12 shrink-0 bg-red-100 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border border-red-200/50 dark:border-red-900/20 shadow-sm relative overflow-hidden select-none">
@@ -170,10 +170,10 @@ REFERENCES
         </div>
         
         <div className="flex flex-col text-left">
-          <span className="font-bold text-[14px] text-neutral-800 dark:text-neutral-200 leading-snug truncate max-w-[220px] sm:max-w-[280px]">
+          <span className="font-bold text-body-medium text-on-surface dark:text-neutral-200 leading-snug truncate max-w-[220px] sm:max-w-[280px]">
             Kamogelo_Mosia_CV.pdf
           </span>
-          <span className="text-[12px] text-neutral-400 font-medium mt-0.5">
+          <span className="text-label-medium text-on-surface-variant font-medium mt-0.5">
             184 KB • Official CV/Resume
           </span>
         </div>
@@ -182,14 +182,14 @@ REFERENCES
       <div className="flex sm:flex-col items-stretch gap-2 shrink-0">
         <button
           onClick={handleDownload}
-          className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-black hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-white px-4 py-2 rounded-xl transition-all font-semibold text-[13px] sm:text-[13.5px] cursor-pointer shadow-sm border-0"
+          className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-inverse-surface hover:bg-surface-container-highest bg-surface-container-highest hover:bg-surface-variant text-on-primary px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer shadow-sm border-0"
         >
           <Download size={14} /> Download
         </button>
         {onViewCv && (
           <button
             onClick={onViewCv}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-white hover:bg-neutral-100 dark:bg-transparent dark:hover:bg-neutral-800/80 text-neutral-700 dark:text-neutral-200 px-4 py-2 rounded-xl transition-all font-semibold text-[13px] sm:text-[13.5px] cursor-pointer border border-neutral-200 dark:border-neutral-700"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-surface hover:bg-surface-container dark:bg-transparent hover:bg-surface-container-highest/80 text-on-surface dark:text-neutral-200 px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer border border-outline-variant"
           >
             View Online
           </button>

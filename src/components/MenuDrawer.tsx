@@ -11,12 +11,12 @@ interface MenuDrawerProps {
 
 export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }: MenuDrawerProps) {
   const menuItems: Array<{ id: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace"; label: string; icon: React.ReactNode; desc: string }> = [
-    { id: "chat", label: "Chat Assistant", icon: <MaterialIcon name="forum" className="text-[20px]" />, desc: "Ask the AI anything" },
-    { id: "projects", label: "Projects", icon: <MaterialIcon name="code" className="text-[20px]" />, desc: "Explore Live Projects" },
-    { id: "cv", label: "Resume / CV", icon: <MaterialIcon name="description" className="text-[20px]" />, desc: "Career history & skills" },
-    { id: "contact", label: "Contact", icon: <MaterialIcon name="mail" className="text-[20px]" />, desc: "Get in touch directly" },
-    { id: "workspace", label: "Google Hub", icon: <MaterialIcon name="apps" className="text-[20px]" />, desc: "Manage Gmail, Calendar, & Keep" },
-    { id: "changelog", label: "System Updates", icon: <MaterialIcon name="history" className="text-[20px]" />, desc: "View version history & logs" }
+    { id: "chat", label: "Chat Assistant", icon: <MaterialIcon name="forum" className="text-headline-small" />, desc: "Ask the AI anything" },
+    { id: "projects", label: "Projects", icon: <MaterialIcon name="code" className="text-headline-small" />, desc: "Explore Live Projects" },
+    { id: "cv", label: "Resume / CV", icon: <MaterialIcon name="description" className="text-headline-small" />, desc: "Career history & skills" },
+    { id: "contact", label: "Contact", icon: <MaterialIcon name="mail" className="text-headline-small" />, desc: "Get in touch directly" },
+    { id: "workspace", label: "Google Hub", icon: <MaterialIcon name="apps" className="text-headline-small" />, desc: "Manage Gmail, Calendar, & Keep" },
+    { id: "changelog", label: "System Updates", icon: <MaterialIcon name="history" className="text-headline-small" />, desc: "View version history & logs" }
   ];
 
   return (
@@ -42,7 +42,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-[var(--bg-card)] rounded-none z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r border-[var(--border-light)]"
+            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-surface rounded-none z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r border-outline-variant"
           >
             <div className="flex flex-col gap-6 flex-1">
               {/* Header */}
@@ -50,10 +50,10 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                 <div className="mb-5 text-accent">
                   <WatermelonIcon className="w-10 h-10" />
                 </div>
-                <h3 className="font-display font-medium text-[22px] tracking-normal text-[var(--text-main)] leading-tight mb-1">
+                <h3 className="font-display font-medium text-headline-medium tracking-normal text-on-background leading-tight mb-1">
                   Kamogelo Mosia
                 </h3>
-                <p className="text-[14px] text-[var(--text-muted)] font-normal">
+                <p className="text-body-medium text-on-surface-variant font-normal">
                   Interaction & Dev
                 </p>
               </div>
@@ -73,19 +73,19 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                       }}
                       className={`text-left px-5 py-4 w-full rounded-none flex items-center gap-4 transition-colors cursor-pointer border-0 ${
                         isActive
-                          ? "bg-[var(--color-accent-light)] text-[var(--color-accent)]"
-                          : "bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-main)]"
+                          ? "bg-primary-container text-primary"
+                          : "bg-transparent hover:bg-surface-container text-on-background"
                       }`}
                     >
-                      <div className={`shrink-0 flex items-center justify-center ${isActive ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)]'}`}>
+                      <div className={`shrink-0 flex items-center justify-center ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
                         {item.icon}
                       </div>
                       <div className="flex-1 flex flex-col">
-                        <span className={`text-[15px] font-medium leading-tight mb-0.5 ${isActive ? 'text-[var(--color-accent)] font-bold' : ''}`}>
+                        <span className={`text-title-small font-medium leading-tight mb-0.5 ${isActive ? 'text-primary font-bold' : ''}`}>
                           {item.label}
                         </span>
                         {!isActive && (
-                           <span className="text-[13px] text-[var(--text-muted)] leading-tight">
+                           <span className="text-body-small text-on-surface-variant leading-tight">
                              {item.desc}
                            </span>
                         )}
@@ -104,26 +104,26 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
                   href="https://github.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors shrink-0 cursor-pointer"
                   title="GitHub Profile"
                 >
-                  <MaterialIcon name="terminal" className="text-[20px]" />
+                  <MaterialIcon name="terminal" className="text-headline-small" />
                 </a>
                 <a
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-elevated)] transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors shrink-0 cursor-pointer"
                   title="LinkedIn Profile"
                 >
-                  <MaterialIcon name="work" className="text-[20px]" />
+                  <MaterialIcon name="work" className="text-headline-small" />
                 </a>
                 <a
                   href="mailto:kamogelomosiah@gmail.com"
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-accent-light)] hover:opacity-90 text-[var(--color-accent)] transition-colors shrink-0 cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-primary-container hover:opacity-90 text-primary transition-colors shrink-0 cursor-pointer"
                   title="Direct Contact"
                 >
-                  <MaterialIcon name="mail" className="text-[20px]" />
+                  <MaterialIcon name="mail" className="text-headline-small" />
                 </a>
               </div>
             </div>

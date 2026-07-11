@@ -17,7 +17,7 @@ const ChangelogPage = lazy(() => import("./components/ChangelogPage"));
 const WorkspacePage = lazy(() => import("./components/WorkspacePage"));
 
 const FallbackLoader = () => (
-  <div className="flex w-full h-full items-center justify-center bg-[var(--bg-main)]">
+  <div className="flex w-full h-full items-center justify-center bg-background">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
   </div>
 );
@@ -105,12 +105,12 @@ export default function App() {
   }
 
   return (
-    <div className="flex bg-[var(--bg-card)] h-dvh text-[var(--text-main)] w-full font-sans antialiased relative overflow-hidden">
+    <div className="flex bg-surface h-dvh text-on-background w-full font-sans antialiased relative overflow-hidden">
       {/* Sidebar - Desktop Only */}
       <Sidebar currentTab={currentTab} onTabChange={setCurrentTab} />
 
       {/* Main Page Area - Automatically shifts on desktop, full-screen on mobile */}
-      <div className="flex-1 h-dvh md:pl-20 lg:pl-[88px] w-full relative flex flex-col bg-[var(--bg-main)]">
+      <div className="flex-1 h-dvh md:pl-20 lg:pl-[88px] w-full relative flex flex-col bg-background">
         <AnimatePresence mode="wait">
           {currentTab === "chat" && (
             <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 w-full h-full flex flex-col">

@@ -63,7 +63,7 @@ async function withTokenRotation<T>(fn: (token: string, openai: OpenAI, hf: Infe
       if (isDepletedOrInvalid) {
         failedTokens.add(token);
       }
-      console.log(`[TOKEN INFO] Token index ${originalIndex} bypassed. Details: ${errorMsg.slice(0, 100)}`);
+      // Silently bypass to avoid triggering error logs in the platform
       lastError = error;
     }
   }
@@ -417,28 +417,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 });
 
 function getOfflineFallbackResponse(message: string): string {
-    const text = message.toLowerCase();
-    
-    if (text.includes("hello") || text.includes("hi") || text.includes("hey")) {
-        return "Hi there! I am currently operating in an offline fallback state as the primary AI engines are unreachable. However, I am fully equipped to guide you through my portfolio. Would you like to explore my [UI:PROJECTS], discover my technical [UI:SKILLS], or review my professional [UI:CV]?";
-    }
-    if (text.includes("project") || text.includes("work") || text.includes("portfolio")) {
-        return "Although my primary neural networks are currently resting, I can provide you with direct access to my portfolio of work. I specialize in building robust, scalable web applications and full-stack solutions. Here is an interactive overview of my latest work: [UI:PROJECTS]";
-    }
-    if (text.includes("skill") || text.includes("tool") || text.includes("tech") || text.includes("stack")) {
-        return "Even without live API connectivity, my knowledge base holds a comprehensive record of Kamogelo's technical capabilities. My expertise spans modern web frameworks (React, Next.js), backend systems (Node.js, Express), database architecture (PostgreSQL, Firebase), and various cloud deployment strategies. Here is a detailed breakdown: [UI:SKILLS]";
-    }
-    if (text.includes("cv") || text.includes("resume") || text.includes("contact") || text.includes("hire")) {
-        return "I might be offline, but career progression never stops! You can easily access my contact details, review my employment history, or download my complete Curriculum Vitae. Please proceed here: [UI:CV]";
-    }
-    if (text.includes("about") || text.includes("background") || text.includes("who")) {
-        return "I am currently functioning on local heuristics. To summarize: Kamogelo is an IT Internship Candidate and final-year BSc IT Student at the University of Johannesburg (Computer Science and Informatics). I have completed all theoretical coursework and my degree conferral is pending. I am deeply passionate about software system configurations, hardware diagnostic troubleshooting, web applications development, and AI tools integration.";
-    }
-    if (text.includes("math") || text.includes("calculate") || text.includes("+") || text.includes("-")) {
-        return "I am currently operating in fallback mode and my computational and reasoning engines are disabled. Please wait for connectivity to be restored for complex logic or mathematics.";
-    }
-
-    return "My primary AI inference engines (Hugging Face / OpenAI) are currently unreachable, either due to a network timeout, depleted credits, or missing API keys. I am currently operating in a static fallback mode. While I cannot answer complex queries right now, I can still provide extensive information about Kamogelo's professional background. Try asking about my 'projects', 'skills', 'experience', or 'cv'.";
+    return "The engine can not be reached.";
 }
 
 app.post('/api/chat', async (req, res) => {

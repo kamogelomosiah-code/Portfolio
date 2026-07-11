@@ -51,21 +51,21 @@ function CodeBlock({ children, className }: { children: React.ReactNode, classNa
   };
 
   return (
-    <div className="rounded-lg overflow-hidden my-4 border border-neutral-800 shadow-sm bg-neutral-950 font-sans">
-      <div className="flex items-center justify-between px-4 py-2 bg-neutral-900 border-b border-neutral-800">
+    <div className="rounded-lg overflow-hidden my-4 border border-outline shadow-sm bg-neutral-950 font-sans">
+      <div className="flex items-center justify-between px-4 py-2 bg-inverse-surface border-b border-outline">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">{language}</span>
+          <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{language}</span>
           {isHtml && (
-            <div className="flex bg-neutral-800 rounded p-0.5">
+            <div className="flex bg-surface-container-highest rounded p-0.5">
               <button
                 onClick={() => setShowPreview(false)}
-                className={`text-[10px] px-2 py-0.5 rounded-sm font-semibold transition-colors border-0 cursor-pointer ${!showPreview ? 'bg-neutral-700 text-white' : 'bg-transparent text-neutral-400 hover:text-neutral-200'}`}
+                className={`text-[10px] px-2 py-0.5 rounded-sm font-semibold transition-colors border-0 cursor-pointer ${!showPreview ? 'bg-neutral-700 text-on-primary' : 'bg-transparent text-on-surface-variant hover:text-neutral-200'}`}
               >
                 Code
               </button>
               <button
                 onClick={() => setShowPreview(true)}
-                className={`text-[10px] px-2 py-0.5 rounded-sm font-semibold transition-colors border-0 cursor-pointer ${showPreview ? 'bg-neutral-700 text-white' : 'bg-transparent text-neutral-400 hover:text-neutral-200'}`}
+                className={`text-[10px] px-2 py-0.5 rounded-sm font-semibold transition-colors border-0 cursor-pointer ${showPreview ? 'bg-neutral-700 text-on-primary' : 'bg-transparent text-on-surface-variant hover:text-neutral-200'}`}
               >
                 Preview
               </button>
@@ -75,14 +75,14 @@ function CodeBlock({ children, className }: { children: React.ReactNode, classNa
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
-            className="text-neutral-400 hover:text-white transition-colors flex items-center justify-center p-1 bg-transparent border-0 cursor-pointer"
+            className="text-on-surface-variant hover:text-on-primary transition-colors flex items-center justify-center p-1 bg-transparent border-0 cursor-pointer"
             title="Copy code"
           >
             {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
           </button>
           <button
             onClick={handleDownload}
-            className="text-neutral-400 hover:text-white transition-colors flex items-center justify-center p-1 bg-transparent border-0 cursor-pointer"
+            className="text-on-surface-variant hover:text-on-primary transition-colors flex items-center justify-center p-1 bg-transparent border-0 cursor-pointer"
             title="Download file"
           >
             <Download size={14} />
@@ -91,7 +91,7 @@ function CodeBlock({ children, className }: { children: React.ReactNode, classNa
       </div>
       <div className="w-full relative overflow-hidden bg-neutral-950">
         {showPreview && isHtml ? (
-          <div className="w-full h-full min-h-[200px] bg-white overflow-auto relative">
+          <div className="w-full h-full min-h-[200px] bg-surface overflow-auto relative">
             <iframe
               srcDoc={codeText}
               className="w-full h-full min-h-[300px] border-0"
@@ -100,7 +100,7 @@ function CodeBlock({ children, className }: { children: React.ReactNode, classNa
             />
           </div>
         ) : (
-          <div className="p-0 m-0 overflow-x-auto text-[13px] sm:text-[13.5px]">
+          <div className="p-0 m-0 overflow-x-auto text-body-small sm:text-[13.5px]">
             <SyntaxHighlighter
               style={oneDark}
               language={language}
@@ -176,40 +176,40 @@ export function EmailDraftCard({ to, subject, body }: EmailDraftCardProps) {
   };
 
   return (
-    <div className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-md my-4 font-sans bg-white dark:bg-neutral-900 transition-all duration-200">
+    <div className="w-full border border-outline-variant rounded-xl overflow-hidden shadow-md my-4 font-sans bg-surface bg-surface-container-highest transition-all duration-200">
       {/* Mail Header Window Controls */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-100 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-surface-container dark:bg-neutral-950 border-b border-outline-variant">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-[#FF5F56] inline-block" />
           <span className="w-3 h-3 rounded-full bg-[#FFBD2E] inline-block" />
           <span className="w-3 h-3 rounded-full bg-[#27C93F] inline-block" />
         </div>
-        <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">Email Composer Draft</span>
+        <span className="text-xs font-semibold text-on-surface-variant">Email Composer Draft</span>
         <div className="w-12" /> {/* spacer */}
       </div>
 
       {/* Mail Address Form fields */}
-      <div className="p-3.5 border-b border-neutral-100 dark:border-neutral-800/60 text-xs sm:text-sm space-y-2 bg-neutral-50/50 dark:bg-neutral-950/20">
+      <div className="p-3.5 border-b border-neutral-100 border-outline/60 text-xs sm:text-sm space-y-2 bg-surface-container-low dark:bg-neutral-950/20">
         <div className="flex items-baseline gap-2">
-          <span className="text-neutral-400 font-medium w-16 text-right select-none">To:</span>
-          <span className="font-semibold text-neutral-800 dark:text-neutral-200">{to}</span>
+          <span className="text-on-surface-variant font-medium w-16 text-right select-none">To:</span>
+          <span className="font-semibold text-on-surface dark:text-neutral-200">{to}</span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-neutral-400 font-medium w-16 text-right select-none">Subject:</span>
-          <span className="font-bold text-neutral-900 dark:text-neutral-100">{subject}</span>
+          <span className="text-on-surface-variant font-medium w-16 text-right select-none">Subject:</span>
+          <span className="font-bold text-on-surface dark:text-neutral-100">{subject}</span>
         </div>
       </div>
 
       {/* Mail Envelope Content Body */}
-      <div className="p-5 max-h-[350px] overflow-y-auto bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap font-sans border-b border-neutral-100 dark:border-neutral-900">
+      <div className="p-5 max-h-[350px] overflow-y-auto bg-surface dark:bg-neutral-950 text-on-surface dark:text-neutral-200 text-body-medium sm:text-title-small leading-relaxed whitespace-pre-wrap font-sans border-b border-neutral-100 dark:border-neutral-900">
         {body}
       </div>
 
       {/* Mail Composer Action bar */}
-      <div className="flex items-center justify-end gap-3 px-4 py-3 bg-neutral-50 dark:bg-neutral-950/40 border-t border-neutral-150 dark:border-neutral-800">
+      <div className="flex items-center justify-end gap-3 px-4 py-3 bg-surface-container-low dark:bg-neutral-950/40 border-t border-neutral-150 border-outline">
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs sm:text-sm font-semibold transition-all cursor-pointer bg-transparent text-neutral-700 dark:text-neutral-300"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container hover:bg-surface-container-highest text-xs sm:text-sm font-semibold transition-all cursor-pointer bg-transparent text-on-surface dark:text-neutral-300"
         >
           {copied ? (
             <>
@@ -225,7 +225,7 @@ export function EmailDraftCard({ to, subject, body }: EmailDraftCardProps) {
         </button>
         <button
           onClick={handleSend}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[var(--color-accent)] text-white hover:opacity-95 text-xs sm:text-sm font-semibold transition-all cursor-pointer border-0 shadow-sm"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-on-primary hover:opacity-95 text-xs sm:text-sm font-semibold transition-all cursor-pointer border-0 shadow-sm"
         >
           <Mail size={14} />
           <span>Open Mail App</span>
@@ -263,17 +263,17 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
         rehypePlugins={[rehypeKatex]}
         components={{
           p: ({ children }) => (
-            <p className="mb-2.5 last:mb-0 leading-relaxed text-[15.5px] sm:text-[16px] font-normal break-words text-[var(--text-main)]">
+            <p className="mb-2.5 last:mb-0 leading-relaxed text-[15.5px] sm:text-title-medium font-normal break-words text-on-background">
               {children}
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc pl-5 mb-3.5 space-y-1.5 text-[14.5px] sm:text-[15px] text-[var(--text-main)]">
+            <ul className="list-disc pl-5 mb-3.5 space-y-1.5 text-[14.5px] sm:text-title-small text-on-background">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal pl-5 mb-3.5 space-y-1.5 text-[14.5px] sm:text-[15px] text-[var(--text-main)]">
+            <ol className="list-decimal pl-5 mb-3.5 space-y-1.5 text-[14.5px] sm:text-title-small text-on-background">
               {children}
             </ol>
           ),
@@ -283,24 +283,24 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
             </li>
           ),
           h1: ({ children }) => (
-            <h1 className="text-xl sm:text-2xl font-bold mt-5 mb-2.5 text-[var(--text-main)] font-display tracking-tight border-b border-[var(--border-light)] pb-1">
+            <h1 className="text-xl sm:text-2xl font-bold mt-5 mb-2.5 text-on-background font-display tracking-tight border-b border-outline-variant pb-1">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-lg sm:text-xl font-semibold mt-4.5 mb-2 text-[var(--text-main)] font-display tracking-tight">
+            <h2 className="text-lg sm:text-xl font-semibold mt-4.5 mb-2 text-on-background font-display tracking-tight">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-base font-semibold mt-3.5 mb-1.5 text-[var(--text-main)] font-display">
+            <h3 className="text-base font-semibold mt-3.5 mb-1.5 text-on-background font-display">
               {children}
             </h3>
           ),
           code: ({ children, className }) => {
             const isInline = !className;
             return isInline ? (
-              <code className="px-1.5 py-0.5 rounded-sm bg-neutral-100 dark:bg-neutral-800 text-[13px] font-mono text-[var(--color-accent)] font-semibold">
+              <code className="px-1.5 py-0.5 rounded-sm bg-surface-container text-body-small font-mono text-primary font-semibold">
                 {children}
               </code>
             ) : (
@@ -312,34 +312,34 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--color-accent)] hover:underline font-semibold"
+              className="text-primary hover:underline font-semibold"
             >
               {children}
             </a>
           ),
           strong: ({ children }) => (
-            <strong className="font-bold text-[var(--text-main)]">
+            <strong className="font-bold text-on-background">
               {children}
             </strong>
           ),
-          em: ({ children }) => <em className="italic text-[var(--text-main)]/90">{children}</em>,
+          em: ({ children }) => <em className="italic text-on-background/90">{children}</em>,
           blockquote: ({ children }) => (
-            <blockquote className="border-l-3 border-[var(--color-accent)] pl-3.5 italic my-3.5 text-[var(--text-muted)] bg-neutral-50 dark:bg-neutral-900/20 py-1 pr-2">
+            <blockquote className="border-l-3 border-primary pl-3.5 italic my-3.5 text-on-surface-variant bg-surface-container-low bg-surface-container-highest/20 py-1 pr-2">
               {children}
             </blockquote>
           ),
           table: ({ children }) => (
             <div className="overflow-x-auto my-3.5 w-full">
-              <table className="min-w-full border-collapse border border-[var(--border-light)] text-[14px]">
+              <table className="min-w-full border-collapse border border-outline-variant text-body-medium">
                 {children}
               </table>
             </div>
           ),
-          thead: ({ children }) => <thead className="bg-neutral-50 dark:bg-neutral-800/50">{children}</thead>,
+          thead: ({ children }) => <thead className="bg-surface-container-low bg-surface-container-highest/50">{children}</thead>,
           tbody: ({ children }) => <tbody>{children}</tbody>,
-          tr: ({ children }) => <tr className="border-b border-[var(--border-light)]">{children}</tr>,
-          th: ({ children }) => <th className="p-2 border border-[var(--border-light)] font-semibold text-left">{children}</th>,
-          td: ({ children }) => <td className="p-2 border border-[var(--border-light)] text-[var(--text-main)]">{children}</td>
+          tr: ({ children }) => <tr className="border-b border-outline-variant">{children}</tr>,
+          th: ({ children }) => <th className="p-2 border border-outline-variant font-semibold text-left">{children}</th>,
+          td: ({ children }) => <td className="p-2 border border-outline-variant text-on-background">{children}</td>
         }}
       >
         {text}

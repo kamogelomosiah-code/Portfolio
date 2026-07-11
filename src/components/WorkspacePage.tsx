@@ -359,7 +359,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
         setKeepNotes(JSON.parse(local));
       } else {
         const defaultNotes = [
-          { id: "1", title: "Project MasterAPI Goals", text: "1. Optimize SQL indexes\n2. Add Swagger integration\n3. Set up Redis caching", color: "bg-amber-100 dark:bg-amber-950/40" },
+          { id: "1", title: "Project MasterAPI Goals", text: "1. Optimize SQL indexes\n2. Add Swagger integration\n3. Set up Redis caching", color: "bg-amber-100 bg-surfacember-950/40" },
           { id: "2", title: "BSc IT Degree Graduation List", text: "Complete submission of graduation audit by end of week.", color: "bg-emerald-100 dark:bg-emerald-950/40" },
           { id: "3", title: "UJ Stock Manager Refactoring", text: "Migrate frontend state management to React Context or Redux Toolkit for smoother transactions.", color: "bg-sky-100 dark:bg-sky-950/40" }
         ];
@@ -375,7 +375,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
     if (isKeepSandbox) {
       const colors = [
-        "bg-amber-100 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/30",
+        "bg-amber-100 bg-surfacember-950/40 border-amber-200 dark:border-amber-900/30",
         "bg-emerald-100 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/30",
         "bg-sky-100 dark:bg-sky-950/40 border-sky-200 dark:border-sky-900/30",
         "bg-purple-100 dark:bg-purple-950/40 border-purple-200 dark:border-purple-900/30",
@@ -450,25 +450,25 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4 }}
-      className="flex-1 h-full w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden relative"
+      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden relative"
     >
       {/* Top Navbar - Glassy Island Style */}
       <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
-        <div className="flex items-center justify-between w-full pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-xl shadow-md border border-[var(--border-light)]/60 px-4 py-2 max-w-4xl">
+        <div className="flex items-center justify-between w-full pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border border-outline-variant/60 px-4 py-2 max-w-4xl">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-accent-light)] flex items-center justify-center text-[var(--color-accent)] shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-primary shrink-0">
               <Mail size={18} />
             </div>
-            <h1 className="font-semibold text-[15px] sm:text-[18px] text-[var(--text-main)] tracking-tight font-display py-1">
+            <h1 className="font-semibold text-title-small sm:text-title-large text-on-background tracking-tight font-display py-1">
               Google Workspace
             </h1>
           </div>
           {user && (
             <div className="flex items-center gap-3">
-              <span className="hidden sm:inline-block text-xs text-[var(--text-muted)] font-mono">{user.email}</span>
+              <span className="hidden sm:inline-block text-xs text-on-surface-variant font-mono">{user.email}</span>
               <button 
                 onClick={handleLogout}
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[var(--border-light)] hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 cursor-pointer bg-transparent transition-colors"
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-outline-variant hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 cursor-pointer bg-transparent transition-colors"
               >
                 Sign Out
               </button>
@@ -489,15 +489,15 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-md mx-auto mt-8 p-6 sm:p-8 bg-[var(--bg-card)] border border-[var(--border-light)] rounded-3xl shadow-lg flex flex-col items-center text-center"
+                className="w-full max-w-md mx-auto mt-8 p-6 sm:p-8 bg-surface border border-outline-variant rounded-xl shadow-lg flex flex-col items-center text-center"
               >
-                <div className="w-16 h-16 rounded-2xl bg-[var(--color-accent-light)] flex items-center justify-center text-[var(--color-accent)] mb-6">
+                <div className="w-16 h-16 rounded-xl bg-primary-container flex items-center justify-center text-primary mb-6">
                   <Mail size={32} />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-[var(--text-main)] mb-3">
+                <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-on-background mb-3">
                   Connect Workspace APIs
                 </h2>
-                <p className="text-[13.5px] sm:text-[14px] text-[var(--text-muted)] leading-relaxed mb-6">
+                <p className="text-[13.5px] sm:text-body-medium text-on-surface-variant leading-relaxed mb-6">
                   Authenticate securely via Google to read & manage your Gmail, check your Calendar schedule, and edit your Google Keep notes directly in this dashboard.
                 </p>
 
@@ -511,7 +511,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 <button 
                   onClick={handleLogin}
                   disabled={isLoggingIn}
-                  className="w-full h-12 flex items-center justify-center gap-3 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black font-semibold text-[14.5px] rounded-xl cursor-pointer transition-all border-0 shadow-md disabled:opacity-75 disabled:cursor-wait"
+                  className="w-full h-12 flex items-center justify-center gap-3 bg-inverse-surface hover:bg-surface-container-highest dark:bg-surface dark:hover:bg-surface-container text-on-primary text-on-background font-semibold text-[14.5px] rounded-xl cursor-pointer transition-all border-0 shadow-md disabled:opacity-75 disabled:cursor-wait"
                 >
                   {isLoggingIn ? (
                     <>
@@ -532,7 +532,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                   )}
                 </button>
 
-                <span className="mt-4 text-[11px] text-[var(--text-muted)] flex items-center gap-1">
+                <span className="mt-4 text-label-small text-on-surface-variant flex items-center gap-1">
                   <Info size={11} /> Secured using Google OAuth standard.
                 </span>
               </motion.div>
@@ -546,13 +546,13 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 className="w-full flex flex-col gap-6"
               >
                 {/* INNER WORKSPACE TABS */}
-                <div className="flex bg-[var(--bg-card)] border border-[var(--border-light)] p-1.5 rounded-xl w-full max-w-md mx-auto">
+                <div className="flex bg-surface border border-outline-variant p-1.5 rounded-xl w-full max-w-md mx-auto">
                   <button
                     onClick={() => setActiveSubTab("gmail")}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer border-0 ${
                       activeSubTab === "gmail"
-                        ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] shadow-sm"
-                        : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                        ? "bg-primary-container text-primary shadow-sm"
+                        : "bg-transparent text-on-surface-variant hover:text-on-background"
                     }`}
                   >
                     <Mail size={16} />
@@ -562,8 +562,8 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     onClick={() => setActiveSubTab("calendar")}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer border-0 ${
                       activeSubTab === "calendar"
-                        ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] shadow-sm"
-                        : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                        ? "bg-primary-container text-primary shadow-sm"
+                        : "bg-transparent text-on-surface-variant hover:text-on-background"
                     }`}
                   >
                     <Calendar size={16} />
@@ -573,8 +573,8 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     onClick={() => setActiveSubTab("keep")}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer border-0 ${
                       activeSubTab === "keep"
-                        ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] shadow-sm"
-                        : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                        ? "bg-primary-container text-primary shadow-sm"
+                        : "bg-transparent text-on-surface-variant hover:text-on-background"
                     }`}
                   >
                     <FileText size={16} />
@@ -584,13 +584,13 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
                 {/* RELOAD/REFRESH INDICATOR */}
                 <div className="flex justify-between items-center px-1">
-                  <span className="text-[12px] font-mono text-[var(--text-muted)]">
+                  <span className="text-label-medium font-mono text-on-surface-variant">
                     {activeSubTab === "gmail" ? "Inbox Sync: 6 Latest Emails" : activeSubTab === "calendar" ? "Agenda Sync: Upcoming Events" : isKeepSandbox ? "Keep Local Sandbox Mode" : "Keep Notes Sync"}
                   </span>
                   <button 
                     onClick={fetchTabData}
                     disabled={isLoadingData}
-                    className="text-xs flex items-center gap-1 px-2 py-1 rounded-md hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-transparent hover:border-[var(--border-light)] cursor-pointer disabled:opacity-50"
+                    className="text-xs flex items-center gap-1 px-2 py-1 rounded-md hover:bg-surface text-on-surface-variant hover:text-on-background border border-transparent hover:border-outline-variant cursor-pointer disabled:opacity-50"
                   >
                     <RefreshCw size={12} className={isLoadingData ? "animate-spin" : ""} />
                     <span>Refresh</span>
@@ -599,9 +599,9 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
                 {/* CORE VIEWS LOADING STATS */}
                 {isLoadingData && emails.length === 0 && events.length === 0 && keepNotes.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl">
-                    <Loader2 size={28} className="text-[var(--color-accent)] animate-spin mb-3" />
-                    <span className="text-sm text-[var(--text-muted)] font-mono">Loading data from Google servers...</span>
+                  <div className="flex flex-col items-center justify-center py-20 bg-surface border border-outline-variant rounded-xl">
+                    <Loader2 size={28} className="text-primary animate-spin mb-3" />
+                    <span className="text-sm text-on-surface-variant font-mono">Loading data from Google servers...</span>
                   </div>
                 ) : (
                   
@@ -613,7 +613,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         <div className="flex justify-end">
                           <button
                             onClick={() => setIsComposingEmail(true)}
-                            className="flex items-center gap-1.5 bg-[var(--color-accent)] hover:opacity-90 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl cursor-pointer shadow-sm border-0"
+                            className="flex items-center gap-1.5 bg-primary hover:opacity-90 text-on-primary font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl cursor-pointer shadow-sm border-0"
                           >
                             <Plus size={16} />
                             <span>Compose Email</span>
@@ -621,7 +621,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         </div>
 
                         {emails.length === 0 ? (
-                          <div className="p-8 text-center bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl text-[var(--text-muted)] text-sm">
+                          <div className="p-8 text-center bg-surface border border-outline-variant rounded-xl text-on-surface-variant text-sm">
                             No emails found in your primary inbox.
                           </div>
                         ) : (
@@ -630,17 +630,17 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                               <div
                                 key={email.id}
                                 onClick={() => setSelectedEmail(email)}
-                                className="p-4 bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-[var(--color-accent)] rounded-2xl cursor-pointer transition-all shadow-sm text-left relative overflow-hidden group"
+                                className="p-4 bg-surface border border-outline-variant hover:border-primary rounded-xl cursor-pointer transition-all shadow-sm text-left relative overflow-hidden group"
                               >
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-400 group-hover:bg-[var(--color-accent)] transition-colors" />
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-400 group-hover:bg-primary transition-colors" />
                                 <div className="flex justify-between items-start gap-4 mb-1 pl-1">
-                                  <span className="font-semibold text-xs text-[var(--text-muted)] font-mono">{email.sender}</span>
-                                  <span className="text-[11px] text-[var(--text-muted)] shrink-0">{email.date}</span>
+                                  <span className="font-semibold text-xs text-on-surface-variant font-mono">{email.sender}</span>
+                                  <span className="text-label-small text-on-surface-variant shrink-0">{email.date}</span>
                                 </div>
-                                <h3 className="font-bold text-[14.5px] text-[var(--text-main)] mb-1.5 pl-1 truncate">
+                                <h3 className="font-bold text-[14.5px] text-on-background mb-1.5 pl-1 truncate">
                                   {email.subject}
                                 </h3>
-                                <p className="text-[13px] text-[var(--text-muted)] pl-1 line-clamp-2 leading-relaxed">
+                                <p className="text-body-small text-on-surface-variant pl-1 line-clamp-2 leading-relaxed">
                                   {email.snippet}
                                 </p>
                               </div>
@@ -656,7 +656,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         <div className="flex justify-end">
                           <button
                             onClick={() => setIsAddingEvent(true)}
-                            className="flex items-center gap-1.5 bg-[var(--color-accent)] hover:opacity-90 text-white font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl cursor-pointer shadow-sm border-0"
+                            className="flex items-center gap-1.5 bg-primary hover:opacity-90 text-on-primary font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl cursor-pointer shadow-sm border-0"
                           >
                             <Plus size={16} />
                             <span>Schedule Event</span>
@@ -664,7 +664,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         </div>
 
                         {events.length === 0 ? (
-                          <div className="p-8 text-center bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl text-[var(--text-muted)] text-sm">
+                          <div className="p-8 text-center bg-surface border border-outline-variant rounded-xl text-on-surface-variant text-sm">
                             No upcoming calendar events found.
                           </div>
                         ) : (
@@ -677,15 +677,15 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                               return (
                                 <div
                                   key={evt.id}
-                                  className="p-4 sm:p-5 bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-[var(--color-accent)]/40 rounded-2xl transition-all shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left relative overflow-hidden"
+                                  className="p-4 sm:p-5 bg-surface border border-outline-variant hover:border-primary/40 rounded-xl transition-all shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left relative overflow-hidden"
                                 >
                                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-400" />
                                   <div className="flex-1 space-y-2 pl-1">
-                                    <h3 className="font-bold text-[16px] text-[var(--text-main)]">
+                                    <h3 className="font-bold text-title-medium text-on-background">
                                       {evt.summary}
                                     </h3>
                                     
-                                    <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-[var(--text-muted)]">
+                                    <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-on-surface-variant">
                                       <span className="flex items-center gap-1">
                                         <Clock size={13} />
                                         <span>{dateStr} at {timeStr}</span>
@@ -699,7 +699,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                                     </div>
 
                                     {evt.description && (
-                                      <p className="text-[12.5px] text-[var(--text-muted)] leading-relaxed bg-[var(--bg-main)]/50 p-2.5 rounded-lg border border-[var(--border-light)]/50 mt-1">
+                                      <p className="text-[12.5px] text-on-surface-variant leading-relaxed bg-background/50 p-2.5 rounded-lg border border-outline-variant mt-1">
                                         {evt.description}
                                       </p>
                                     )}
@@ -718,18 +718,18 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         {/* Notes Bar Search & Create */}
                         <div className="flex flex-col sm:flex-row gap-3">
                           <div className="flex-1 relative">
-                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
                             <input
                               type="text"
                               value={keepSearch}
                               onChange={(e) => setKeepSearch(e.target.value)}
                               placeholder="Search Keep notes..."
-                              className="w-full h-10 pl-10 pr-4 bg-[var(--bg-card)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                              className="w-full h-10 pl-10 pr-4 bg-surface border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                             />
                           </div>
                           <button
                             onClick={() => setIsAddingNote(true)}
-                            className="flex items-center justify-center gap-1.5 bg-[var(--color-accent)] hover:opacity-90 text-white font-semibold text-xs sm:text-sm px-4 h-10 rounded-xl cursor-pointer shadow-sm border-0 shrink-0"
+                            className="flex items-center justify-center gap-1.5 bg-primary hover:opacity-90 text-on-primary font-semibold text-xs sm:text-sm px-4 h-10 rounded-xl cursor-pointer shadow-sm border-0 shrink-0"
                           >
                             <Plus size={16} />
                             <span>New Note</span>
@@ -744,7 +744,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         )}
 
                         {filteredNotes.length === 0 ? (
-                          <div className="p-8 text-center bg-[var(--bg-card)] border border-[var(--border-light)] rounded-2xl text-[var(--text-muted)] text-sm">
+                          <div className="p-8 text-center bg-surface border border-outline-variant rounded-xl text-on-surface-variant text-sm">
                             No notes found matching search.
                           </div>
                         ) : (
@@ -752,17 +752,17 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                             {filteredNotes.map((note) => (
                               <div
                                 key={note.id}
-                                className={`p-4 sm:p-5 rounded-2xl border flex flex-col justify-between shadow-sm relative group text-left ${
-                                  note.color || "bg-[var(--bg-card)] border-[var(--border-light)] hover:border-[var(--color-accent)]/40"
+                                className={`p-4 sm:p-5 rounded-xl border flex flex-col justify-between shadow-sm relative group text-left ${
+                                  note.color || "bg-surface border-outline-variant hover:border-primary/40"
                                 }`}
                               >
                                 <div>
                                   {note.title && (
-                                    <h3 className="font-bold text-[15px] sm:text-[16px] text-neutral-800 dark:text-neutral-100 mb-2 font-display">
+                                    <h3 className="font-bold text-title-small sm:text-title-medium text-on-surface dark:text-neutral-100 mb-2 font-display">
                                       {note.title}
                                     </h3>
                                   )}
-                                  <p className="text-[13.5px] text-neutral-700 dark:text-neutral-300 whitespace-pre-line leading-relaxed">
+                                  <p className="text-[13.5px] text-on-surface dark:text-neutral-300 whitespace-pre-line leading-relaxed">
                                     {note.text}
                                   </p>
                                 </div>
@@ -770,7 +770,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                                 <div className="flex justify-end mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button
                                     onClick={() => handleDeleteNote(note.id)}
-                                    className="p-1.5 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+                                    className="p-1.5 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                                     title="Delete Note"
                                   >
                                     <Trash2 size={15} />
@@ -793,11 +793,11 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
       {/* Floating Bottom Navigation */}
       <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-lg border border-[var(--border-light)]/60 px-2 py-2">
+        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant/60 px-2 py-2">
           {onToggleDrawer && (
             <button 
               onClick={onToggleDrawer}
-              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-main)] transition-colors cursor-pointer border-0 bg-transparent"
+              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
               title="Menu"
             >
               <Menu size={24} />
@@ -805,11 +805,11 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
           )}
           <button 
             onClick={onBackToChat}
-            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-main)] transition-colors cursor-pointer border-0 bg-transparent"
+            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
             title="Back to Chat"
           >
             <ArrowLeft size={20} />
-            <span className="font-medium text-[15px]">Back to Chat</span>
+            <span className="font-medium text-title-small">Back to Chat</span>
           </button>
         </div>
       </div>
@@ -823,20 +823,20 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsComposingEmail(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm"
             />
             
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-light)] p-5 sm:p-6 rounded-3xl shadow-xl z-10 flex flex-col max-h-[90vh] overflow-hidden"
+              className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Compose Email</h2>
                 <button 
                   onClick={() => setIsComposingEmail(false)}
-                  className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+                  className="p-1 hover:bg-surface-container hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft size={20} />
                 </button>
@@ -844,45 +844,45 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
               <form onSubmit={handleSendEmail} className="space-y-4 overflow-y-auto flex-1 pr-1 text-left">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">To (Recipient Email)</label>
+                  <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant">To (Recipient Email)</label>
                   <input
                     type="email"
                     required
                     value={emailTo}
                     onChange={(e) => setEmailTo(e.target.value)}
                     placeholder="e.g. client@example.com"
-                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                    className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">Subject</label>
+                  <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant">Subject</label>
                   <input
                     type="text"
                     required
                     value={emailSubject}
                     onChange={(e) => setEmailSubject(e.target.value)}
                     placeholder="Enter email subject line"
-                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                    className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">Message Body</label>
+                  <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant">Message Body</label>
                   <textarea
                     required
                     rows={6}
                     value={emailBody}
                     onChange={(e) => setEmailBody(e.target.value)}
                     placeholder="Type your mail content..."
-                    className="w-full p-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)] resize-none"
+                    className="w-full p-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={emailSending}
-                  className="w-full h-11 bg-[var(--color-accent)] hover:opacity-90 text-white font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
+                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
                 >
                   {emailSending ? (
                     <>
@@ -911,22 +911,22 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedEmail(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm"
             />
             
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-light)] p-5 sm:p-6 rounded-3xl shadow-xl z-10 flex flex-col text-left"
+              className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col text-left"
             >
               <div className="flex justify-between items-center mb-4">
-                <span className="text-[11px] font-mono font-bold px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 rounded-md">
+                <span className="text-label-small font-mono font-bold px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 rounded-md">
                   Secure Message Payload
                 </span>
                 <button 
                   onClick={() => setSelectedEmail(null)}
-                  className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+                  className="p-1 hover:bg-surface-container hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft size={20} />
                 </button>
@@ -934,24 +934,24 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">From</label>
-                  <div className="font-semibold text-sm text-[var(--text-main)] font-mono">{selectedEmail.sender}</div>
+                  <label className="text-[10px] font-bold font-sans uppercase tracking-wider text-on-surface-variant">From</label>
+                  <div className="font-semibold text-sm text-on-background font-mono">{selectedEmail.sender}</div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">Subject</label>
-                  <h3 className="font-bold text-[17px] text-[var(--text-main)] tracking-tight font-display">
+                  <label className="text-[10px] font-bold font-sans uppercase tracking-wider text-on-surface-variant">Subject</label>
+                  <h3 className="font-bold text-[17px] text-on-background tracking-tight font-display">
                     {selectedEmail.subject}
                   </h3>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)] font-mono">Date</label>
-                  <div className="text-xs text-[var(--text-muted)]">{selectedEmail.date}</div>
+                  <label className="text-[10px] font-bold font-sans uppercase tracking-wider text-on-surface-variant font-mono">Date</label>
+                  <div className="text-xs text-on-surface-variant">{selectedEmail.date}</div>
                 </div>
 
-                <div className="border-t border-[var(--border-light)] pt-3.5 mt-2">
-                  <p className="text-[14px] text-[var(--text-main)] leading-relaxed whitespace-pre-wrap">
+                <div className="border-t border-outline-variant pt-3.5 mt-2">
+                  <p className="text-body-medium text-on-background leading-relaxed whitespace-pre-wrap">
                     {selectedEmail.snippet}
                   </p>
                 </div>
@@ -970,20 +970,20 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddingEvent(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm"
             />
             
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-light)] p-5 sm:p-6 rounded-3xl shadow-xl z-10 flex flex-col max-h-[90vh] overflow-hidden text-left"
+              className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col max-h-[90vh] overflow-hidden text-left"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Schedule Calendar Event</h2>
                 <button 
                   onClick={() => setIsAddingEvent(false)}
-                  className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+                  className="p-1 hover:bg-surface-container hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft size={20} />
                 </button>
@@ -991,47 +991,47 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
               <form onSubmit={handleAddEvent} className="space-y-4 overflow-y-auto flex-1 pr-1">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">Event Title</label>
+                  <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant">Event Title</label>
                   <input
                     type="text"
                     required
                     value={eventTitle}
                     onChange={(e) => setEventTitle(e.target.value)}
                     placeholder="e.g. MasterAPI Refinement Sync"
-                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                    className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)] font-mono">Date</label>
+                    <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant font-mono">Date</label>
                     <input
                       type="date"
                       required
                       value={eventDate}
                       onChange={(e) => setEventDate(e.target.value)}
-                      className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                      className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)] font-mono">Time</label>
+                    <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant font-mono">Time</label>
                     <input
                       type="time"
                       required
                       value={eventTime}
                       onChange={(e) => setEventTime(e.target.value)}
-                      className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                      className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">Duration</label>
+                    <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant">Duration</label>
                     <select
                       value={eventDuration}
                       onChange={(e) => setEventDuration(e.target.value)}
-                      className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                      className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                     >
                       <option value="30">30 minutes</option>
                       <option value="60">1 hour</option>
@@ -1040,32 +1040,32 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">Location</label>
+                    <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant">Location</label>
                     <input
                       type="text"
                       value={eventLocation}
                       onChange={(e) => setEventLocation(e.target.value)}
                       placeholder="Google Meet, Office, etc."
-                      className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                      className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)] font-mono">Description</label>
+                  <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant font-mono">Description</label>
                   <textarea
                     rows={3}
                     value={eventDesc}
                     onChange={(e) => setEventDesc(e.target.value)}
                     placeholder="Enter discussion agenda or details"
-                    className="w-full p-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)] resize-none"
+                    className="w-full p-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={eventAdding}
-                  className="w-full h-11 bg-[var(--color-accent)] hover:opacity-90 text-white font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
+                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
                 >
                   {eventAdding ? (
                     <>
@@ -1094,20 +1094,20 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddingNote(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm"
             />
             
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-light)] p-5 sm:p-6 rounded-3xl shadow-xl z-10 flex flex-col text-left"
+              className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col text-left"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Create Keep Note</h2>
                 <button 
                   onClick={() => setIsAddingNote(false)}
-                  className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+                  className="p-1 hover:bg-surface-container hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft size={20} />
                 </button>
@@ -1115,31 +1115,31 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
               <form onSubmit={handleAddKeepNote} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">Note Title (Optional)</label>
+                  <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant">Note Title (Optional)</label>
                   <input
                     type="text"
                     value={noteTitle}
                     onChange={(e) => setNoteTitle(e.target.value)}
                     placeholder="Enter note title"
-                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)]"
+                    className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold font-sans uppercase tracking-wider text-[var(--text-muted)]">Body Text</label>
+                  <label className="text-label-small font-bold font-sans uppercase tracking-wider text-on-surface-variant">Body Text</label>
                   <textarea
                     required
                     rows={4}
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder="Type your notes here..."
-                    className="w-full p-3 bg-[var(--bg-main)] border border-[var(--border-light)] rounded-xl text-sm focus:outline-none focus:border-[var(--color-accent)] text-[var(--text-main)] resize-none"
+                    className="w-full p-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full h-11 bg-[var(--color-accent)] hover:opacity-90 text-white font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2"
+                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2"
                 >
                   <Plus size={15} />
                   <span>Create note</span>

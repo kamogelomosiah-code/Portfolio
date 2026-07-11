@@ -54,27 +54,27 @@ const PROMPT_SETS = [
 function renderPromptIcon(iconName: string) {
   switch (iconName) {
     case "list":
-      return <List size={16} className="text-[var(--color-accent)]" />;
+      return <List size={16} className="text-primary" />;
     case "mail":
-      return <Mail size={16} className="text-[var(--color-accent)]" />;
+      return <Mail size={16} className="text-primary" />;
     case "text":
-      return <FileText size={16} className="text-[var(--color-accent)]" />;
+      return <FileText size={16} className="text-primary" />;
     case "cpu":
-      return <Cpu size={16} className="text-[var(--color-accent)]" />;
+      return <Cpu size={16} className="text-primary" />;
     case "sparkles":
-      return <Sparkles size={16} className="text-[var(--color-accent)]" />;
+      return <Sparkles size={16} className="text-primary" />;
     case "code":
-      return <Code2 size={16} className="text-[var(--color-accent)]" />;
+      return <Code2 size={16} className="text-primary" />;
     case "user":
-      return <User size={16} className="text-[var(--color-accent)]" />;
+      return <User size={16} className="text-primary" />;
     case "cap":
-      return <GraduationCap size={16} className="text-[var(--color-accent)]" />;
+      return <GraduationCap size={16} className="text-primary" />;
     case "layers":
-      return <Layers size={16} className="text-[var(--color-accent)]" />;
+      return <Layers size={16} className="text-primary" />;
     case "database":
-      return <Database size={16} className="text-[var(--color-accent)]" />;
+      return <Database size={16} className="text-primary" />;
     default:
-      return <MessageSquare size={16} className="text-[var(--color-accent)]" />;
+      return <MessageSquare size={16} className="text-primary" />;
   }
 }
 
@@ -261,7 +261,7 @@ export default function ChatInterface({
 
       return () => clearInterval(interval);
     }
-  }, [messages, streamedTexts, currentlyStreamingId]);
+  }, [messages]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -280,21 +280,7 @@ export default function ChatInterface({
   // Microphone recording removed
 
   const getOfflineResponse = (text: string) => {
-    const lower = text.toLowerCase();
-    if (lower.includes("project") || lower.includes("portfolio") || lower.includes("work")) {
-      return "I can't fetch live data right now, but here are some of Kamogelo's highlighted projects: [UI:PROJECTS]";
-    }
-    if (lower.includes("skill") || lower.includes("tech") || lower.includes("stack")) {
-      return "Kamogelo is an IT Engineer. Here is an overview of his technical skills: [UI:SKILLS]";
-    }
-    if (lower.includes("cv") || lower.includes("resume") || lower.includes("hire") || lower.includes("download")) {
-      return "You can download Kamogelo's full CV right here: [UI:CV]";
-    }
-    if (lower.includes("contact") || lower.includes("email") || lower.includes("message")) {
-      return "Kamogelo can be reached at kamogelomosiah@gmail.com. Feel free to reach out to him directly!";
-    }
-    
-    return "I'm currently operating in offline mode. I can show you Kamogelo's projects, skills, or CV. What would you like to see?";
+    return "The engine can not be reached.";
   };
 
   const handleSend = async (text: string) => {
@@ -425,24 +411,24 @@ export default function ChatInterface({
               initial={{ opacity: 0, y: 15, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="w-full bg-[var(--bg-card)] border border-[var(--color-accent)]/20 shadow-xl p-4 mb-3 rounded-none relative z-30 text-left"
+              className="w-full bg-surface border border-primary/20 shadow-xl p-4 mb-3 rounded-none relative z-30 text-left"
             >
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5 text-[var(--color-accent)] font-semibold text-[13px] sm:text-[14px]">
-                  <MaterialIcon name="auto_awesome" className="text-[16px] animate-pulse" />
+                <div className="flex items-center gap-1.5 text-primary font-semibold text-body-small sm:text-body-medium">
+                  <MaterialIcon name="auto_awesome" className="text-title-medium animate-pulse" />
                   <span>Interactive Follow-up Questions</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveClarifications([])}
-                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  className="text-on-surface-variant hover:text-on-surface-variant dark:hover:text-neutral-200 transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center rounded-lg hover:bg-surface-container hover:bg-surface-container-highest"
                   style={{ minWidth: "44px", minHeight: "44px" }}
                   title="Dismiss suggestions"
                 >
-                  <MaterialIcon name="close" className="text-[18px]" />
+                  <MaterialIcon name="close" className="text-title-large" />
                 </button>
               </div>
-              <p className="text-[12.5px] text-[var(--text-muted)] mb-3 leading-relaxed">
+              <p className="text-[12.5px] text-on-surface-variant mb-3 leading-relaxed">
                 Choose a question below to refine your query, or ask anything else:
               </p>
               <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
@@ -454,7 +440,7 @@ export default function ChatInterface({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 text-[13px] sm:text-[13.5px] font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/60 hover:bg-[var(--color-accent-light)] hover:text-[var(--color-accent)] border border-neutral-200 dark:border-neutral-800 hover:border-[var(--color-accent)]/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
+                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-medium text-on-surface dark:text-neutral-300 bg-surface-container-low bg-surface-container-highest/60 hover:bg-primary-container hover:text-primary border border-outline-variant hover:border-primary/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
                   >
                     {question}
                   </button>
@@ -465,7 +451,7 @@ export default function ChatInterface({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className="w-full bg-[var(--bg-card)] border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
+        <div className="w-full bg-surface border border-outline-variant shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
           {/* Top Row: text area */}
           <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
             <textarea
@@ -480,7 +466,7 @@ export default function ChatInterface({
               }}
               placeholder="Ask me about math or coding!" 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-[var(--text-main)] py-1.5 px-1 focus:outline-none resize-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant dark:placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading}
               rows={2}
             />
@@ -496,7 +482,7 @@ export default function ChatInterface({
                   setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
                 }
               }}
-              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-[12px] font-semibold transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
+              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-semibold transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
               style={{
                 backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
                 borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
@@ -504,7 +490,7 @@ export default function ChatInterface({
               }}
               title={selectedModel === "fusion" ? "Thinking Mode Active" : "Enable Thinking Mode for advanced responses"}
             >
-              <MaterialIcon name="psychology" className={`text-[18px] ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
+              <MaterialIcon name="psychology" className={`text-title-large ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
               <span>Thinking Mode</span>
               {selectedModel === "fusion" && (
                 <span className="relative flex h-1.5 w-1.5">
@@ -516,7 +502,7 @@ export default function ChatInterface({
 
             {/* Right side: Character count and Send */}
             <div className="flex items-center gap-2">
-              <span className="text-[11.5px] text-[var(--text-muted)] font-mono hidden sm:inline select-none pr-1">
+              <span className="text-[11.5px] text-on-surface-variant font-mono hidden sm:inline select-none pr-1">
                 {input.length}/1000
               </span>
 
@@ -526,13 +512,13 @@ export default function ChatInterface({
                 disabled={!input.trim() || isLoading}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
                   input.trim() && !isLoading
-                    ? "border-transparent bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 shadow-sm"
-                    : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-300 dark:text-neutral-600 cursor-not-allowed"
+                    ? "border-transparent bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-sm"
+                    : "border-outline-variant/60 border-outline/60 bg-surface-container-low bg-surface-container-highest/30 text-neutral-300 text-on-surface-variant cursor-not-allowed"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
                 title="Send message"
               >
-                <MaterialIcon name="send" className="text-[18px]" />
+                <MaterialIcon name="send" className="text-title-large" />
               </button>
             </div>
           </div>
@@ -558,7 +544,7 @@ export default function ChatInterface({
                  </>
                )}
              </span>
-             <span className="text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 font-mono">
+             <span className="text-label-small font-semibold text-on-surface-variant font-mono">
                {isHfConnected === null ? (
                  "Checking server..."
                ) : isHfConnected ? (
@@ -569,7 +555,7 @@ export default function ChatInterface({
              </span>
            </div>
 
-           <span className="text-[10.5px] text-[var(--text-muted)] font-normal">
+           <span className="text-[10.5px] text-on-surface-variant font-normal">
               Assistant can make mistakes. Please check important details.
            </span>
         </div>
@@ -581,26 +567,26 @@ export default function ChatInterface({
   const isShrunk = isScrolled || !isInitialState;
 
   return (
-    <div className="flex-1 flex h-full overflow-hidden relative bg-[var(--bg-main)] w-full font-sans antialiased">
+    <div className="flex-1 flex h-full overflow-hidden relative bg-background w-full font-sans antialiased">
       
       {/* Main Conversation Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
         
         {/* Top Sticky Header */}
-        <div className="sticky top-0 z-30 w-full flex items-center justify-between h-[64px] border-b border-[var(--border-light)] bg-[var(--bg-card)]/95 backdrop-blur-md px-4 shadow-sm">
+        <div className="sticky top-0 z-30 w-full flex items-center justify-between h-[64px] border-b border-outline-variant bg-surface/95 backdrop-blur-md px-4 shadow-sm">
           <div className="flex items-center gap-2.5">
             <button 
               onClick={onToggleDrawer} 
-              className="md:hidden flex items-center justify-center w-11 h-11 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent"
+              className="md:hidden flex items-center justify-center w-11 h-11 rounded-lg hover:bg-inverse-surface/5 dark:hover:bg-surface/5 transition-colors text-on-surface-variant cursor-pointer border-0 bg-transparent"
               style={{ minWidth: "44px", minHeight: "44px" }}
               title="Navigation Menu"
             >
-              <MaterialIcon name="menu" className="text-[24px]" />
+              <MaterialIcon name="menu" className="text-headline-large" />
             </button>
             
             <div className="flex items-center gap-2">
-              <WatermelonIcon className="w-5 h-5 text-[var(--color-accent)] shrink-0" />
-              <span className="font-semibold text-[15px] sm:text-[16px] text-[var(--text-main)] font-display tracking-tight">
+              <WatermelonIcon className="w-5 h-5 text-primary shrink-0" />
+              <span className="font-semibold text-title-small sm:text-title-medium text-on-background font-display tracking-tight">
                 Kamogelo's GPT
               </span>
             </div>
@@ -608,7 +594,7 @@ export default function ChatInterface({
           
           <div className="flex items-center gap-2">
             {needsAuth ? (
-              <button onClick={handleLogin} disabled={isLoggingIn} className="gsi-material-button bg-white text-gray-700 font-semibold py-1.5 px-3 rounded shadow border border-gray-300 flex items-center gap-2 text-[13px] hover:bg-gray-50 cursor-pointer">
+              <button onClick={handleLogin} disabled={isLoggingIn} className="gsi-material-button bg-surface text-on-surface font-semibold py-1.5 px-3 rounded shadow border border-outline-variant flex items-center gap-2 text-body-small hover:bg-surface-container-low cursor-pointer">
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-4 h-4">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
                   <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
@@ -620,10 +606,10 @@ export default function ChatInterface({
               </button>
             ) : (
               <div className="flex items-center gap-3">
-                <span className="text-[13px] text-[var(--text-muted)] font-medium truncate max-w-[150px]">
+                <span className="text-body-small text-on-surface-variant font-medium truncate max-w-[150px]">
                   {user?.email}
                 </span>
-                <button onClick={handleLogout} className="text-[12px] text-red-500 hover:text-red-600 bg-transparent border-0 cursor-pointer font-medium px-2 py-1">
+                <button onClick={handleLogout} className="text-label-medium text-red-500 hover:text-red-600 bg-transparent border-0 cursor-pointer font-medium px-2 py-1">
                   Sign out
                 </button>
               </div>
@@ -653,13 +639,13 @@ export default function ChatInterface({
                       >
                         {/* Greeting Hero */}
                         <div className="mb-6">
-                          <h1 className="text-[36px] sm:text-[44px] font-bold tracking-tight text-[var(--text-main)] mb-1 leading-none font-display">
+                          <h1 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-on-background mb-1 leading-none font-display">
                             Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
                           </h1>
-                          <h2 className="text-[36px] sm:text-[44px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-4 leading-none font-display">
+                          <h2 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-4 leading-none font-display">
                             What would you like to know?
                           </h2>
-                          <p className="text-[var(--text-muted)] text-[15.5px] font-normal leading-relaxed">
+                          <p className="text-on-surface-variant text-[15.5px] font-normal leading-relaxed">
                             Use one of the most common prompts below or use your own to begin learning about me.
                           </p>
                         </div>
@@ -674,7 +660,7 @@ export default function ChatInterface({
                       >
                         {/* Compact suggestions header */}
                         <div className="mb-3.5">
-                          <p className="text-[var(--text-muted)] text-[12px] font-semibold uppercase tracking-wider">
+                          <p className="text-on-surface-variant text-label-medium font-semibold uppercase tracking-wider">
                             Quick Suggestions
                           </p>
                         </div>
@@ -685,12 +671,12 @@ export default function ChatInterface({
                             <button
                               key={idx}
                               onClick={() => handleSend(prompt.text)}
-                              className="flex items-center gap-3.5 p-3.5 bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-gray-400 dark:hover:border-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-none shadow-sm"
+                              className="flex items-center gap-3.5 p-3.5 bg-surface border border-outline-variant hover:border-gray-400 dark:hover:border-neutral-500 hover:bg-surface-container-low hover:bg-surface-container-highest/40 transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-none shadow-sm"
                             >
-                              <div className="shrink-0 w-8 h-8 rounded-none bg-[var(--color-accent-light)] flex items-center justify-center">
+                              <div className="shrink-0 w-8 h-8 rounded-none bg-primary-container flex items-center justify-center">
                                 {renderPromptIcon(prompt.icon)}
                               </div>
-                              <span className="text-[13px] text-[var(--text-main)] font-semibold leading-tight line-clamp-2">
+                              <span className="text-body-small text-on-background font-semibold leading-tight line-clamp-2">
                                 {prompt.text}
                               </span>
                             </button>
@@ -701,9 +687,9 @@ export default function ChatInterface({
                         <div className="mt-3.5 flex justify-start mb-8">
                           <button
                             onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                            className="flex items-center gap-1.5 text-[12.5px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-semibold transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
+                            className="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant hover:text-on-background font-semibold transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
                           >
-                            <MaterialIcon name="refresh" className="text-[14px]" />
+                            <MaterialIcon name="refresh" className="text-body-medium" />
                             <span>Refresh Suggestions</span>
                           </button>
                         </div>
@@ -733,13 +719,13 @@ export default function ChatInterface({
                           /* 5 & 6. User: Rounded bubble, right-aligned, accent-colored background */
                           <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%]">
                             <div 
-                              className="text-[var(--text-main)] px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-[20px] rounded-tr-[4px] border shadow-sm"
+                              className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-[20px] rounded-tr-[4px] border shadow-sm"
                               style={{ 
                                 backgroundColor: "var(--color-accent-light)", 
                                 borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
                               }}
                             >
-                              <p className="text-[14.5px] sm:text-[15px] whitespace-pre-wrap font-normal leading-relaxed break-words">
+                              <p className="text-[14.5px] sm:text-title-small whitespace-pre-wrap font-normal leading-relaxed break-words">
                                 {msg.text}
                               </p>
                               
@@ -757,11 +743,11 @@ export default function ChatInterface({
                                             referrerPolicy="no-referrer"
                                           />
                                         ) : (
-                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-white/60 dark:bg-black/30 border border-black/5 dark:border-white/5 rounded-lg select-none text-left">
-                                            <MaterialIcon name="description" className="text-[16px] text-[var(--color-accent)] shrink-0" />
+                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-surface/60 dark:bg-inverse-surface/30 border border-black/5 dark:border-white/5 rounded-lg select-none text-left">
+                                            <MaterialIcon name="description" className="text-title-medium text-primary shrink-0" />
                                             <div className="flex flex-col min-w-0">
-                                              <span className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-200 truncate max-w-[160px]">{attachment.name}</span>
-                                              <span className="text-[10px] text-neutral-500 font-mono">{(attachment.size / 1024).toFixed(1)} KB</span>
+                                              <span className="text-label-medium font-semibold text-on-surface dark:text-neutral-200 truncate max-w-[160px]">{attachment.name}</span>
+                                              <span className="text-[10px] text-on-surface-variant font-mono">{(attachment.size / 1024).toFixed(1)} KB</span>
                                             </div>
                                           </div>
                                         )}
@@ -774,9 +760,9 @@ export default function ChatInterface({
                             {msg.status === "error" && (
                               <button 
                                 onClick={() => handleSend(msg.text)} 
-                                className="mt-1.5 text-red-500 hover:text-red-600 flex items-center gap-1.5 text-[12px] font-semibold bg-transparent border-0 cursor-pointer min-h-[44px]"
+                                className="mt-1.5 text-red-500 hover:text-red-600 flex items-center gap-1.5 text-label-medium font-semibold bg-transparent border-0 cursor-pointer min-h-[44px]"
                               >
-                                <MaterialIcon name="error" className="text-[14px] text-red-500 mr-1" />
+                                <MaterialIcon name="error" className="text-body-medium text-red-500 mr-1" />
                                 <span>Failed to send. Click to retry</span>
                               </button>
                             )}
@@ -786,8 +772,8 @@ export default function ChatInterface({
                           <div className="flex items-start gap-4 w-full max-w-full px-1">
                             <div className="w-8 h-8 shrink-0 mt-1 flex items-center justify-center">
                               {isFirstInGroup ? (
-                                <div className="flex items-center justify-center rounded-full bg-[var(--bg-card)] border border-[var(--border-light)] w-8 h-8 shadow-sm">
-                                  <WatermelonIcon className="w-4.5 h-4.5 text-[var(--color-accent)] animate-pulse" />
+                                <div className="flex items-center justify-center rounded-full bg-surface border border-outline-variant w-8 h-8 shadow-sm">
+                                  <WatermelonIcon className="w-4.5 h-4.5 text-primary animate-pulse" />
                                 </div>
                               ) : (
                                 <div className="w-8 h-8" />
@@ -796,30 +782,30 @@ export default function ChatInterface({
                             
                             <div className="flex-1 flex flex-col items-start w-full min-w-0">
                               {isFirstInGroup && (
-                                <span className="font-semibold text-[13px] text-[var(--text-muted)] mb-1">
+                                <span className="font-semibold text-body-small text-on-surface-variant mb-1">
                                   Kamogelo Mosiah
                                 </span>
                               )}
-                              <div className="text-[var(--text-main)] bg-transparent pb-1 w-full text-left max-w-3xl">
+                              <div className="text-on-background bg-transparent pb-1 w-full text-left max-w-3xl">
                                 <MarkdownRenderer content={textToShow} isStreaming={isStreaming} />
                                 
                                 {!isStreaming && (
                                   <div className="flex flex-wrap gap-2 mt-3 mb-1 select-none">
                                     <button
                                       onClick={() => handleSend("Tell me about your software projects")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-label-medium font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>📂 View Projects</span>
                                     </button>
                                     <button
                                       onClick={() => handleSend("What are your core technical skills?")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-label-medium font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>🛠️ Check Skills</span>
                                     </button>
                                     <button
                                       onClick={() => handleSend("Can I see your CV / Resume?")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-label-medium font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>📄 Download CV</span>
                                     </button>
@@ -846,18 +832,18 @@ export default function ChatInterface({
                   {isLoading && (
                     <div className="flex items-start w-full justify-start mt-6 px-1">
                       <div className="flex items-start gap-4 w-full max-w-full">
-                        <div className="flex items-center justify-center rounded-full bg-[var(--bg-card)] border border-[var(--border-light)] w-8 h-8 shrink-0 mt-1 shadow-sm">
-                          <WatermelonIcon className="w-4.5 h-4.5 text-[var(--color-accent)] animate-pulse" />
+                        <div className="flex items-center justify-center rounded-full bg-surface border border-outline-variant w-8 h-8 shrink-0 mt-1 shadow-sm">
+                          <WatermelonIcon className="w-4.5 h-4.5 text-primary animate-pulse" />
                         </div>
                         <div className="flex-1 flex flex-col items-start w-full">
-                          <span className="font-semibold text-[13px] text-[var(--text-muted)] mb-1">
+                          <span className="font-semibold text-body-small text-on-surface-variant mb-1">
                             Kamogelo Mosiah
                           </span>
-                          <div className="py-2 flex items-center gap-1.5 text-[var(--text-muted)]">
-                            <span className="text-[14px] font-normal italic">
+                          <div className="py-2 flex items-center gap-1.5 text-on-surface-variant">
+                            <span className="text-body-medium font-normal italic">
                               {selectedModel === 'fusion' ? 'Consulting models...' : 'Thinking'}
                             </span>
-                            <span className="inline-block animate-pulse font-bold text-[var(--color-accent)] select-none">▍</span>
+                            <span className="inline-block animate-pulse font-bold text-primary select-none">▍</span>
                           </div>
                         </div>
                       </div>
@@ -870,7 +856,7 @@ export default function ChatInterface({
         </div>
 
         {/* Custom Composer fixed at bottom - always displayed to be sticky bottom and always visible */}
-        <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-[var(--bg-main)] border-t border-[var(--border-subtle)]">
+        <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-background border-t border-outline-variant">
           {renderComposer(true)}
         </div>
 

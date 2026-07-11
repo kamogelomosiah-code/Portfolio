@@ -107,13 +107,13 @@ export default function ChangelogPage({ onBackToChat, onToggleDrawer }: Changelo
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4 }}
-      className="flex-1 h-full w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden relative"
+      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden relative"
     >
       {/* Top Navbar - Island Style */}
       <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
-        <div className="flex items-center justify-between w-full pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-xl shadow-md border border-[var(--border-light)]/60 px-4 py-2 max-w-3xl">
+        <div className="flex items-center justify-between w-full pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border border-outline-variant/60 px-4 py-2 max-w-3xl">
           <div className="flex items-center gap-2 m-0 p-0">
-            <h1 className="font-medium text-[16px] sm:text-[18px] md:text-[20px] text-[var(--text-main)] tracking-normal font-display m-0 p-0 ml-1 py-1">System Changelog</h1>
+            <h1 className="font-medium text-title-medium sm:text-title-large md:text-headline-small text-on-background tracking-normal font-display m-0 p-0 ml-1 py-1">System Changelog</h1>
           </div>
         </div>
       </div>
@@ -123,13 +123,13 @@ export default function ChangelogPage({ onBackToChat, onToggleDrawer }: Changelo
         <div className="w-full max-w-2xl pt-4 sm:pt-8 text-left">
           
           <div className="mb-10 max-w-xl">
-            <p className="text-[var(--text-muted)] text-[15px] sm:text-[16px] leading-relaxed">
+            <p className="text-on-surface-variant text-title-small sm:text-title-medium leading-relaxed">
               Tracking core platform system changes, layout iterations, chatbot features, and backend LLM pipeline optimizations.
             </p>
           </div>
 
           {/* Interactive Timeline Graph */}
-          <div className="relative pl-6 sm:pl-8 border-l border-[var(--border-light)] ml-2 sm:ml-4 space-y-12">
+          <div className="relative pl-6 sm:pl-8 border-l border-outline-variant ml-2 sm:ml-4 space-y-12">
             
             {changelogData.map((item, index) => (
               <motion.div
@@ -143,46 +143,46 @@ export default function ChangelogPage({ onBackToChat, onToggleDrawer }: Changelo
                 {/* Timeline Bullet Node */}
                 <div className={`absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 sm:w-5 h-4 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                   item.status === "current"
-                    ? "bg-[var(--bg-card)] border-[var(--color-accent)] shadow-[0_0_10px_rgba(var(--color-accent),0.3)] scale-110"
-                    : "bg-[var(--bg-main)] border-[var(--text-muted)]/50 group-hover:border-[var(--color-accent)]"
+                    ? "bg-surface border-primary shadow-[0_0_10px_rgba(var(--color-accent),0.3)] scale-110"
+                    : "bg-background border-[var(--text-muted)]/50 group-hover:border-primary"
                 }`}>
                   {item.status === "current" ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                   ) : (
-                    <span className="w-1 h-1 rounded-full bg-[var(--text-muted)]/50 group-hover:bg-[var(--color-accent)]" />
+                    <span className="w-1 h-1 rounded-full bg-[var(--text-muted)]/50 group-hover:bg-primary" />
                   )}
                 </div>
 
                 {/* Main Version Block Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={`text-[12px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                    <span className={`text-label-medium font-mono font-bold px-2 py-0.5 rounded-md ${
                       item.status === "current"
-                        ? "bg-[var(--color-accent)] text-white"
-                        : "bg-[var(--border-light)] text-[var(--text-muted)]"
+                        ? "bg-primary text-on-primary"
+                        : "bg-[var(--border-light)] text-on-surface-variant"
                     }`}>
                       {item.version}
                     </span>
-                    <h2 className="text-[17px] sm:text-[19px] font-semibold text-[var(--text-main)] font-display tracking-tight">
+                    <h2 className="text-[17px] sm:text-[19px] font-semibold text-on-background font-display tracking-tight">
                       {item.title}
                     </h2>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] text-[var(--text-muted)]">
+                  <div className="flex items-center gap-1.5 text-label-small sm:text-label-medium text-on-surface-variant">
                     <Clock size={12} />
                     <span>{item.date}</span>
                   </div>
                 </div>
 
                 {/* Version Log Card Body */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-[var(--color-accent)]/30 transition-all shadow-sm">
+                <div className="p-4 sm:p-5 rounded-xl bg-surface border border-outline-variant hover:border-primary/30 transition-all shadow-sm">
                   <ul className="space-y-3.5 m-0 p-0 list-none">
                     {item.changes.map((change, cIdx) => (
-                      <li key={cIdx} className="flex items-start gap-3 text-[13.5px] sm:text-[14px] text-[var(--text-main)]">
+                      <li key={cIdx} className="flex items-start gap-3 text-[13.5px] sm:text-body-medium text-on-background">
                         <span className={`shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getTypeStyle(change.type)}`}>
                           {getTypeIcon(change.type)}
                           <span>{change.type}</span>
                         </span>
-                        <span className="leading-relaxed text-[var(--text-main)]/90 pt-0.5">{change.text}</span>
+                        <span className="leading-relaxed text-on-background/90 pt-0.5">{change.text}</span>
                       </li>
                     ))}
                   </ul>
@@ -198,11 +198,11 @@ export default function ChangelogPage({ onBackToChat, onToggleDrawer }: Changelo
 
       {/* Floating Bottom Navigation */}
       <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-[var(--bg-card)]/90 backdrop-blur-md rounded-full shadow-lg border border-[var(--border-light)]/60 px-2 py-2">
+        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant/60 px-2 py-2">
           {onToggleDrawer && (
             <button 
               onClick={onToggleDrawer}
-              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-main)] transition-colors cursor-pointer border-0 bg-transparent"
+              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
               title="Menu"
             >
               <Menu size={24} />
@@ -210,11 +210,11 @@ export default function ChangelogPage({ onBackToChat, onToggleDrawer }: Changelo
           )}
           <button 
             onClick={onBackToChat}
-            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-main)] transition-colors cursor-pointer border-0 bg-transparent"
+            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
             title="Back to Chat"
           >
             <ArrowLeft size={20} />
-            <span className="font-medium text-[15px]">Back to Chat</span>
+            <span className="font-medium text-title-small">Back to Chat</span>
           </button>
         </div>
       </div>

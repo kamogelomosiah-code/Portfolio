@@ -1,0 +1,17 @@
+export const typography = {
+  displayLarge: 'text-display-large font-display tracking-display-large',
+  displayMedium: 'text-display-medium font-display tracking-display-medium',
+  displaySmall: 'text-display-small font-display tracking-display-small',
+  headlineLarge: 'text-headline-large font-display tracking-headline-large',
+  headlineMedium: 'text-headline-medium font-display tracking-headline-medium',
+  headlineSmall: 'text-headline-small font-display tracking-headline-small',
+  titleLarge: 'text-title-large font-sans tracking-title-large',
+  titleMedium: 'text-title-medium font-sans tracking-title-medium font-medium',
+  titleSmall: 'text-title-small font-sans tracking-title-small font-medium',
+  bodyLarge: 'text-body-large font-sans tracking-body-large',
+  bodyMedium: 'text-body-medium font-sans tracking-body-medium',
+  bodySmall: 'text-body-small font-sans tracking-body-small',
+  labelLarge: 'text-label-large font-sans tracking-label-large font-medium',
+  labelMedium: 'text-label-medium font-sans tracking-label-medium font-medium',
+  labelSmall: 'text-label-small font-sans tracking-label-small font-medium',
+};

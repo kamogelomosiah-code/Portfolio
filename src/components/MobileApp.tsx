@@ -14,7 +14,7 @@ const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const WorkspacePage = lazy(() => import("./WorkspacePage"));
 
 const FallbackLoader = () => (
-  <div className="flex w-full h-full items-center justify-center bg-[var(--bg-main)]">
+  <div className="flex w-full h-full items-center justify-center bg-background">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
   </div>
 );
@@ -53,27 +53,27 @@ const PROMPT_SETS = [
 function renderPromptIcon(iconName: string) {
   switch (iconName) {
     case "list":
-      return <MaterialIcon name="list" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="list" className="text-primary text-title-medium" />;
     case "mail":
-      return <MaterialIcon name="mail" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="mail" className="text-primary text-title-medium" />;
     case "text":
-      return <MaterialIcon name="description" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="description" className="text-primary text-title-medium" />;
     case "cpu":
-      return <MaterialIcon name="memory" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="memory" className="text-primary text-title-medium" />;
     case "sparkles":
-      return <MaterialIcon name="auto_awesome" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="auto_awesome" className="text-primary text-title-medium" />;
     case "code":
-      return <MaterialIcon name="code" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="code" className="text-primary text-title-medium" />;
     case "user":
-      return <MaterialIcon name="person" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="person" className="text-primary text-title-medium" />;
     case "cap":
-      return <MaterialIcon name="school" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="school" className="text-primary text-title-medium" />;
     case "layers":
-      return <MaterialIcon name="layers" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="layers" className="text-primary text-title-medium" />;
     case "database":
-      return <MaterialIcon name="storage" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="storage" className="text-primary text-title-medium" />;
     default:
-      return <MaterialIcon name="chat" className="text-[var(--color-accent)] text-[16px]" />;
+      return <MaterialIcon name="chat" className="text-primary text-title-medium" />;
   }
 }
 
@@ -117,21 +117,21 @@ export default function MobileApp({
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
-              className="w-full bg-[var(--bg-card)] border border-[var(--color-accent)]/20 shadow-lg p-3 mb-2.5 rounded-none relative z-30 text-left"
+              className="w-full bg-surface border border-primary/20 shadow-lg p-3 mb-2.5 rounded-none relative z-30 text-left"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1 text-[var(--color-accent)] font-semibold text-[12px] sm:text-[13px]">
-                  <MaterialIcon name="auto_awesome" className="text-[14px] animate-pulse" />
+                <div className="flex items-center gap-1 text-primary font-semibold text-label-medium sm:text-body-small">
+                  <MaterialIcon name="auto_awesome" className="text-body-medium animate-pulse" />
                   <span>Interactive Follow-up Questions</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setActiveClarifications([])}
-                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center"
+                  className="text-on-surface-variant hover:text-on-surface-variant dark:hover:text-neutral-200 transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center"
                   style={{ minWidth: "44px", minHeight: "44px" }}
                   title="Dismiss suggestions"
                 >
-                  <MaterialIcon name="close" className="text-[16px]" />
+                  <MaterialIcon name="close" className="text-title-medium" />
                 </button>
               </div>
               <div className="flex flex-col gap-1.5 max-h-[130px] overflow-y-auto pr-0.5">
@@ -143,7 +143,7 @@ export default function MobileApp({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-2.5 py-1.5 text-[12px] font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/50 hover:bg-[var(--color-accent-light)] hover:text-[var(--color-accent)] border border-neutral-200 dark:border-neutral-800/80 hover:border-[var(--color-accent)]/30 rounded-none transition-all active:scale-[0.99] cursor-pointer"
+                    className="w-full text-left px-2.5 py-1.5 text-label-medium font-medium text-on-surface dark:text-neutral-300 bg-surface-container-low bg-surface-container-highest/50 hover:bg-primary-container hover:text-primary border border-outline-variant/80 hover:border-primary/30 rounded-none transition-all active:scale-[0.99] cursor-pointer"
                   >
                     {question}
                   </button>
@@ -154,7 +154,7 @@ export default function MobileApp({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className="w-full bg-[var(--bg-card)] border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-[var(--color-accent)] focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative">
+        <div className="w-full bg-surface border border-outline-variant shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative">
           {/* Top Row: text area */}
           <div className="flex items-start justify-between gap-2.5 w-full min-h-[44px]">
             <textarea
@@ -163,7 +163,7 @@ export default function MobileApp({
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
               placeholder="Ask me about math or coding!" 
-              className="flex-1 bg-transparent text-[var(--text-main)] py-1.5 px-1 focus:outline-none resize-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 font-normal text-[15px] leading-relaxed max-h-[100px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant dark:placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed max-h-[100px] overflow-y-auto border-0"
               disabled={isLoading}
               rows={2}
             />
@@ -179,7 +179,7 @@ export default function MobileApp({
                   setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[11px] font-bold transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-label-small font-bold transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
               style={{
                 backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
                 borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
@@ -187,7 +187,7 @@ export default function MobileApp({
               }}
               title={selectedModel === "fusion" ? "Thinking Mode Active" : "Enable Thinking Mode for advanced responses"}
             >
-              <MaterialIcon name="psychology" className={`text-[16px] ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
+              <MaterialIcon name="psychology" className={`text-title-medium ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
               <span>Thinking Mode</span>
               {selectedModel === "fusion" && (
                 <span className="relative flex h-1.5 w-1.5">
@@ -199,7 +199,7 @@ export default function MobileApp({
 
             {/* Right side: Character count and Send */}
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-[var(--text-muted)] font-mono hidden sm:inline select-none pr-1">
+              <span className="text-label-small text-on-surface-variant font-mono hidden sm:inline select-none pr-1">
                 {input.length}/1000
               </span>
 
@@ -209,13 +209,13 @@ export default function MobileApp({
                 disabled={!input.trim() || isLoading}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
                   input.trim() && !isLoading
-                    ? "border-transparent bg-[var(--color-accent)] text-white hover:opacity-90 active:scale-95 shadow-sm"
-                    : "border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-300 dark:text-neutral-600 cursor-not-allowed"
+                    ? "border-transparent bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-sm"
+                    : "border-outline-variant/60 border-outline/60 bg-surface-container-low bg-surface-container-highest/30 text-neutral-300 text-on-surface-variant cursor-not-allowed"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
                 title="Send message"
               >
-                <MaterialIcon name="send" className="text-[18px]" />
+                <MaterialIcon name="send" className="text-title-large" />
               </button>
             </div>
           </div>
@@ -241,12 +241,12 @@ export default function MobileApp({
                 </>
               )}
             </span>
-            <span className="font-semibold text-neutral-400 dark:text-neutral-500 font-mono">
+            <span className="font-semibold text-on-surface-variant font-mono">
               {isHfConnected === null ? "Connecting..." : isHfConnected ? "Server: Connected" : "Mode: Offline"}
             </span>
           </div>
 
-          <span className="text-[10px] text-[var(--text-muted)] font-normal">
+          <span className="text-[10px] text-on-surface-variant font-normal">
             Assistant can make mistakes.
           </span>
         </div>
@@ -308,21 +308,7 @@ export default function MobileApp({
   // Recording Logic removed
 
   const getOfflineResponse = (text: string) => {
-    const lower = text.toLowerCase();
-    if (lower.includes("project") || lower.includes("portfolio") || lower.includes("work")) {
-      return "I can't fetch live data right now, but here are some of Kamogelo's highlighted projects: [UI:PROJECTS]";
-    }
-    if (lower.includes("skill") || lower.includes("tech") || lower.includes("stack")) {
-      return "Kamogelo is an IT Engineer. Here is an overview of his technical skills: [UI:SKILLS]";
-    }
-    if (lower.includes("cv") || lower.includes("resume") || lower.includes("hire") || lower.includes("download")) {
-      return "You can download Kamogelo's full CV right here: [UI:CV]";
-    }
-    if (lower.includes("contact") || lower.includes("email") || lower.includes("message")) {
-      return "Kamogelo can be reached at kamogelomosiah@gmail.com. Feel free to reach out to him directly!";
-    }
-    
-    return "I'm currently operating in offline mode. I can show you Kamogelo's projects, skills, or CV. What would you like to see?";
+    return "The engine can not be reached.";
   };
 
   // Send message logic
@@ -462,23 +448,23 @@ export default function MobileApp({
   };
 
   return (
-    <div className="flex flex-col h-dvh w-full bg-[var(--bg-main)] text-[var(--text-main)] font-sans select-none overflow-hidden relative">
+    <div className="flex flex-col h-dvh w-full bg-background text-on-background font-sans select-none overflow-hidden relative">
       
       {/* Top Header - Only displayed on Chat tab */}
       {activeTab === "chat" && (
-        <header className="sticky top-0 z-30 w-full flex items-center justify-between h-[60px] border-b border-[var(--border-light)] bg-[var(--bg-card)]/90 backdrop-blur-md px-4 shrink-0 shadow-sm safe-top">
+        <header className="sticky top-0 z-30 w-full flex items-center justify-between h-[60px] border-b border-outline-variant bg-surface/90 backdrop-blur-md px-4 shrink-0 shadow-sm safe-top">
           <div className="flex items-center gap-2.5">
             <button 
               onClick={() => setDrawerOpen(true)}
-              className="flex items-center justify-center w-11 h-11 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[var(--text-muted)] cursor-pointer border-0 bg-transparent shrink-0"
+              className="flex items-center justify-center w-11 h-11 rounded-lg hover:bg-inverse-surface/5 dark:hover:bg-surface/5 transition-colors text-on-surface-variant cursor-pointer border-0 bg-transparent shrink-0"
               style={{ minWidth: "44px", minHeight: "44px" }}
               title="Menu"
             >
-              <MaterialIcon name="menu" className="text-[24px]" />
+              <MaterialIcon name="menu" className="text-headline-large" />
             </button>
             <div className="flex items-center gap-2">
-              <WatermelonIcon className="w-5 h-5 text-[var(--color-accent)] animate-pulse" />
-              <span className="font-bold text-[15px] font-display tracking-tight text-[var(--text-main)]">
+              <WatermelonIcon className="w-5 h-5 text-primary animate-pulse" />
+              <span className="font-bold text-title-small font-display tracking-tight text-on-background">
                 Kamogelo's GPT
               </span>
             </div>
@@ -487,7 +473,7 @@ export default function MobileApp({
       )}
 
       {/* Screen Container with Swipe-Style Tab Transitions */}
-      <main className="flex-1 w-full overflow-hidden relative bg-[var(--bg-main)]">
+      <main className="flex-1 w-full overflow-hidden relative bg-background">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={activeTab}
@@ -519,13 +505,13 @@ export default function MobileApp({
                           >
                             {/* Greeting Hero */}
                             <div className="mb-5">
-                              <h1 className="text-[30px] font-bold tracking-tight text-[var(--text-main)] mb-0.5 leading-none font-display">
+                              <h1 className="text-[30px] font-bold tracking-tight text-on-background mb-0.5 leading-none font-display">
                                 Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
                               </h1>
                               <h2 className="text-[30px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-3 leading-none font-display">
                                 What would you like to know?
                               </h2>
-                              <p className="text-[var(--text-muted)] text-[14px] font-normal leading-relaxed">
+                              <p className="text-on-surface-variant text-body-medium font-normal leading-relaxed">
                                 Use one of the most common prompts below or use your own to begin learning about me.
                               </p>
                             </div>
@@ -540,7 +526,7 @@ export default function MobileApp({
                           >
                             {/* Compact suggestions header */}
                             <div className="mb-2.5">
-                              <p className="text-[var(--text-muted)] text-[11px] font-semibold uppercase tracking-wider">
+                              <p className="text-on-surface-variant text-label-small font-semibold uppercase tracking-wider">
                                 Quick Suggestions
                               </p>
                             </div>
@@ -551,12 +537,12 @@ export default function MobileApp({
                                 <button
                                   key={idx}
                                   onClick={() => handleSend(prompt.text)}
-                                  className="flex items-center gap-3 p-3 bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-gray-400 dark:hover:border-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[54px] rounded-none shadow-sm"
+                                  className="flex items-center gap-3 p-3 bg-surface border border-outline-variant hover:border-gray-400 dark:hover:border-neutral-500 hover:bg-surface-container-low hover:bg-surface-container-highest/40 transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[54px] rounded-none shadow-sm"
                                 >
-                                  <div className="shrink-0 w-7 h-7 rounded-none bg-[var(--color-accent-light)] flex items-center justify-center">
+                                  <div className="shrink-0 w-7 h-7 rounded-none bg-primary-container flex items-center justify-center">
                                     {renderPromptIcon(prompt.icon)}
                                   </div>
-                                  <span className="text-[12.5px] text-[var(--text-main)] font-semibold leading-tight line-clamp-2">
+                                  <span className="text-[12.5px] text-on-background font-semibold leading-tight line-clamp-2">
                                     {prompt.text}
                                   </span>
                                 </button>
@@ -567,9 +553,9 @@ export default function MobileApp({
                             <div className="mt-3.5 flex justify-start mb-6">
                               <button
                                 onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                                className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--text-main)] font-semibold transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
+                                className="flex items-center gap-1.5 text-label-medium text-on-surface-variant hover:text-on-background font-semibold transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
                               >
-                                <MaterialIcon name="refresh" className="text-[14px]" />
+                                <MaterialIcon name="refresh" className="text-body-medium" />
                                 <span>Refresh Suggestions</span>
                               </button>
                             </div>
@@ -591,13 +577,13 @@ export default function MobileApp({
                             {isUser ? (
                               <div className="flex flex-col items-end max-w-[85%]">
                                 <div 
-                                  className="text-[var(--text-main)] px-4 py-3 rounded-[20px] rounded-tr-[4px] border shadow-sm"
+                                  className="text-on-background px-4 py-3 rounded-[20px] rounded-tr-[4px] border shadow-sm"
                                   style={{ 
                                     backgroundColor: "var(--color-accent-light)", 
                                     borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
                                   }}
                                 >
-                                  <p className="text-[14px] whitespace-pre-wrap leading-relaxed break-words">
+                                  <p className="text-body-medium whitespace-pre-wrap leading-relaxed break-words">
                                     {msg.text}
                                   </p>
                                   
@@ -615,11 +601,11 @@ export default function MobileApp({
                                                 referrerPolicy="no-referrer"
                                               />
                                             ) : (
-                                              <div className="flex items-center gap-2 px-2.5 py-1.5 bg-white/60 dark:bg-black/30 border border-black/5 dark:border-white/5 rounded-lg select-none text-left">
-                                                <MaterialIcon name="description" className="text-[14px] text-[var(--color-accent)] shrink-0" />
+                                              <div className="flex items-center gap-2 px-2.5 py-1.5 bg-surface/60 dark:bg-inverse-surface/30 border border-black/5 dark:border-white/5 rounded-lg select-none text-left">
+                                                <MaterialIcon name="description" className="text-body-medium text-primary shrink-0" />
                                                 <div className="flex flex-col min-w-0">
-                                                  <span className="text-[11px] font-semibold text-neutral-800 dark:text-neutral-200 truncate max-w-[120px]">{attachment.name}</span>
-                                                  <span className="text-[9px] text-neutral-500 font-mono leading-none mt-0.5">{(attachment.size / 1024).toFixed(1)} KB</span>
+                                                  <span className="text-label-small font-semibold text-on-surface dark:text-neutral-200 truncate max-w-[120px]">{attachment.name}</span>
+                                                  <span className="text-[9px] text-on-surface-variant font-mono leading-none mt-0.5">{(attachment.size / 1024).toFixed(1)} KB</span>
                                                 </div>
                                               </div>
                                             )}
@@ -632,43 +618,43 @@ export default function MobileApp({
                                 {msg.status === "error" && (
                                   <button 
                                     onClick={() => handleSend(msg.text)} 
-                                    className="mt-1 text-red-500 flex items-center gap-1 text-[11px] bg-transparent border-0 min-h-[44px]"
+                                    className="mt-1 text-red-500 flex items-center gap-1 text-label-small bg-transparent border-0 min-h-[44px]"
                                   >
-                                    <MaterialIcon name="error" className="text-[14px] text-red-500 mr-1" /> Retry
+                                    <MaterialIcon name="error" className="text-body-medium text-red-500 mr-1" /> Retry
                                   </button>
                                 )}
                               </div>
                             ) : (
                               <div className="flex items-start gap-3 w-full">
-                                <div className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm">
-                                  <WatermelonIcon className="w-4 h-4 text-[var(--color-accent)]" />
+                                <div className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-surface border border-outline-variant shadow-sm">
+                                  <WatermelonIcon className="w-4 h-4 text-primary" />
                                 </div>
                                  <div className="flex-1 min-w-0">
                                   {isFirst && (
-                                    <span className="block font-semibold text-[11px] text-[var(--text-muted)] mb-0.5">
+                                    <span className="block font-semibold text-label-small text-on-surface-variant mb-0.5">
                                       Kamogelo Mosiah
                                     </span>
                                   )}
-                                  <div className="text-[14px] leading-relaxed text-[var(--text-main)] w-full">
+                                  <div className="text-body-medium leading-relaxed text-on-background w-full">
                                     <MarkdownRenderer content={msg.text} />
                                   </div>
 
                                   <div className="flex flex-wrap gap-1.5 mt-2 mb-1 select-none">
                                     <button
                                       onClick={() => handleSend("Tell me about your software projects")}
-                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>📂 View Projects</span>
                                     </button>
                                     <button
                                       onClick={() => handleSend("What are your core technical skills?")}
-                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>🛠️ Check Skills</span>
                                     </button>
                                     <button
                                       onClick={() => handleSend("Can I see your CV / Resume?")}
-                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-neutral-100 hover:bg-[var(--color-accent-light)] dark:bg-neutral-800 dark:hover:bg-[var(--color-accent-light)] text-neutral-700 dark:text-neutral-300 hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] border border-neutral-200/60 dark:border-neutral-700/60 hover:border-[var(--color-accent)]/30 transition-all duration-150 cursor-pointer shadow-sm"
+                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                     >
                                       <span>📄 Download CV</span>
                                     </button>
@@ -690,18 +676,18 @@ export default function MobileApp({
 
                       {isLoading && (
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-[var(--bg-card)] border border-[var(--border-light)] shadow-sm">
-                            <WatermelonIcon className="w-4 h-4 text-[var(--color-accent)] animate-pulse" />
+                          <div className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-surface border border-outline-variant shadow-sm">
+                            <WatermelonIcon className="w-4 h-4 text-primary animate-pulse" />
                           </div>
                           <div className="flex-1">
-                            <span className="block font-semibold text-[11px] text-[var(--text-muted)] mb-0.5">
+                            <span className="block font-semibold text-label-small text-on-surface-variant mb-0.5">
                               Kamogelo Mosiah
                             </span>
-                            <div className="flex items-center gap-1.5 text-[var(--text-muted)] py-1.5">
-                              <span className="text-[13px] italic">
+                            <div className="flex items-center gap-1.5 text-on-surface-variant py-1.5">
+                              <span className="text-body-small italic">
                                 {selectedModel === 'fusion' ? 'Consulting models...' : 'Thinking'}
                               </span>
-                              <span className="inline-block animate-pulse text-[var(--color-accent)]">▍</span>
+                              <span className="inline-block animate-pulse text-primary">▍</span>
                             </div>
                           </div>
                         </div>
@@ -711,7 +697,7 @@ export default function MobileApp({
                 </div>
 
                 {/* Keyboard-Aware Pinned Composer bar - always visible and sticky bottom */}
-                <div className="w-full pt-3 pb-4 px-4 shrink-0 bg-[var(--bg-main)] z-10 border-t border-[var(--border-subtle)]">
+                <div className="w-full pt-3 pb-4 px-4 shrink-0 bg-background z-10 border-t border-outline-variant">
                   {renderComposer(true)}
                 </div>
               </div>
