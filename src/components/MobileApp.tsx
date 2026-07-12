@@ -89,6 +89,14 @@ export default function MobileApp({
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const lastScrollY = useRef(0);
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    lastScrollY.current = scrollTop;
+    setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
+  };
 
   // Smart Clarification / Follow-up Questions State
   const [activeClarifications, setActiveClarifications] = useState<string[]>([]);

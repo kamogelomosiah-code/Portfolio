@@ -26,7 +26,7 @@ export type Message = {
   role: "user" | "agent";
   text: string;
   uiBlock?: "projects" | "skills" | "cv" | null;
-  status?: "sending" | "sent" | "error";
+  status?: "sending" | "sent" | "error" | "loading" | "streaming";
   attachments?: Attachment[];
 };
 
@@ -97,6 +97,7 @@ export default function ChatInterface({
   const [promptSetIndex, setPromptSetIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -168,9 +169,7 @@ export default function ChatInterface({
   }, [messages.length]);
 
   // Client side typing stream states
-  const [streamedTexts, setStreamedTexts] = useState<Record<string, string>>({});
-  const [currentlyStreamingId, setCurrentlyStreamingId] = useState<string | null>(null);
-
+    
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
@@ -212,7 +211,8 @@ export default function ChatInterface({
       if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
         const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        if (isNearBottom && !currentlyStreamingId) {
+        const isStreaming = messages.some(m => m.status === 'streaming');
+        if (isNearBottom && !isStreaming) {
           scrollToBottom('smooth');
         }
       }
@@ -220,7 +220,7 @@ export default function ChatInterface({
 
     resizeObserver.observe(scrollContentRef.current);
     return () => resizeObserver.disconnect();
-  }, [currentlyStreamingId]);
+  }, []);
 
   // Progressive Token/Word streaming effect
   useEffect(() => {
@@ -271,10 +271,11 @@ export default function ChatInterface({
     }
   }, [input]);
 
-  const handleScroll = (e: UIEvent<HTMLDivElement>) => {
-    const currentScrollY = e.currentTarget.scrollTop;
-    setIsScrolled(currentScrollY > 20);
-    lastScrollY.current = currentScrollY;
+    const handleScroll = (e: UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    setIsScrolled(scrollTop > 20);
+    lastScrollY.current = scrollTop;
+    setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
   };
 
   // Microphone recording removed
@@ -292,13 +293,32 @@ export default function ChatInterface({
       text: text.trim(), 
       status: "sending"
     };
-    const updatedMessages = [...messages, userMsg];
+    const agentMsgId = (Date.now() + 1).toString();
+    const initialAgentMsg: Message = {
+      id: agentMsgId,
+      role: "agent",
+      text: "",
+      status: "loading"
+    };
+
+    const updatedMessages = [...messages, userMsg, initialAgentMsg];
     
-    // Set UI to loading immediately
     setMessages(updatedMessages);
     setInput("");
-    setIsLoading(true);
+    setIsLoading(true); // Keep for backwards compatibility, but not used in UI ideally
     setActiveClarifications([]);
+
+    // Scroll to new agent message
+    setTimeout(() => {
+      const el = document.getElementById(`msg-${agentMsgId}`);
+      if (el && scrollContainerRef.current) {
+        // Animate smooth scroll to the start of the message
+        scrollContainerRef.current.scrollTo({
+          top: el.offsetTop - 20, // Add some padding
+          behavior: 'smooth'
+        });
+      }
+    }, 50);
 
     if (isHfConnected === false) {
       setTimeout(() => {
@@ -316,18 +336,11 @@ export default function ChatInterface({
           replyText = replyText.replace("[UI:CV]", "").trim();
         }
 
-        const agentMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "agent",
-          text: replyText,
-          uiBlock,
-          status: "sent"
-        };
-
-        setMessages(prev => {
-          const updated = prev.map(m => m.id === userMsg.id ? { ...m, status: "sent" as const } : m);
-          return [...updated, agentMsg];
-        });
+        setMessages(prev => prev.map(m => {
+          if (m.id === userMsg.id) return { ...m, status: "sent" as const };
+          if (m.id === agentMsgId) return { ...m, status: "streaming" as const, text: replyText, uiBlock };
+          return m;
+        }));
         setIsLoading(false);
       }, 600);
       return;
@@ -375,28 +388,23 @@ export default function ChatInterface({
         replyText = replyText.replace("[UI:CV]", "").trim();
       }
 
-      const agentMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "agent",
-        text: replyText,
-        uiBlock,
-        status: "sent"
-      };
-
-      setMessages(prev => {
-        const updated = prev.map(m => m.id === userMsg.id ? { ...m, status: "sent" as const } : m);
-        return [...updated, agentMsg];
-      });
+      setMessages(prev => prev.map(m => {
+        if (m.id === userMsg.id) return { ...m, status: "sent" as const };
+        if (m.id === agentMsgId) return { ...m, status: "streaming" as const, text: replyText, uiBlock };
+        return m;
+      }));
 
       if (followUps.length > 0) {
         setActiveClarifications(followUps);
       }
-
+      setIsLoading(false);
     } catch (error) {
-      console.error("Chat Error:", error);
-      // Optimistic failure feedback
-      setMessages(prev => prev.map(m => m.id === userMsg.id ? { ...m, status: "error" as const } : m));
-    } finally {
+      console.error("Chat error:", error);
+      setMessages(prev => prev.map(m => {
+        if (m.id === userMsg.id) return { ...m, status: "error" as const };
+        if (m.id === agentMsgId) return { ...m, status: "error" as const, text: "An error occurred." };
+        return m;
+      }));
       setIsLoading(false);
     }
   };
@@ -706,8 +714,8 @@ export default function ChatInterface({
                     const isFirstInGroup = index === 0 || messages[index - 1].role !== msg.role;
                     const isLastInGroup = index === messages.length - 1 || messages[index + 1].role !== msg.role;
                     
-                    const isStreaming = currentlyStreamingId === msg.id;
-                    const textToShow = isStreaming ? (streamedTexts[msg.id] || "") : msg.text;
+                    const isStreaming = msg.status === "streaming";
+                    const textToShow = msg.text;
 
                     return (
                       <div 
@@ -768,91 +776,65 @@ export default function ChatInterface({
                             )}
                           </div>
                         ) : (
-                          /* 5 & 6. Assistant: Plain text on bg, avatar on left, shown once per group */
-                          <div className="flex items-start gap-4 w-full max-w-full px-1">
-                            <div className="w-8 h-8 shrink-0 mt-1 flex items-center justify-center">
-                              {isFirstInGroup ? (
-                                <div className="flex items-center justify-center rounded-full bg-surface border border-outline-variant w-8 h-8 shadow-sm">
-                                  <AppIcon className="w-4.5 h-4.5 text-primary animate-pulse" />
-                                </div>
-                              ) : (
-                                <div className="w-8 h-8" />
-                              )}
-                            </div>
-                            
-                            <div className="flex-1 flex flex-col items-start w-full min-w-0">
-                              {isFirstInGroup && (
-                                <span className="font-semibold text-body-small text-on-surface-variant mb-1">
-                                  Kamogelo Mosiah
-                                </span>
-                              )}
-                              <div className="text-on-background bg-transparent pb-1 w-full text-left max-w-3xl">
-                                <MarkdownRenderer content={textToShow} isStreaming={isStreaming} />
-                                
-                                {!isStreaming && (
-                                  <div className="flex flex-wrap gap-2 mt-3 mb-1 select-none">
-                                    <button
-                                      onClick={() => handleSend("Tell me about your software projects")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-label-medium font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
-                                    >
-                                      <span>📂 View Projects</span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleSend("What are your core technical skills?")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-label-medium font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
-                                    >
-                                      <span>🛠️ Check Skills</span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleSend("Can I see your CV / Resume?")}
-                                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-label-medium font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
-                                    >
-                                      <span>📄 Download CV</span>
-                                    </button>
-                                  </div>
-                                )}
-
-                                {/* Rich Visual UI widgets, rendered only once completed */}
-                                {!isStreaming && msg.uiBlock && (
-                                  <div className="mt-4 flex flex-col gap-3 w-full max-w-3xl">
-                                    {msg.uiBlock === "projects" && <ProjectCards />}
-                                    {msg.uiBlock === "skills" && <SkillChips />}
-                                    {msg.uiBlock === "cv" && <DownloadCV onViewCv={onViewCv} />}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
+                          <AIMessage
+                            msg={msg}
+                            isFirstInGroup={isFirstInGroup}
+                            onStreamingComplete={(id) => {
+                              setMessages(prev => prev.map(m => m.id === id ? { ...m, status: "sent" } : m));
+                            }}
+                            renderUIBlock={(uiBlock) => (
+                              <>
+                                {uiBlock === "projects" && <ProjectCards />}
+                                {uiBlock === "skills" && <SkillChips />}
+                                {uiBlock === "cv" && <DownloadCV onViewCv={onViewCv} />}
+                              </>
+                            )}
+                          />
                         )}
                       </div>
                     );
                   })}
-                  
-                  {/* While AI is responding status indicator */}
-                  {isLoading && (
-                    <div className="flex items-start w-full justify-start mt-6 px-1">
-                      <div className="flex items-start gap-4 w-full max-w-full">
-                        <div className="flex items-center justify-center rounded-full bg-surface border border-outline-variant w-8 h-8 shrink-0 mt-1 shadow-sm">
-                          <AppIcon className="w-4.5 h-4.5 text-primary animate-pulse" />
-                        </div>
-                        <div className="flex-1 flex flex-col items-start w-full">
-                          <span className="font-semibold text-body-small text-on-surface-variant mb-1">
-                            Kamogelo Mosiah
-                          </span>
-                          <div className="py-2 flex items-center gap-1.5 text-on-surface-variant">
-                            <span className="text-body-medium font-normal italic">
-                              {selectedModel === 'fusion' ? 'Consulting models...' : 'Thinking'}
-                            </span>
-                            <span className="inline-block animate-pulse font-bold text-primary select-none">▍</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   <div ref={endOfMessagesRef} className="h-4" />
                 </div>
               )}
             </div>
+        </div>
+
+
+        {/* Floating Scroll Controls */}
+        <div className="absolute bottom-[100px] left-0 right-0 flex justify-center pointer-events-none z-20 gap-3">
+          {(!isAtBottom || messages.some(m => m.status === 'streaming')) && (
+            <div className="pointer-events-auto flex gap-2">
+              {messages.some(m => m.status === 'streaming') && (
+                <button
+                  onClick={() => {
+                    const streamingMsg = messages.find(m => m.status === 'streaming');
+                    if (streamingMsg) {
+                      const el = document.getElementById(`msg-${streamingMsg.id}`);
+                      if (el && scrollContainerRef.current) {
+                        scrollContainerRef.current.scrollTo({
+                          top: el.offsetTop - 20,
+                          behavior: 'smooth'
+                        });
+                      }
+                    }
+                  }}
+                  className="flex items-center gap-1 bg-surface border border-outline-variant rounded-full px-3 py-1.5 shadow-md text-primary hover:bg-surface-container-high transition-all text-label-medium font-semibold"
+                >
+                  <MaterialIcon name="arrow_upward" className="text-body-small" />
+                  Response Start
+                </button>
+              )}
+              {!isAtBottom && (
+                <button
+                  onClick={() => scrollToBottom('smooth')}
+                  className="flex items-center justify-center w-8 h-8 bg-surface border border-outline-variant rounded-full shadow-md text-primary hover:bg-surface-container-high transition-all"
+                >
+                  <MaterialIcon name="arrow_downward" className="text-body-small" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Custom Composer fixed at bottom - always displayed to be sticky bottom and always visible */}
