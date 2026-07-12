@@ -217,46 +217,7 @@ export default function ChatInterface({
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Progressive Token/Word streaming effect
-  useEffect(() => {
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg && lastMsg.role === "agent" && !streamedTexts[lastMsg.id] && currentlyStreamingId !== lastMsg.id) {
-      setCurrentlyStreamingId(lastMsg.id);
-      
-      // Scroll to the start of the message
-      setTimeout(() => {
-        const msgEl = document.getElementById(`message-${lastMsg.id}`);
-        if (msgEl) {
-          msgEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 50);
 
-      const fullText = lastMsg.text;
-      const words = fullText.split(/(\s+)/); // keep spaces
-      let currentWordIndex = 0;
-      let currentText = "";
-      
-      const interval = setInterval(() => {
-        if (currentWordIndex < words.length) {
-          currentText += words[currentWordIndex];
-          currentWordIndex++;
-          setStreamedTexts(prev => ({
-            ...prev,
-            [lastMsg.id]: currentText
-          }));
-        } else {
-          clearInterval(interval);
-          setCurrentlyStreamingId(null);
-          setStreamedTexts(prev => ({
-            ...prev,
-            [lastMsg.id]: fullText
-          }));
-        }
-      }, 15); // lightning fast word streaming
-
-      return () => clearInterval(interval);
-    }
-  }, [messages]);
 
   // Auto-resize textarea
   useEffect(() => {
