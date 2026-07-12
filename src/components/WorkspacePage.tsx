@@ -359,9 +359,9 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
         setKeepNotes(JSON.parse(local));
       } else {
         const defaultNotes = [
-          { id: "1", title: "Project MasterAPI Goals", text: "1. Optimize SQL indexes\n2. Add Swagger integration\n3. Set up Redis caching", color: "bg-amber-100 bg-surfacember-950/40" },
-          { id: "2", title: "BSc IT Degree Graduation List", text: "Complete submission of graduation audit by end of week.", color: "bg-emerald-100 dark:bg-emerald-950/40" },
-          { id: "3", title: "UJ Stock Manager Refactoring", text: "Migrate frontend state management to React Context or Redux Toolkit for smoother transactions.", color: "bg-sky-100 dark:bg-sky-950/40" }
+          { id: "1", title: "Project MasterAPI Goals", text: "1. Optimize SQL indexes\n2. Add Swagger integration\n3. Set up Redis caching", color: "bg-amber-100 bg-amber-100" },
+          { id: "2", title: "BSc IT Degree Graduation List", text: "Complete submission of graduation audit by end of week.", color: "bg-emerald-100 " },
+          { id: "3", title: "UJ Stock Manager Refactoring", text: "Migrate frontend state management to React Context or Redux Toolkit for smoother transactions.", color: "bg-sky-100 " }
         ];
         setKeepNotes(defaultNotes);
         localStorage.setItem("keep_sandbox_notes", JSON.stringify(defaultNotes));
@@ -375,11 +375,11 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
     if (isKeepSandbox) {
       const colors = [
-        "bg-amber-100 bg-surfacember-950/40 border-amber-200 dark:border-amber-900/30",
-        "bg-emerald-100 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/30",
-        "bg-sky-100 dark:bg-sky-950/40 border-sky-200 dark:border-sky-900/30",
-        "bg-purple-100 dark:bg-purple-950/40 border-purple-200 dark:border-purple-900/30",
-        "bg-rose-100 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/30"
+        "bg-amber-100 bg-amber-100 border-amber-200 ",
+        "bg-emerald-100  border-emerald-200 ",
+        "bg-sky-100  border-sky-200 ",
+        "bg-purple-100  border-purple-200 ",
+        "bg-rose-100  border-rose-200 "
       ];
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
@@ -468,7 +468,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               <span className="hidden sm:inline-block text-xs text-on-surface-variant font-mono">{user.email}</span>
               <button 
                 onClick={handleLogout}
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-outline-variant hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 cursor-pointer bg-transparent transition-colors"
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-outline-variant hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-600  cursor-pointer bg-transparent transition-colors"
               >
                 Sign Out
               </button>
@@ -502,7 +502,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 </p>
 
                 {errorMsg && (
-                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs rounded-xl flex items-center gap-2">
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-600  text-xs rounded-xl flex items-center gap-2">
                     <AlertCircle size={14} />
                     <span>{errorMsg}</span>
                   </div>
@@ -511,7 +511,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 <button 
                   onClick={handleLogin}
                   disabled={isLoggingIn}
-                  className="w-full h-12 flex items-center justify-center gap-3 bg-inverse-surface hover:bg-surface-container-highest dark:bg-surface dark:hover:bg-surface-container text-on-primary text-on-background font-semibold text-[14.5px] rounded-xl cursor-pointer transition-all border-0 shadow-md disabled:opacity-75 disabled:cursor-wait"
+                  className="w-full h-12 flex items-center justify-center gap-3 bg-inverse-surface hover:bg-surface-container-highest  dark:hover:bg-surface-container text-on-primary font-semibold text-[14.5px] rounded-xl cursor-pointer transition-all border-0 shadow-md disabled:opacity-75 disabled:cursor-wait"
                 >
                   {isLoggingIn ? (
                     <>
@@ -737,7 +737,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         </div>
 
                         {isKeepSandbox && (
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-400 text-xs rounded-xl flex items-center gap-2">
+                          <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-800  text-xs rounded-xl flex items-center gap-2">
                             <Info size={14} />
                             <span>Consumer Keeps use sandbox persistence mode successfully.</span>
                           </div>
@@ -758,11 +758,11 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                               >
                                 <div>
                                   {note.title && (
-                                    <h3 className="font-bold text-title-small sm:text-title-medium text-on-surface dark:text-neutral-100 mb-2 font-display">
+                                    <h3 className="font-bold text-title-small sm:text-title-medium text-on-surface  mb-2 font-display">
                                       {note.title}
                                     </h3>
                                   )}
-                                  <p className="text-[13.5px] text-on-surface dark:text-neutral-300 whitespace-pre-line leading-relaxed">
+                                  <p className="text-[13.5px] text-on-surface  whitespace-pre-line leading-relaxed">
                                     {note.text}
                                   </p>
                                 </div>
@@ -770,7 +770,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                                 <div className="flex justify-end mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button
                                     onClick={() => handleDeleteNote(note.id)}
-                                    className="p-1.5 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
+                                    className="p-1.5 hover:bg-red-500/10 hover:text-red-600  rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                                     title="Delete Note"
                                   >
                                     <Trash2 size={15} />
@@ -836,7 +836,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Compose Email</h2>
                 <button 
                   onClick={() => setIsComposingEmail(false)}
-                  className="p-1 hover:bg-surface-container hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
+                  className="p-1 hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft size={20} />
                 </button>
@@ -921,12 +921,12 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col text-left"
             >
               <div className="flex justify-between items-center mb-4">
-                <span className="text-label-small font-mono font-bold px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 rounded-md">
+                <span className="text-label-small font-mono font-bold px-2.5 py-1 bg-red-500/10 text-red-600  rounded-md">
                   Secure Message Payload
                 </span>
                 <button 
                   onClick={() => setSelectedEmail(null)}
-                  className="p-1 hover:bg-surface-container hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
+                  className="p-1 hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft size={20} />
                 </button>
@@ -983,7 +983,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Schedule Calendar Event</h2>
                 <button 
                   onClick={() => setIsAddingEvent(false)}
-                  className="p-1 hover:bg-surface-container hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
+                  className="p-1 hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft size={20} />
                 </button>
@@ -1107,7 +1107,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Create Keep Note</h2>
                 <button 
                   onClick={() => setIsAddingNote(false)}
-                  className="p-1 hover:bg-surface-container hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
+                  className="p-1 hover:bg-surface-container-highest rounded-lg text-on-surface-variant cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft size={20} />
                 </button>

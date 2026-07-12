@@ -37,7 +37,7 @@ export function ProjectCards() {
             <p className="text-on-surface-variant text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
             <div className="flex flex-wrap gap-1.5 mb-6">
               {project.tags.map(tag => (
-                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-surface-container-low bg-surface-container-highest border border-gray-100 border-outline rounded-lg text-on-surface dark:text-gray-300">
+                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-surface-container-low border border-outline rounded-lg text-on-surface dark:text-gray-300">
                   {tag}
                 </span>
                ))}
@@ -62,7 +62,7 @@ export function SkillChips() {
   return (
     <div className="flex flex-wrap gap-2 mt-4 max-w-xl font-sans">
       {skills.map(skill => (
-        <div key={skill} className="px-3 py-1.5 border border-outline-variant bg-surface-container-low bg-surface-container-highest rounded-full text-xs font-semibold text-on-surface dark:text-neutral-200 hover:bg-inverse-surface hover:text-on-primary dark:hover:bg-surface dark:hover:text-on-background transition-colors cursor-default shadow-sm">
+        <div key={skill} className="px-3 py-1.5 border border-outline-variant bg-surface-container-low rounded-full text-xs font-semibold text-on-surface  hover:bg-inverse-surface hover:text-on-primary dark:hover:bg-surface dark:hover:text-on-background transition-colors cursor-default shadow-sm">
           {skill}
         </div>
       ))}
@@ -158,19 +158,19 @@ REFERENCES
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-surface-container-low bg-surface-container-highest/50 border border-outline-variant rounded-xl w-full max-w-lg mt-3 gap-4 shadow-sm hover:border-outline-variant dark:hover:border-outline transition-colors">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-surface-container-low border border-outline-variant rounded-xl w-full max-w-lg mt-3 gap-4 shadow-sm hover:border-outline-variant  transition-colors">
       <div className="flex items-center gap-3.5">
         {/* Document Icon Graphic */}
         <div className="w-12 h-12 shrink-0 bg-red-100 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border border-red-200/50 dark:border-red-900/20 shadow-sm relative overflow-hidden select-none">
           <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
-          <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <svg className="w-6 h-6 text-red-600 " fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <span className="text-[8px] font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest mt-0.5 font-mono">PDF</span>
+          <span className="text-[8px] font-extrabold text-red-600  uppercase tracking-widest mt-0.5 font-mono">PDF</span>
         </div>
         
         <div className="flex flex-col text-left">
-          <span className="font-bold text-body-medium text-on-surface dark:text-neutral-200 leading-snug truncate max-w-[220px] sm:max-w-[280px]">
+          <span className="font-bold text-body-medium text-on-surface  leading-snug truncate max-w-[220px] sm:max-w-[280px]">
             Kamogelo_Mosia_CV.pdf
           </span>
           <span className="text-label-medium text-on-surface-variant font-medium mt-0.5">
@@ -182,14 +182,14 @@ REFERENCES
       <div className="flex sm:flex-col items-stretch gap-2 shrink-0">
         <button
           onClick={handleDownload}
-          className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-inverse-surface hover:bg-surface-container-highest bg-surface-container-highest hover:bg-surface-variant text-on-primary px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer shadow-sm border-0"
+          className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-inverse-surface hover:bg-surface-container-highest text-on-primary px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer shadow-sm border-0"
         >
           <Download size={14} /> Download
         </button>
         {onViewCv && (
           <button
             onClick={onViewCv}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-surface hover:bg-surface-container dark:bg-transparent hover:bg-surface-container-highest/80 text-on-surface dark:text-neutral-200 px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer border border-outline-variant"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-surface hover:bg-surface-container-highest text-on-surface  px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer border border-outline-variant"
           >
             View Online
           </button>

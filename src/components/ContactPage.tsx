@@ -212,7 +212,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-4 rounded-lg flex items-start gap-3"
+                      className="bg-red-500/10 border border-red-500/20 text-red-600  p-4 rounded-lg flex items-start gap-3"
                     >
                       <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
                       <div>

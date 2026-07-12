@@ -421,7 +421,7 @@ export default function ChatInterface({
                 <button
                   type="button"
                   onClick={() => setActiveClarifications([])}
-                  className="text-on-surface-variant hover:text-on-surface-variant dark:hover:text-neutral-200 transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center rounded-lg hover:bg-surface-container hover:bg-surface-container-highest"
+                  className="text-on-surface-variant hover:text-on-surface-variant  transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center rounded-lg hover:bg-surface-container-highest"
                   style={{ minWidth: "44px", minHeight: "44px" }}
                   title="Dismiss suggestions"
                 >
@@ -440,7 +440,7 @@ export default function ChatInterface({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-medium text-on-surface dark:text-neutral-300 bg-surface-container-low bg-surface-container-highest/60 hover:bg-primary-container hover:text-primary border border-outline-variant hover:border-primary/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
+                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-medium text-on-surface  bg-surface-container-low hover:bg-primary-container hover:text-primary border border-outline-variant hover:border-primary/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
                   >
                     {question}
                   </button>
@@ -466,7 +466,7 @@ export default function ChatInterface({
               }}
               placeholder="Ask me about math or coding!" 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant dark:placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant  font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading}
               rows={2}
             />
@@ -513,7 +513,7 @@ export default function ChatInterface({
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
                   input.trim() && !isLoading
                     ? "border-transparent bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-sm"
-                    : "border-outline-variant/60 border-outline/60 bg-surface-container-low bg-surface-container-highest/30 text-neutral-300 text-on-surface-variant cursor-not-allowed"
+                    : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
                 title="Send message"
@@ -577,7 +577,7 @@ export default function ChatInterface({
           <div className="flex items-center gap-2.5">
             <button 
               onClick={onToggleDrawer} 
-              className="md:hidden flex items-center justify-center w-11 h-11 rounded-lg hover:bg-inverse-surface/5 dark:hover:bg-surface/5 transition-colors text-on-surface-variant cursor-pointer border-0 bg-transparent"
+              className="md:hidden flex items-center justify-center w-11 h-11 rounded-lg hover:bg-inverse-surface/5  transition-colors text-on-surface-variant cursor-pointer border-0 bg-transparent"
               style={{ minWidth: "44px", minHeight: "44px" }}
               title="Navigation Menu"
             >
@@ -642,7 +642,7 @@ export default function ChatInterface({
                           <h1 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-on-background mb-1 leading-none font-display">
                             Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
                           </h1>
-                          <h2 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-[#4F46E5] dark:text-[#818CF8] mb-4 leading-none font-display">
+                          <h2 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-[#4F46E5]  mb-4 leading-none font-display">
                             What would you like to know?
                           </h2>
                           <p className="text-on-surface-variant text-[15.5px] font-normal leading-relaxed">
@@ -671,7 +671,7 @@ export default function ChatInterface({
                             <button
                               key={idx}
                               onClick={() => handleSend(prompt.text)}
-                              className="flex items-center gap-3.5 p-3.5 bg-surface border border-outline-variant hover:border-gray-400 dark:hover:border-neutral-500 hover:bg-surface-container-low hover:bg-surface-container-highest/40 transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-none shadow-sm"
+                              className="flex items-center gap-3.5 p-3.5 bg-surface border border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-none shadow-sm"
                             >
                               <div className="shrink-0 w-8 h-8 rounded-none bg-primary-container flex items-center justify-center">
                                 {renderPromptIcon(prompt.icon)}
@@ -739,14 +739,14 @@ export default function ChatInterface({
                                           <img 
                                             src={attachment.dataUrl} 
                                             alt={attachment.name} 
-                                            className="max-w-full max-h-[160px] object-cover rounded-lg border border-black/10 dark:border-white/10 shadow-sm" 
+                                            className="max-w-full max-h-[160px] object-cover rounded-lg border border-black/10  shadow-sm" 
                                             referrerPolicy="no-referrer"
                                           />
                                         ) : (
-                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-surface/60 dark:bg-inverse-surface/30 border border-black/5 dark:border-white/5 rounded-lg select-none text-left">
+                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-surface/60  border border-black/5  rounded-lg select-none text-left">
                                             <MaterialIcon name="description" className="text-title-medium text-primary shrink-0" />
                                             <div className="flex flex-col min-w-0">
-                                              <span className="text-label-medium font-semibold text-on-surface dark:text-neutral-200 truncate max-w-[160px]">{attachment.name}</span>
+                                              <span className="text-label-medium font-semibold text-on-surface  truncate max-w-[160px]">{attachment.name}</span>
                                               <span className="text-[10px] text-on-surface-variant font-mono">{(attachment.size / 1024).toFixed(1)} KB</span>
                                             </div>
                                           </div>
