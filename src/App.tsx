@@ -22,19 +22,11 @@ const FallbackLoader = () => (
   </div>
 );
 
-const getDefaultAccentColor = () => {
-  const currentHour = new Date().getHours();
-  if (currentHour >= 5 && currentHour < 12) return "#F9AB00"; // Morning (Yellow)
-  if (currentHour >= 12 && currentHour < 17) return "#1A73E8"; // Afternoon (Blue)
-  if (currentHour >= 17 && currentHour < 20) return "#D93025"; // Evening (Red)
-  return "#9333EA"; // Night (Purple)
-};
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "workspace">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [accentColor, setAccentColor] = useState(getDefaultAccentColor());
-  const [selectedModel, setSelectedModel] = useState("MiniMaxAI/MiniMax-M3:preferred");
+    const [selectedModel, setSelectedModel] = useState("MiniMaxAI/MiniMax-M3:preferred");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -47,10 +39,7 @@ export default function App() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  useEffect(() => {
-    document.documentElement.style.setProperty('--accent-color', accentColor);
-  }, [accentColor]);
-
+  
   useEffect(() => {
     const updateScale = () => {
       const width = window.innerWidth;
@@ -79,16 +68,31 @@ export default function App() {
   useEffect(() => {
     const updateTimeBasedTheme = () => {
       const currentHour = new Date().getHours();
+      const root = document.documentElement;
+
       // Dark mode between 6 PM (18) and 7 AM (7)
       if (currentHour < 7 || currentHour >= 18) {
-        document.documentElement.classList.add('dark');
+        root.classList.add('dark');
       } else {
-        document.documentElement.classList.remove('dark');
+        root.classList.remove('dark');
+      }
+
+      // Remove existing themes
+      root.classList.remove('theme-morning', 'theme-afternoon', 'theme-evening', 'theme-night');
+
+      // Add appropriate theme
+      if (currentHour >= 5 && currentHour < 12) {
+        root.classList.add('theme-morning');
+      } else if (currentHour >= 12 && currentHour < 17) {
+        root.classList.add('theme-afternoon');
+      } else if (currentHour >= 17 && currentHour < 20) {
+        root.classList.add('theme-evening');
+      } else {
+        root.classList.add('theme-night');
       }
     };
     
     updateTimeBasedTheme();
-    // Check every minute
     const interval = setInterval(updateTimeBasedTheme, 60000);
     return () => clearInterval(interval);
   }, []);
