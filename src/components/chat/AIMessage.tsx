@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import MarkdownRenderer from "../MarkdownRenderer";
+import { MarkdownRenderer } from "../MarkdownRenderer";
 import { Message } from "../ChatInterface";
 import { AppIcon } from "../AppIcon";
 

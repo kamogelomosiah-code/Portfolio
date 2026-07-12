@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { AppIcon } from "./AppIcon";
+import { AIMessage } from "./chat/AIMessage";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { MaterialIcon } from "./MaterialIcon";
 import { initAuth, googleSignIn, logout, getAccessToken } from "../lib/auth";
@@ -191,17 +192,11 @@ export default function ChatInterface({
 
   // High-reliability scrolling on message shifts
   useEffect(() => {
-    // Only auto scroll to bottom if user is sending a message or it's loading
-    if (isLoading || input) {
+    // Only scroll to bottom initially
+    if (messages.length <= 1) {
       scrollToBottom('auto');
-      const t1 = setTimeout(() => scrollToBottom('smooth'), 40);
-      const t2 = setTimeout(() => scrollToBottom('smooth'), 150);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
     }
-  }, [messages, isLoading, input]);
+  }, []);
 
   // Resize observer to scroll when bubble height increases dynamically
   useEffect(() => {
@@ -211,7 +206,7 @@ export default function ChatInterface({
       if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
         const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        const isStreaming = messages.some(m => m.status === 'streaming');
+        const isStreaming = messages.some(m => m.status === 'streaming' || m.status === 'loading');
         if (isNearBottom && !isStreaming) {
           scrollToBottom('smooth');
         }
@@ -307,44 +302,17 @@ export default function ChatInterface({
     setInput("");
     setIsLoading(true); // Keep for backwards compatibility, but not used in UI ideally
     setActiveClarifications([]);
-
     // Scroll to new agent message
     setTimeout(() => {
       const el = document.getElementById(`msg-${agentMsgId}`);
       if (el && scrollContainerRef.current) {
-        // Animate smooth scroll to the start of the message
         scrollContainerRef.current.scrollTo({
-          top: el.offsetTop - 20, // Add some padding
+          top: el.offsetTop - 20,
           behavior: 'smooth'
         });
       }
     }, 50);
 
-    if (isHfConnected === false) {
-      setTimeout(() => {
-        let replyText = getOfflineResponse(text);
-        let uiBlock: Message["uiBlock"] = null;
-
-        if (replyText.includes("[UI:PROJECTS]")) {
-          uiBlock = "projects";
-          replyText = replyText.replace("[UI:PROJECTS]", "").trim();
-        } else if (replyText.includes("[UI:SKILLS]")) {
-          uiBlock = "skills";
-          replyText = replyText.replace("[UI:SKILLS]", "").trim();
-        } else if (replyText.includes("[UI:CV]")) {
-          uiBlock = "cv";
-          replyText = replyText.replace("[UI:CV]", "").trim();
-        }
-
-        setMessages(prev => prev.map(m => {
-          if (m.id === userMsg.id) return { ...m, status: "sent" as const };
-          if (m.id === agentMsgId) return { ...m, status: "streaming" as const, text: replyText, uiBlock };
-          return m;
-        }));
-        setIsLoading(false);
-      }, 600);
-      return;
-    }
 
     try {
       const history = messages.map(m => ({
@@ -805,10 +773,10 @@ export default function ChatInterface({
         <div className="absolute bottom-[100px] left-0 right-0 flex justify-center pointer-events-none z-20 gap-3">
           {(!isAtBottom || messages.some(m => m.status === 'streaming')) && (
             <div className="pointer-events-auto flex gap-2">
-              {messages.some(m => m.status === 'streaming') && (
+              {messages.length > 0 && messages[messages.length - 1].role === 'agent' && (
                 <button
                   onClick={() => {
-                    const streamingMsg = messages.find(m => m.status === 'streaming');
+                    const streamingMsg = [...messages].reverse().find(m => m.role === 'agent');
                     if (streamingMsg) {
                       const el = document.getElementById(`msg-${streamingMsg.id}`);
                       if (el && scrollContainerRef.current) {

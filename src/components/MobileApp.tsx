@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { AppIcon } from "./AppIcon";
 import { Message, Attachment } from "./ChatInterface";
+import { AIMessage } from "./chat/AIMessage";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import MenuDrawer from "./MenuDrawer";
 
