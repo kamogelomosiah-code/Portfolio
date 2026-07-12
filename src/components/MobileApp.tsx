@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { MaterialIcon } from "./MaterialIcon";
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
-import { WatermelonIcon } from "./WatermelonIcon";
+import { AppIcon } from "./AppIcon";
 import { Message, Attachment } from "./ChatInterface";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import MenuDrawer from "./MenuDrawer";
@@ -463,7 +463,7 @@ export default function MobileApp({
               <MaterialIcon name="menu" className="text-headline-large" />
             </button>
             <div className="flex items-center gap-2">
-              <WatermelonIcon className="w-5 h-5 text-primary animate-pulse" />
+              <AppIcon className="w-5 h-5 text-primary animate-pulse" />
               <span className="font-bold text-title-small font-display tracking-tight text-on-background">
                 Kamogelo's GPT
               </span>
@@ -627,7 +627,7 @@ export default function MobileApp({
                             ) : (
                               <div className="flex items-start gap-3 w-full">
                                 <div className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-surface border border-outline-variant shadow-sm">
-                                  <WatermelonIcon className="w-4 h-4 text-primary" />
+                                  <AppIcon className="w-4 h-4 text-primary" />
                                 </div>
                                  <div className="flex-1 min-w-0">
                                   {isFirst && (
@@ -677,7 +677,7 @@ export default function MobileApp({
                       {isLoading && (
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-surface border border-outline-variant shadow-sm">
-                            <WatermelonIcon className="w-4 h-4 text-primary animate-pulse" />
+                            <AppIcon className="w-4 h-4 text-primary animate-pulse" />
                           </div>
                           <div className="flex-1">
                             <span className="block font-semibold text-label-small text-on-surface-variant mb-0.5">

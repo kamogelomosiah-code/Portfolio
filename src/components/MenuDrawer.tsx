@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "motion/react";
 import { MaterialIcon } from "./MaterialIcon";
-import { WatermelonIcon } from "./WatermelonIcon";
+import { AppIcon } from "./AppIcon";
 
 interface MenuDrawerProps {
   currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace";
@@ -48,7 +48,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
               {/* Header */}
               <div className="flex flex-col px-4 pt-2">
                 <div className="mb-5 text-accent">
-                  <WatermelonIcon className="w-10 h-10" />
+                  <AppIcon className="w-10 h-10" />
                 </div>
                 <h3 className="font-display font-medium text-headline-medium tracking-normal text-on-background leading-tight mb-1">
                   Kamogelo Mosia

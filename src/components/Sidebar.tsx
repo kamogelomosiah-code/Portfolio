@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { MaterialIcon } from "./MaterialIcon";
-import { WatermelonIcon } from "./WatermelonIcon";
+import { AppIcon } from "./AppIcon";
 
 interface SidebarProps {
   currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace";
@@ -16,7 +16,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
           onClick={() => onTabChange("chat")}
           className="w-[42px] h-[42px] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity duration-300 text-accent"
         >
-          <WatermelonIcon className="w-8 h-8" />
+          <AppIcon className="w-8 h-8" />
         </div>
         
         {/* Navigation Section */}
