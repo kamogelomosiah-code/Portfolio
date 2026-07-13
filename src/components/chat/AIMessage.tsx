@@ -14,26 +14,21 @@ export function AIMessage({
   onStreamingComplete: (id: string) => void;
   renderUIBlock?: (uiBlock: string) => React.ReactNode;
 }) {
-  const [displayedText, setDisplayedText] = useState(msg.status === "streaming" ? "" : msg.text);
-  const [localStatus, setLocalStatus] = useState<"loading" | "streaming" | "sent">(msg.status === "sending" || msg.status === "loading" ? "loading" : msg.status === "streaming" ? "streaming" : "sent");
+  const hasAnimatedRef = useRef(false);
+  const [displayedText, setDisplayedText] = useState(msg.status === "sent" ? msg.text : "");
+  const [localStatus, setLocalStatus] = useState<"loading" | "streaming" | "sent">(
+    msg.status === "sending" || msg.status === "loading" ? "loading" : msg.status === "sent" ? "sent" : "streaming"
+  );
 
   useEffect(() => {
     if (msg.status === "loading" || msg.status === "sending") {
       setLocalStatus("loading");
-    } else if (msg.status === "streaming") {
-      if (localStatus === "loading") {
-        setLocalStatus("streaming");
-      }
-    } else if (msg.status === "sent") {
-      setLocalStatus("sent");
-      setDisplayedText(msg.text);
-    }
-  }, [msg.status, msg.text]);
-
-  useEffect(() => {
-    if (localStatus === "streaming" && msg.text) {
+      setDisplayedText("");
+      hasAnimatedRef.current = false;
+    } else if (msg.text && !hasAnimatedRef.current && localStatus !== "sent") {
+      hasAnimatedRef.current = true;
+      setLocalStatus("streaming");
       let currentIndex = 0;
-      // We stream characters or words. Let's do chunks of characters to make it fast but smooth.
       const textToStream = msg.text;
       
       const interval = setInterval(() => {
@@ -48,14 +43,18 @@ export function AIMessage({
       }, 10); // 10ms per chunk
 
       return () => clearInterval(interval);
+    } else if (msg.status === "sent" && !hasAnimatedRef.current) {
+      hasAnimatedRef.current = true;
+      setDisplayedText(msg.text);
+      setLocalStatus("sent");
     }
-  }, [localStatus, msg.text, msg.id, onStreamingComplete]);
+  }, [msg.text, msg.status, msg.id, localStatus, onStreamingComplete]);
 
   return (
     <div className="flex items-start gap-4 w-full max-w-full px-1 scroll-mt-4" id={`msg-${msg.id}`}>
       <div className="w-8 h-8 shrink-0 mt-1 flex items-center justify-center">
         {isFirstInGroup ? (
-          <div className="flex items-center justify-center rounded-full bg-surface border border-outline-variant w-8 h-8 shadow-sm">
+          <div className="flex items-center justify-center rounded-full bg-surface w-8 h-8 shadow-sm">
             <AppIcon className={`w-4.5 h-4.5 text-primary ${localStatus === "loading" ? "animate-pulse" : ""}`} />
           </div>
         ) : (

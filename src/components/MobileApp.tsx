@@ -152,7 +152,7 @@ export default function MobileApp({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-2.5 py-1.5 text-label-medium font-medium text-on-surface  bg-surface-container-low hover:bg-primary-container hover:text-primary border border-outline-variant/80 hover:border-primary/30 rounded-none transition-all active:scale-[0.99] cursor-pointer"
+                    className="w-full text-left px-2.5 py-1.5 text-label-medium font-medium text-on-surface  bg-surface-container-low hover:bg-primary-container hover:text-primary rounded-xl mb-1 transition-all active:scale-[0.99] cursor-pointer"
                   >
                     {question}
                   </button>
@@ -163,7 +163,7 @@ export default function MobileApp({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className="w-full bg-surface border border-outline-variant shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative">
+        <div className="w-full bg-surface border-t border-outline-variant flex flex-col p-4 pb-3.5 relative">
           {/* Top Row: text area */}
           <div className="flex items-start justify-between gap-2.5 w-full min-h-[44px]">
             <textarea
@@ -294,15 +294,31 @@ export default function MobileApp({
   };
 
   // Scroll to bottom helper
-  const scrollToBottom = () => {
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior
+      });
     }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === "agent") {
+      setTimeout(() => {
+        const msgEl = document.getElementById(`msg-${lastMsg.id}`);
+        if (msgEl && scrollContainerRef.current) {
+           scrollContainerRef.current.scrollTo({
+             top: msgEl.offsetTop - 20,
+             behavior: 'smooth'
+           });
+        }
+      }, 50);
+    } else {
+      scrollToBottom('smooth');
+    }
+  }, [messages.length, isLoading]);
 
   // Keyboard awareness - scroll when input receives focus
   const handleInputFocus = () => {
@@ -546,7 +562,7 @@ export default function MobileApp({
                                 <button
                                   key={idx}
                                   onClick={() => handleSend(prompt.text)}
-                                  className="flex items-center gap-3 p-3 bg-surface border border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[54px] rounded-none shadow-sm"
+                                  className="flex items-center gap-3 p-3 bg-surface bg-surface-container hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[54px] rounded-2xl"
                                 >
                                   <div className="shrink-0 w-7 h-7 rounded-none bg-primary-container flex items-center justify-center">
                                     {renderPromptIcon(prompt.icon)}
@@ -586,7 +602,7 @@ export default function MobileApp({
                             {isUser ? (
                               <div className="flex flex-col items-end max-w-[85%]">
                                 <div 
-                                  className="text-on-background px-4 py-3 rounded-[20px] rounded-tr-[4px] border shadow-sm"
+                                  className="text-on-primary bg-primary px-4 py-3 rounded-[20px] rounded-tr-[4px] shadow-sm"
                                   style={{ 
                                     backgroundColor: "var(--color-accent-light)", 
                                     borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
@@ -634,50 +650,40 @@ export default function MobileApp({
                                 )}
                               </div>
                             ) : (
-                              <div className="flex items-start gap-3 w-full">
-                                <div className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-surface border border-outline-variant shadow-sm">
-                                  <AppIcon className="w-4 h-4 text-primary" />
-                                </div>
-                                 <div className="flex-1 min-w-0">
-                                  {isFirst && (
-                                    <span className="block font-semibold text-label-small text-on-surface-variant mb-0.5">
-                                      Kamogelo Mosiah
-                                    </span>
-                                  )}
-                                  <div className="text-body-medium leading-relaxed text-on-background w-full">
-                                    <MarkdownRenderer content={msg.text} />
-                                  </div>
-
-                                  <div className="flex flex-wrap gap-1.5 mt-2 mb-1 select-none">
-                                    <button
-                                      onClick={() => handleSend("Tell me about your software projects")}
-                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
-                                    >
-                                      <span>📂 View Projects</span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleSend("What are your core technical skills?")}
-                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
-                                    >
-                                      <span>🛠️ Check Skills</span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleSend("Can I see your CV / Resume?")}
-                                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
-                                    >
-                                      <span>📄 Download CV</span>
-                                    </button>
-                                  </div>
-                                  
-                                  {msg.uiBlock && (
-                                    <div className="mt-3 w-full">
-                                      {msg.uiBlock === "projects" && <ProjectCards />}
-                                      {msg.uiBlock === "skills" && <SkillChips />}
-                                      {msg.uiBlock === "cv" && <DownloadCV onViewCv={() => handleTabChange("cv")} />}
+                              <AIMessage
+                                msg={msg}
+                                isFirstInGroup={isFirst}
+                                onStreamingComplete={(id) => {
+                                  setMessages(prev => prev.map(m => m.id === id ? { ...m, status: "sent" } : m));
+                                }}
+                                renderUIBlock={(uiBlock) => (
+                                  <>
+                                    <div className="flex flex-wrap gap-1.5 mt-2 mb-1 select-none">
+                                      <button
+                                        onClick={() => handleSend("Tell me about your software projects")}
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary transition-all duration-150 cursor-pointer rounded-full"
+                                      >
+                                        <span>📂 View Projects</span>
+                                      </button>
+                                      <button
+                                        onClick={() => handleSend("What are your core technical skills?")}
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary transition-all duration-150 cursor-pointer rounded-full"
+                                      >
+                                        <span>🛠️ Check Skills</span>
+                                      </button>
+                                      <button
+                                        onClick={() => handleSend("Can I see your CV / Resume?")}
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-semibold bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary transition-all duration-150 cursor-pointer rounded-full"
+                                      >
+                                        <span>📄 Download CV</span>
+                                      </button>
                                     </div>
-                                  )}
-                                </div>
-                              </div>
+                                    {uiBlock === "projects" && <ProjectCards />}
+                                    {uiBlock === "skills" && <SkillChips />}
+                                    {uiBlock === "cv" && <DownloadCV onViewCv={() => handleTabChange("cv")} />}
+                                  </>
+                                )}
+                              />
                             )}
                           </div>
                         );

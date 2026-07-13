@@ -198,24 +198,7 @@ export default function ChatInterface({
     }
   }, []);
 
-  // Resize observer to scroll when bubble height increases dynamically
-  useEffect(() => {
-    if (!scrollContentRef.current) return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      if (scrollContainerRef.current) {
-        const container = scrollContainerRef.current;
-        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        const isStreaming = messages.some(m => m.status === 'streaming' || m.status === 'loading');
-        if (isNearBottom && !isStreaming) {
-          scrollToBottom('smooth');
-        }
-      }
-    });
-
-    resizeObserver.observe(scrollContentRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
 
 
 
@@ -377,7 +360,7 @@ export default function ChatInterface({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-medium text-on-surface  bg-surface-container-low hover:bg-primary-container hover:text-primary border border-outline-variant hover:border-primary/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
+                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-medium text-on-surface  bg-surface-container-low hover:bg-primary-container hover:text-primary rounded-xl mb-1 duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
                   >
                     {question}
                   </button>
@@ -388,7 +371,7 @@ export default function ChatInterface({
         </AnimatePresence>
 
         {/* Input box */}
-        <div className="w-full bg-surface border border-outline-variant shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
+        <div className="w-full bg-surface border-t border-outline-variant flex flex-col p-4.5 pb-3.5 relative">
           {/* Top Row: text area */}
           <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
             <textarea
@@ -608,7 +591,7 @@ export default function ChatInterface({
                             <button
                               key={idx}
                               onClick={() => handleSend(prompt.text)}
-                              className="flex items-center gap-3.5 p-3.5 bg-surface border border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-none shadow-sm"
+                              className="flex items-center gap-3.5 p-3.5 bg-surface bg-surface-container hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-2xl"
                             >
                               <div className="shrink-0 w-8 h-8 rounded-none bg-primary-container flex items-center justify-center">
                                 {renderPromptIcon(prompt.icon)}
@@ -656,7 +639,7 @@ export default function ChatInterface({
                           /* 5 & 6. User: Rounded bubble, right-aligned, accent-colored background */
                           <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%]">
                             <div 
-                              className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-[20px] rounded-tr-[4px] border shadow-sm"
+                              className="text-on-primary bg-primary px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-[20px] rounded-tr-[4px] shadow-sm"
                               style={{ 
                                 backgroundColor: "var(--color-accent-light)", 
                                 borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
