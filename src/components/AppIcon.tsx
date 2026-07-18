@@ -1,6 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 
 export function AppIcon({ className = "w-6 h-6", color }: { className?: string, color?: string }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (!imgError) {
+    return (
+      <img 
+        src="/app_icon.png" 
+        alt="App Icon" 
+        className={`${className} object-contain`} 
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+
+  // Fallback icon if image doesn't exist yet
   return (
     <svg 
       className={className} 

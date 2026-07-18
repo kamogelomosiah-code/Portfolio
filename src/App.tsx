@@ -27,8 +27,33 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "workspace">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedModel, setSelectedModel] = useState("MiniMaxAI/MiniMax-M3:preferred");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const saved = sessionStorage.getItem("chat_messages");
+      if (saved) {
+        const parsed: Message[] = JSON.parse(saved);
+        // Fix any stuck messages that were loading/streaming during reload
+        return parsed.map(m => {
+          if (m.status === "loading" || m.status === "streaming" || m.status === "sending") {
+            return { ...m, status: m.text ? "sent" : "error" };
+          }
+          return m;
+        });
+      }
+    } catch (e) {
+      console.error("Failed to load messages from storage", e);
+    }
+    return [];
+  });
   const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("chat_messages", JSON.stringify(messages));
+    } catch (e) {
+      console.error("Failed to save messages to storage", e);
+    }
+  }, [messages]);
 
   useEffect(() => {
     const checkMobile = () => {

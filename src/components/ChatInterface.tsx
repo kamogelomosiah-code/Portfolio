@@ -105,14 +105,20 @@ export default function ChatInterface({
   const [needsAuth, setNeedsAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  const isGenerating = messages.some(m => m.status === 'loading' || m.status === 'streaming');
+
   // Tap and hold voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState("");
+  const [interimSpeech, setInterimSpeech] = useState("");
+  const finalSpeechRef = useRef("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<any>(null);
 
   const startRecording = async () => {
+    setInterimSpeech("");
+    finalSpeechRef.current = "";
     // Try Web Speech API first if supported
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -140,10 +146,8 @@ export default function ChatInterface({
           }
           const spoken = finalTranscript || interimTranscript;
           if (spoken) {
-            setInput(prev => {
-              // Append or update
-              return prev ? prev + " " + spoken : spoken;
-            });
+            setInterimSpeech(spoken);
+            finalSpeechRef.current = spoken;
           }
         };
 
@@ -226,6 +230,12 @@ export default function ChatInterface({
         recognitionRef.current.stop();
       } catch (e) {}
       recognitionRef.current = null;
+      if (finalSpeechRef.current) {
+         setInput(prev => (prev ? prev + " " + finalSpeechRef.current : finalSpeechRef.current));
+      }
+      setInterimSpeech("");
+      setIsRecording(false);
+      setRecordingStatus("");
     }
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -473,7 +483,7 @@ export default function ChatInterface({
       <div className={`${isFixed ? 'w-full max-w-3xl' : 'w-full max-w-2xl mx-auto mt-4'} relative flex flex-col items-center pointer-events-auto`}>
         {/* Recording status banner */}
         <AnimatePresence>
-          {recordingStatus && (
+          {(recordingStatus || interimSpeech) && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -481,7 +491,7 @@ export default function ChatInterface({
               className="w-full bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 px-4 py-2 rounded-2xl mb-2 text-center text-body-small font-medium flex items-center justify-center gap-2"
             >
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-              <span>{recordingStatus}</span>
+              <span>{interimSpeech ? interimSpeech : recordingStatus}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -548,7 +558,7 @@ export default function ChatInterface({
               placeholder="Ask me about math or coding!" 
               ref={textareaRef}
               className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
-              disabled={isLoading}
+              disabled={isLoading || isGenerating}
               rows={2}
             />
           </div>
@@ -566,8 +576,11 @@ export default function ChatInterface({
               style={{
                 backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
                 borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
-                color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)"
+                color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)",
+                opacity: isGenerating ? 0.5 : 1,
+                pointerEvents: isGenerating ? 'none' : 'auto'
               }}
+              disabled={isGenerating}
               title={selectedModel === "fusion" ? "Thinking Mode Active" : "Enable Thinking Mode for advanced responses"}
             >
               <MaterialIcon name="psychology" className={`text-title-large ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
@@ -594,9 +607,12 @@ export default function ChatInterface({
                 onMouseLeave={stopRecording}
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
+                disabled={isGenerating}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
                   isRecording
                     ? "bg-rose-500 text-white animate-pulse border-rose-600 shadow-md scale-105"
+                    : isGenerating
+                    ? "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
                     : "border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
@@ -607,11 +623,11 @@ export default function ChatInterface({
 
               <button
                 onClick={() => handleSend(input)}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || isGenerating}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
-                  input.trim() && !isLoading
+                  input.trim() && !isLoading && !isGenerating
                     ? "border-transparent bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-sm"
-                    : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed"
+                    : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
                 title="Send message"
