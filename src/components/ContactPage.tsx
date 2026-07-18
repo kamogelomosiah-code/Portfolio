@@ -51,7 +51,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
     >
       {/* Top Navbar with Back Button - Island Style */}
       <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
-        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border border-outline-variant/60 px-4 py-2 max-w-3xl">
+        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2 max-w-3xl">
           <div className="flex items-center gap-2 m-0 p-0">
             <h1 className="font-medium text-title-medium sm:text-title-large md:text-headline-small text-on-background tracking-normal font-display m-0 p-0 ml-1 py-1">Get In Touch</h1>
           </div>
@@ -75,7 +75,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
           {/* Information Column (col-span 1) */}
           <div className="flex flex-col gap-6">
-            <div className="border border-outline-variant shadow-sm rounded-[24px] p-6 bg-surface flex flex-col gap-4">
+            <div className="border-2 border-outline-variant shadow-sm rounded-[24px] p-6 bg-surface flex flex-col gap-4">
               <h3 className="text-body-medium font-medium text-on-surface-variant tracking-wide">
                 Direct Communication
               </h3>
@@ -105,7 +105,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
               </div>
             </div>
 
-            <div className="border border-outline-variant shadow-sm rounded-[24px] p-6 bg-surface flex flex-col gap-3">
+            <div className="border-2 border-outline-variant shadow-sm rounded-[24px] p-6 bg-surface flex flex-col gap-3">
               <h4 className="text-body-medium text-primary font-medium tracking-wide">
                 Availability
               </h4>
@@ -121,7 +121,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
 
           {/* Form Column (col-span 2) */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6 border border-outline-variant shadow-sm rounded-[28px] p-6 md:p-8 bg-surface">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6 border-2 border-outline-variant shadow-sm rounded-[28px] p-6 md:p-8 bg-surface">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-2">
                   <label htmlFor="name" className="text-body-small font-medium text-on-surface-variant">Full Name</label>
@@ -132,7 +132,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Jane Doe"
-                    className="bg-background border border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
+                    className="bg-background border-2 border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
                   />
                 </div>
 
@@ -145,7 +145,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="jane@example.com"
-                    className="bg-background border border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
+                    className="bg-background border-2 border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
                   />
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   placeholder="Opportunity for Contract work / Permanent Hire"
-                  className="bg-background border border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
+                  className="bg-background border-2 border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
                 />
               </div>
 
@@ -171,7 +171,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Hi Kamo, let's schedule an introductory call to discuss..."
-                  className="bg-background border border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant resize-none"
+                  className="bg-background border-2 border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant resize-none"
                 />
               </div>
 
@@ -180,7 +180,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                 <button
                   type="submit"
                   disabled={status === "submitting" || status === "success"}
-                  className="w-full md:w-auto self-end flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-on-primary px-8 py-3.5 rounded-full disabled:bg-[#F1F3F4] dark:disabled:bg-[#2C2C2C] disabled:text-[#9AA0A6] dark:disabled:text-[#5F5F5F] font-medium text-title-small transition-colors cursor-pointer border-0"
+                  className="w-full md:w-auto self-end flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-on-primary dark:bg-white dark:text-primary px-8 py-3.5 rounded-full disabled:bg-[#F1F3F4] dark:disabled:bg-[#2C2C2C] disabled:text-[#9AA0A6] dark:disabled:text-[#5F5F5F] font-medium text-title-small transition-colors cursor-pointer border-0"
                 >
                   {status === "submitting" ? (
                     <span>Sending...</span>
@@ -197,7 +197,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="bg-primary-container border border-primary/20 text-on-background p-4 rounded-lg flex items-start gap-3"
+                      className="bg-primary-container border-2 border-primary/20 text-on-background p-4 rounded-lg flex items-start gap-3"
                     >
                       <CheckCircle2 className="text-primary shrink-0 mt-0.5" size={20} />
                       <div>
@@ -212,7 +212,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="bg-red-500/10 border border-red-500/20 text-red-600  p-4 rounded-lg flex items-start gap-3"
+                      className="bg-red-500/10 border-2 border-red-500/20 text-red-600  p-4 rounded-lg flex items-start gap-3"
                     >
                       <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
                       <div>
@@ -231,7 +231,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
       
       {/* Floating Bottom Navigation */}
       <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant/60 px-2 py-2">
+        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
           {onToggleDrawer && (
             <button 
               onClick={onToggleDrawer}

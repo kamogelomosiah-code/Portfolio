@@ -78,14 +78,14 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
     >
       {/* Top Navbar with Back Button - Island Style */}
       <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4 print:hidden">
-        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border border-outline-variant/60 px-4 py-2 max-w-4xl">
+        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2 max-w-4xl">
           <div className="flex items-center gap-2 m-0 p-0">
             <h1 className="font-medium text-title-medium sm:text-title-large md:text-headline-small text-on-background tracking-normal font-display m-0 p-0 ml-1 py-1">Curriculum Vitae</h1>
           </div>
           <div className="flex items-center gap-2">
             <button 
               onClick={handlePrint}
-              className="flex items-center gap-2 bg-primary hover:opacity-95 text-on-primary px-4 py-2 rounded-lg transition-colors font-medium text-body-medium cursor-pointer shadow-sm border-0"
+              className="flex items-center gap-2 bg-primary hover:opacity-95 text-on-primary dark:bg-white dark:text-primary px-4 py-2 rounded-lg transition-colors font-medium text-body-medium cursor-pointer shadow-sm border-0"
               title="Download or Print CV"
             >
               <Download size={18} /> <span className="hidden sm:inline">Download</span>
@@ -99,7 +99,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
         <div className="w-full max-w-4xl pt-4 sm:pt-8 print:pt-0">
           
           {/* CV Sheet - Paper look */}
-          <div className="w-full bg-surface print:bg-surface border border-outline-variant print:border-0 shadow-lg print:shadow-none rounded-[32px] print:rounded-none p-6 sm:p-12 md:p-16 flex flex-col text-left transition-all relative">
+          <div className="w-full bg-surface print:bg-surface border-2 border-outline-variant print:border-0 shadow-lg print:shadow-none rounded-[32px] print:rounded-none p-6 sm:p-12 md:p-16 flex flex-col text-left transition-all relative">
             
             {/* Header Block */}
             <div className="border-b-2 border-primary pb-6 mb-8 print:mb-6">
@@ -190,13 +190,13 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
               </h2>
               <div className="w-full h-0.5 bg-primary mb-4" />
               
-              <div className="border border-outline-variant rounded-xl overflow-hidden shadow-sm flex flex-col">
+              <div className="border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm flex flex-col">
                 {skillsData.map((skill, index) => (
                   <div 
                     key={index} 
-                    className={`flex flex-col sm:flex-row border-b border-outline-variant last:border-0`}
+                    className={`flex flex-col sm:flex-row border-b-2 border-outline-variant last:border-0`}
                   >
-                    <div className="w-full sm:w-[220px] md:w-[260px] bg-background p-4 text-primary font-semibold text-body-small sm:text-body-medium shrink-0 border-b sm:border-b-0 sm:border-r border-outline-variant flex items-center">
+                    <div className="w-full sm:w-[220px] md:w-[260px] bg-background p-4 text-primary font-semibold text-body-small sm:text-body-medium shrink-0 border-b sm:border-b-0 sm:border-r-2 border-outline-variant flex items-center">
                       {skill.category}
                     </div>
                     <div className="flex-1 p-4 text-body-small sm:text-body-medium text-on-background bg-surface leading-relaxed">
@@ -303,7 +303,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
                   </div>
                   <div className="text-body-medium font-semibold text-primary mt-0.5 flex items-center flex-wrap gap-2">
                     <span>BSc Information Technology in Computer Science and Informatics</span>
-                    <span className="text-label-medium px-2 py-0.5 rounded bg-primary-container border border-primary/20 text-primary">NQF Level 7 (Pending)</span>
+                    <span className="text-label-medium px-2 py-0.5 rounded bg-primary-container border-2 border-primary/20 text-primary">NQF Level 7 (Pending)</span>
                   </div>
                   <div className="text-label-medium sm:text-body-small text-on-surface-variant font-mono mt-1">
                     SAQA Reg 80372 <span className="mx-1.5">•</span> Student No 217004345
@@ -395,7 +395,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
       
       {/* Floating Bottom Navigation */}
       <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none print:hidden">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant/60 px-2 py-2">
+        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
           {onToggleDrawer && (
             <button 
               onClick={onToggleDrawer}

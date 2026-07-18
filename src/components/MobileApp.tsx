@@ -418,7 +418,7 @@ export default function MobileApp({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
-              className="w-full bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-2xl mb-2 text-center text-label-medium font-medium flex items-center justify-center gap-1.5"
+              className="w-full bg-rose-500/10 border-2 border-rose-500/30 text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-2xl mb-2 text-center text-label-medium font-medium flex items-center justify-center gap-1.5"
             >
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
               <span>{interimSpeech ? interimSpeech : recordingStatus}</span>
@@ -433,7 +433,7 @@ export default function MobileApp({
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
-              className="w-full bg-surface border border-primary/20 shadow-lg p-3 mb-2.5 rounded-2xl relative z-30 text-left"
+              className="w-full bg-surface border-2 border-primary/20 shadow-lg p-3 mb-2.5 rounded-2xl relative z-30 text-left"
             >
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1 text-primary font-semibold text-label-medium sm:text-body-small">
@@ -459,7 +459,7 @@ export default function MobileApp({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-2.5 py-1.5 text-label-medium font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border border-outline-variant/80 hover:border-primary/30 rounded-2xl transition-all active:scale-[0.99] cursor-pointer"
+                    className="w-full text-left px-2.5 py-1.5 text-label-medium font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border-2 border-outline-variant/80 hover:border-primary/30 rounded-2xl transition-all active:scale-[0.99] cursor-pointer"
                   >
                     {question}
                   </button>
@@ -470,7 +470,7 @@ export default function MobileApp({
         </AnimatePresence>
 
         {/* Input box with smooth border radius */}
-        <div className="w-full bg-surface border border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative">
+        <div className="w-full bg-surface border-2 border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative">
           <div className="flex items-start justify-between gap-2.5 w-full min-h-[44px]">
             <textarea
               ref={textareaRef}
@@ -480,7 +480,7 @@ export default function MobileApp({
               placeholder="Ask me about math or coding!" 
               className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed max-h-[100px] overflow-y-auto border-0"
               disabled={isLoading || isGenerating}
-              rows={2}
+              rows={1}
             />
           </div>
 
@@ -547,7 +547,7 @@ export default function MobileApp({
                 disabled={!input.trim() || isLoading || isGenerating}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
                   input.trim() && !isLoading && !isGenerating
-                    ? "border-transparent bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-sm"
+                    ? "border-transparent bg-primary dark:bg-white text-on-primary dark:bg-white dark:text-primary hover:opacity-90 active:scale-95 shadow-sm"
                     : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
@@ -624,7 +624,7 @@ export default function MobileApp({
       {/* Floating Menu Button */}
       <button
         onClick={() => setDrawerOpen(true)}
-        className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
+        className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
         style={{ minWidth: "44px", minHeight: "44px" }}
         title="Open Navigation Menu"
       >
@@ -697,7 +697,7 @@ export default function MobileApp({
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ duration: 0.2, delay: idx * 0.05 }}
                                   onClick={() => handleSend(prompt.text)}
-                                  className="flex items-center gap-3 p-3 bg-surface border border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[54px] rounded-2xl shadow-sm"
+                                  className="flex items-center gap-3 p-3 bg-surface border-2 border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[54px] rounded-2xl shadow-sm"
                                 >
                                   <div className="shrink-0 w-7 h-7 rounded-xl bg-primary-container flex items-center justify-center">
                                     {renderPromptIcon(prompt.icon)}
@@ -757,11 +757,11 @@ export default function MobileApp({
                                               <img 
                                                 src={attachment.dataUrl} 
                                                 alt={attachment.name} 
-                                                className="max-w-full max-h-[130px] object-cover rounded-2xl border border-black/10 shadow-sm" 
+                                                className="max-w-full max-h-[130px] object-cover rounded-2xl border-2 border-black/10 shadow-sm" 
                                                 referrerPolicy="no-referrer"
                                               />
                                             ) : (
-                                              <div className="flex items-center gap-2 px-2.5 py-1.5 bg-surface/60 border border-black/5 rounded-2xl select-none text-left">
+                                              <div className="flex items-center gap-2 px-2.5 py-1.5 bg-surface/60 border-2 border-black/5 rounded-2xl select-none text-left">
                                                 <MaterialIcon name="description" className="text-body-medium text-primary shrink-0" />
                                                 <div className="flex flex-col min-w-0">
                                                   <span className="text-label-small font-normal text-on-surface truncate max-w-[120px]">{attachment.name}</span>
@@ -796,19 +796,19 @@ export default function MobileApp({
                                     <div className="flex flex-wrap gap-1.5 mt-2 mb-1 select-none">
                                       <button
                                         onClick={() => handleSend("Tell me about your software projects")}
-                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                       >
                                         <span>📂 View Projects</span>
                                       </button>
                                       <button
                                         onClick={() => handleSend("What are your core technical skills?")}
-                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                       >
                                         <span>🛠️ Check Skills</span>
                                       </button>
                                       <button
                                         onClick={() => handleSend("Can I see your CV / Resume?")}
-                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                       >
                                         <span>📄 Download CV</span>
                                       </button>
@@ -827,20 +827,19 @@ export default function MobileApp({
                   )}
                 </div>
 
-                {/* Floating scroll down button */}
-                {!isAtBottom && (
-                  <div className="absolute bottom-[90px] left-0 right-0 flex justify-center pointer-events-none z-20">
-                    <button
-                      onClick={() => scrollToBottom()}
-                      className="pointer-events-auto flex items-center justify-center w-8 h-8 bg-surface border border-outline-variant rounded-full shadow-md text-primary hover:bg-surface-container-high transition-all"
-                    >
-                      <MaterialIcon name="arrow_downward" className="text-body-small" />
-                    </button>
-                  </div>
-                )}
-
                 {/* Mobile Composer */}
-                <div className="w-full pt-3 pb-4 px-3.5 shrink-0 bg-background z-10 border-t border-outline-variant">
+                <div className="w-full pt-3 pb-4 px-3.5 shrink-0 bg-background z-10 border-t-2 border-outline-variant relative">
+                  {/* Floating scroll down button */}
+                  {!isAtBottom && (
+                    <div className="absolute top-0 left-0 right-0 -translate-y-full flex justify-center pointer-events-none z-20 pb-3">
+                      <button
+                        onClick={() => scrollToBottom()}
+                        className="pointer-events-auto flex items-center justify-center w-8 h-8 bg-surface border-2 border-outline-variant rounded-full shadow-md text-primary hover:bg-surface-container-high transition-all"
+                      >
+                        <MaterialIcon name="arrow_downward" className="text-body-small" />
+                      </button>
+                    </div>
+                  )}
                   {renderComposer(true)}
                 </div>
               </div>

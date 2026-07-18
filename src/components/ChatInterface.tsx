@@ -488,7 +488,7 @@ export default function ChatInterface({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
-              className="w-full bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 px-4 py-2 rounded-2xl mb-2 text-center text-body-small font-medium flex items-center justify-center gap-2"
+              className="w-full bg-rose-500/10 border-2 border-rose-500/30 text-rose-600 dark:text-rose-400 px-4 py-2 rounded-2xl mb-2 text-center text-body-small font-medium flex items-center justify-center gap-2"
             >
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
               <span>{interimSpeech ? interimSpeech : recordingStatus}</span>
@@ -503,7 +503,7 @@ export default function ChatInterface({
               initial={{ opacity: 0, y: 15, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="w-full bg-surface border border-primary/20 shadow-xl p-4 mb-3 rounded-2xl relative z-30 text-left"
+              className="w-full bg-surface border-2 border-primary/20 shadow-xl p-4 mb-3 rounded-2xl relative z-30 text-left"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5 text-primary font-semibold text-body-small sm:text-body-medium">
@@ -532,7 +532,7 @@ export default function ChatInterface({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border border-outline-variant hover:border-primary/30 transition-all rounded-2xl duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
+                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border-2 border-outline-variant hover:border-primary/30 transition-all rounded-2xl duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
                   >
                     {question}
                   </button>
@@ -543,7 +543,7 @@ export default function ChatInterface({
         </AnimatePresence>
 
         {/* Input box with smooth border radius */}
-        <div className="w-full bg-surface border border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
+        <div className="w-full bg-surface border-2 border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
           <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
             <textarea
               value={input}
@@ -559,7 +559,7 @@ export default function ChatInterface({
               ref={textareaRef}
               className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading || isGenerating}
-              rows={2}
+              rows={1}
             />
           </div>
 
@@ -626,7 +626,7 @@ export default function ChatInterface({
                 disabled={!input.trim() || isLoading || isGenerating}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
                   input.trim() && !isLoading && !isGenerating
-                    ? "border-transparent bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-sm"
+                    ? "border-transparent bg-primary dark:bg-white text-on-primary dark:bg-white dark:text-primary hover:opacity-90 active:scale-95 shadow-sm"
                     : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
@@ -680,7 +680,7 @@ export default function ChatInterface({
       {onToggleDrawer && (
         <button
           onClick={onToggleDrawer}
-          className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
+          className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
           style={{ minWidth: "44px", minHeight: "44px" }}
           title="Open Navigation Menu"
         >
@@ -746,7 +746,7 @@ export default function ChatInterface({
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.25, delay: idx * 0.05 }}
                               onClick={() => handleSend(prompt.text)}
-                              className="flex items-center gap-3.5 p-3.5 bg-surface border border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-2xl shadow-sm"
+                              className="flex items-center gap-3.5 p-3.5 bg-surface border-2 border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-2xl shadow-sm"
                             >
                               <div className="shrink-0 w-8 h-8 rounded-xl bg-primary-container flex items-center justify-center">
                                 {renderPromptIcon(prompt.icon)}
@@ -808,11 +808,11 @@ export default function ChatInterface({
                                           <img 
                                             src={attachment.dataUrl} 
                                             alt={attachment.name} 
-                                            className="max-w-full max-h-[160px] object-cover rounded-2xl border border-black/10 shadow-sm" 
+                                            className="max-w-full max-h-[160px] object-cover rounded-2xl border-2 border-black/10 shadow-sm" 
                                             referrerPolicy="no-referrer"
                                           />
                                         ) : (
-                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-surface/60 border border-black/5 rounded-2xl select-none text-left">
+                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-surface/60 border-2 border-black/5 rounded-2xl select-none text-left">
                                             <MaterialIcon name="description" className="text-title-medium text-primary shrink-0" />
                                             <div className="flex flex-col min-w-0">
                                               <span className="text-label-medium font-normal text-on-surface truncate max-w-[160px]">{attachment.name}</span>
@@ -861,44 +861,44 @@ export default function ChatInterface({
             </div>
         </div>
 
-        {/* Floating Scroll Controls */}
-        <div className="absolute bottom-[100px] left-0 right-0 flex justify-center pointer-events-none z-20 gap-3">
-          {(!isAtBottom || messages.some(m => m.status === 'streaming')) && (
-            <div className="pointer-events-auto flex gap-2">
-              {messages.length > 0 && messages[messages.length - 1].role === 'agent' && (
-                <button
-                  onClick={() => {
-                    const streamingMsg = [...messages].reverse().find(m => m.role === 'agent');
-                    if (streamingMsg) {
-                      const el = document.getElementById(`msg-${streamingMsg.id}`);
-                      if (el && scrollContainerRef.current) {
-                        scrollContainerRef.current.scrollTo({
-                          top: el.offsetTop - 16,
-                          behavior: 'smooth'
-                        });
-                      }
-                    }
-                  }}
-                  className="flex items-center gap-1 bg-surface border border-outline-variant rounded-full px-3 py-1.5 shadow-md text-primary hover:bg-surface-container-high transition-all text-label-medium font-normal"
-                >
-                  <MaterialIcon name="arrow_upward" className="text-body-small" />
-                  Response Start
-                </button>
-              )}
-              {!isAtBottom && (
-                <button
-                  onClick={() => scrollToBottom('smooth')}
-                  className="flex items-center justify-center w-8 h-8 bg-surface border border-outline-variant rounded-full shadow-md text-primary hover:bg-surface-container-high transition-all"
-                >
-                  <MaterialIcon name="arrow_downward" className="text-body-small" />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Custom Composer fixed at bottom */}
-        <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-background border-t border-outline-variant">
+        <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-background border-t-2 border-outline-variant relative">
+          {/* Floating Scroll Controls */}
+          <div className="absolute top-0 left-0 right-0 -translate-y-full flex justify-center pointer-events-none z-20 pb-3 gap-3">
+            {(!isAtBottom || messages.some(m => m.status === 'streaming')) && (
+              <div className="pointer-events-auto flex gap-2">
+                {messages.length > 0 && messages[messages.length - 1].role === 'agent' && (
+                  <button
+                    onClick={() => {
+                      const streamingMsg = [...messages].reverse().find(m => m.role === 'agent');
+                      if (streamingMsg) {
+                        const el = document.getElementById(`msg-${streamingMsg.id}`);
+                        if (el && scrollContainerRef.current) {
+                          scrollContainerRef.current.scrollTo({
+                            top: el.offsetTop - 16,
+                            behavior: 'smooth'
+                          });
+                        }
+                      }
+                    }}
+                    className="flex items-center gap-1 bg-surface border-2 border-outline-variant rounded-full px-3 py-1.5 shadow-md text-primary hover:bg-surface-container-high transition-all text-label-medium font-normal"
+                  >
+                    <MaterialIcon name="arrow_upward" className="text-body-small" />
+                    Response Start
+                  </button>
+                )}
+                {!isAtBottom && (
+                  <button
+                    onClick={() => scrollToBottom('smooth')}
+                    className="flex items-center justify-center w-8 h-8 bg-surface border-2 border-outline-variant rounded-full shadow-md text-primary hover:bg-surface-container-high transition-all"
+                  >
+                    <MaterialIcon name="arrow_downward" className="text-body-small" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
           {renderComposer(true)}
         </div>
 

@@ -28,10 +28,10 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
           
           <div className="relative z-10 flex gap-4 sm:gap-6 items-center transform transition-all duration-700 group-hover:scale-105 group-hover:-translate-y-2">
             <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface border border-primary/30 shadow-[0_0_15px_rgba(var(--color-accent),0.2)]">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface border-2 border-primary/30 shadow-[0_0_15px_rgba(var(--color-accent),0.2)]">
                 <Database size={20} className="text-primary" />
               </div>
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface border border-primary/30 shadow-[0_0_15px_rgba(var(--color-accent),0.2)]">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface border-2 border-primary/30 shadow-[0_0_15px_rgba(var(--color-accent),0.2)]">
                 <Network size={20} className="text-primary" />
               </div>
             </div>
@@ -40,7 +40,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
               <div className="absolute top-1/2 left-0 w-2 h-2 rounded-full bg-primary -translate-y-1/2 animate-ping" />
             </div>
             
-            <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface border border-primary/50 shadow-[0_0_30px_rgba(var(--color-accent),0.4)] relative">
+            <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface border-2 border-primary/50 shadow-[0_0_30px_rgba(var(--color-accent),0.4)] relative">
               <div className="absolute -inset-1 bg-primary/20 rounded-xl blur animate-pulse" />
               <Server size={32} className="text-primary relative z-10" />
             </div>
@@ -49,7 +49,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
               <div className="absolute top-1/2 right-0 w-2 h-2 rounded-full bg-primary -translate-y-1/2 animate-[ping_1.5s_infinite]" />
             </div>
             
-            <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface border border-primary/30 shadow-[0_0_15px_rgba(var(--color-accent),0.2)]">
+            <div className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface border-2 border-primary/30 shadow-[0_0_15px_rgba(var(--color-accent),0.2)]">
               <ShieldCheck size={24} className="text-primary" />
             </div>
           </div>
@@ -80,8 +80,8 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
           
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-primary/10 rounded-full blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-700" />
           
-          <div className="relative z-10 w-48 h-32 bg-surface rounded-xl border border-outline-variant shadow-lg flex flex-col overflow-hidden transform transition-all duration-700 group-hover:scale-105 group-hover:-rotate-2 group-hover:shadow-[0_10px_30px_rgba(var(--color-accent),0.2)]">
-            <div className="h-6 w-full border-b border-outline-variant flex items-center px-2 gap-1.5 bg-background/50">
+          <div className="relative z-10 w-48 h-32 bg-surface rounded-xl border-2 border-outline-variant shadow-lg flex flex-col overflow-hidden transform transition-all duration-700 group-hover:scale-105 group-hover:-rotate-2 group-hover:shadow-[0_10px_30px_rgba(var(--color-accent),0.2)]">
+            <div className="h-6 w-full border-b-2 border-outline-variant flex items-center px-2 gap-1.5 bg-background/50">
               <div className="w-2 h-2 rounded-full bg-red-400/80" />
               <div className="w-2 h-2 rounded-full bg-yellow-400/80" />
               <div className="w-2 h-2 rounded-full bg-green-400/80" />
@@ -100,12 +100,12 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
           </div>
           
           <div className="absolute z-20 -bottom-4 -right-2 transform transition-all duration-700 group-hover:-translate-y-4 group-hover:-translate-x-4">
-            <div className="w-32 h-20 bg-surface rounded-xl border border-outline-variant shadow-xl p-3 flex flex-col gap-2 translate-x-8 -translate-y-6 rotate-6">
+            <div className="w-32 h-20 bg-surface rounded-xl border-2 border-outline-variant shadow-xl p-3 flex flex-col gap-2 translate-x-8 -translate-y-6 rotate-6">
               <div className="flex items-center gap-2">
                 <AppWindow size={14} className="text-primary" />
                 <div className="w-16 h-1.5 rounded-full bg-primary/40" />
               </div>
-              <div className="w-full h-8 rounded-md bg-primary/10 border border-primary/20" />
+              <div className="w-full h-8 rounded-md bg-primary/10 border-2 border-primary/20" />
             </div>
           </div>
 
@@ -134,7 +134,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
           
           <div className="flex gap-4 relative z-10 transform transition-transform duration-700 group-hover:scale-105">
             {/* Sidebar mock */}
-            <div className="w-12 sm:w-16 h-36 bg-surface rounded-xl border border-outline-variant shadow-lg flex flex-col items-center py-4 gap-3">
+            <div className="w-12 sm:w-16 h-36 bg-surface rounded-xl border-2 border-outline-variant shadow-lg flex flex-col items-center py-4 gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                 <Box size={16} className="text-primary" />
               </div>
@@ -148,7 +148,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
             
             {/* Dashboard blocks */}
             <div className="flex flex-col gap-4 w-36 sm:w-40">
-              <div className="h-16 w-full bg-surface rounded-xl border border-outline-variant shadow-lg flex items-end p-2 gap-1.5 overflow-hidden relative">
+              <div className="h-16 w-full bg-surface rounded-xl border-2 border-outline-variant shadow-lg flex items-end p-2 gap-1.5 overflow-hidden relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-accent)]/10 to-transparent" />
                 <div className="flex-1 h-[30%] bg-primary/40 rounded-t-sm" />
                 <div className="flex-1 h-[60%] bg-primary rounded-t-sm" />
@@ -158,11 +158,11 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                 <BarChart3 size={24} className="absolute top-2 left-2 text-primary/30" />
               </div>
               <div className="flex gap-3 sm:gap-4 h-16 w-full">
-                 <div className="flex-1 bg-surface rounded-xl border border-outline-variant shadow-lg p-2 flex flex-col justify-between">
+                 <div className="flex-1 bg-surface rounded-xl border-2 border-outline-variant shadow-lg p-2 flex flex-col justify-between">
                     <div className="w-full h-1.5 rounded-full bg-primary/20" />
                     <div className="w-3/4 h-2 rounded-full bg-primary/50" />
                  </div>
-                 <div className="flex-1 bg-surface rounded-xl border border-outline-variant shadow-lg p-2 flex flex-col justify-between">
+                 <div className="flex-1 bg-surface rounded-xl border-2 border-outline-variant shadow-lg p-2 flex flex-col justify-between">
                     <div className="w-full h-1.5 rounded-full bg-primary/20" />
                     <div className="w-1/2 h-2 rounded-full bg-primary/50" />
                  </div>
@@ -195,7 +195,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
           <div className="absolute w-[150%] h-[1px] bg-gradient-to-r from-transparent via-[var(--color-accent)]/30 to-transparent -rotate-45 transform transition-transform duration-1000 group-hover:-rotate-12" />
 
           <div className="relative z-10 w-56 h-36 flex flex-col justify-end gap-3 transform transition-transform duration-700 group-hover:scale-105 group-hover:-translate-y-2">
-            <div className="self-start w-32 px-3 py-2 bg-surface rounded-xl rounded-bl-sm border border-outline-variant shadow-md flex items-center gap-2 transform -rotate-2 -translate-x-2">
+            <div className="self-start w-32 px-3 py-2 bg-surface rounded-xl rounded-bl-sm border-2 border-outline-variant shadow-md flex items-center gap-2 transform -rotate-2 -translate-x-2">
               <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                 <Users size={12} className="text-primary" />
               </div>
@@ -205,7 +205,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
               </div>
             </div>
 
-            <div className="self-end w-36 px-3 py-2 bg-primary/10 rounded-xl border border-primary/20 rounded-br-sm shadow-md flex items-center gap-2 transform rotate-2 translate-x-2 relative overflow-hidden">
+            <div className="self-end w-36 px-3 py-2 bg-primary/10 rounded-xl border-2 border-primary/20 rounded-br-sm shadow-md flex items-center gap-2 transform rotate-2 translate-x-2 relative overflow-hidden">
                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--color-accent)]/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
                <div className="flex-1 space-y-1.5 pt-0.5">
                 <div className="w-full h-1.5 bg-primary/50 rounded-full" />
@@ -213,7 +213,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
               </div>
             </div>
             
-            <div className="self-start px-4 py-2 bg-surface rounded-xl rounded-bl-sm border border-primary/30 shadow-lg flex items-center gap-2 -translate-y-1 relative">
+            <div className="self-start px-4 py-2 bg-surface rounded-xl rounded-bl-sm border-2 border-primary/30 shadow-lg flex items-center gap-2 -translate-y-1 relative">
                <div className="flex items-center gap-1.5">
                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }} />
                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -239,7 +239,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
     >
       {/* Top Navbar with Back Button - Island Style */}
       <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
-        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border border-outline-variant/60 px-4 py-2 max-w-3xl">
+        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2 max-w-3xl">
           <div className="flex items-center gap-2 m-0 p-0">
             <h1 className="font-medium text-title-medium sm:text-title-large md:text-headline-small text-on-background tracking-normal font-display m-0 p-0 ml-1 py-1">My Live Works</h1>
           </div>
@@ -263,10 +263,10 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
                 key={project.title}
-                className={`group border border-outline-variant shadow-sm rounded-xl transition-all relative overflow-hidden flex flex-col ${project.bgClass}`}
+                className={`group border-2 border-outline-variant shadow-sm rounded-xl transition-all relative overflow-hidden flex flex-col ${project.bgClass}`}
               >
                 {/* Image Thumbnail / Vector Illustration */}
-                <div className="w-full h-48 md:h-56 overflow-hidden relative border-b border-outline-variant shrink-0">
+                <div className="w-full h-48 md:h-56 overflow-hidden relative border-b-2 border-outline-variant shrink-0">
                   <div className="absolute inset-0 bg-[var(--text-main)]/5 group-hover:bg-transparent transition-colors duration-500 z-20 pointer-events-none" />
                   {project.illustration}
                 </div>
@@ -291,14 +291,14 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
 
                     <div className="flex flex-wrap gap-2 mb-6 justify-start">
                       {project.tags.map((tag) => (
-                        <span key={tag} className="text-label-medium font-medium px-3 py-1.5 bg-[#F1F3F4] rounded-full text-[#444746] hover:bg-[var(--border-light)] transition-colors cursor-default border border-transparent">
+                        <span key={tag} className="text-label-medium font-medium px-3 py-1.5 bg-[#F1F3F4] rounded-full text-[#444746] hover:bg-[var(--border-light)] transition-colors cursor-default border-2 border-transparent">
                           {tag}
                         </span>
                       ))}
                     </div>
 
                     {/* Operational stats */}
-                    <div className="grid grid-cols-3 gap-4 border-t border-outline-variant pt-6 max-w-xl text-left mt-auto">
+                    <div className="grid grid-cols-3 gap-4 border-t-2 border-outline-variant pt-6 max-w-xl text-left mt-auto">
                       {Object.entries(project.stats).map(([key, val]) => (
                         <div key={key} className="text-left">
                           <p className="text-label-small text-on-surface-variant font-medium">{key}</p>
@@ -322,7 +322,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                       href={project.github}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-center gap-2 border border-accent/20 bg-accent/5 text-accent px-6 py-2.5 rounded-full hover:bg-accent/10 transition-colors font-medium text-body-medium cursor-pointer no-underline"
+                      className="flex items-center justify-center gap-2 border-2 border-accent/20 bg-accent/5 text-accent px-6 py-2.5 rounded-full hover:bg-accent/10 transition-colors font-medium text-body-medium cursor-pointer no-underline"
                     >
                       Source <Github size={16} />
                     </a>
@@ -336,7 +336,7 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
       
       {/* Floating Bottom Navigation */}
       <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant/60 px-2 py-2">
+        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
           {onToggleDrawer && (
             <button 
               onClick={onToggleDrawer}

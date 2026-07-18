@@ -42,7 +42,7 @@ export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-surface rounded-none z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r border-outline-variant"
+            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-surface rounded-none z-50 py-6 px-4 flex flex-col shadow-2xl overflow-y-auto border-r-2 border-outline-variant"
           >
             <div className="flex flex-col gap-6 flex-1">
               {/* Header */}

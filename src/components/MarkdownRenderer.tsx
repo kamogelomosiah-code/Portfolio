@@ -51,8 +51,8 @@ function CodeBlock({ children, className }: { children: React.ReactNode, classNa
   };
 
   return (
-    <div className="rounded-lg overflow-hidden my-4 border border-outline shadow-sm bg-neutral-950 font-sans">
-      <div className="flex items-center justify-between px-4 py-2 bg-inverse-surface border-b border-outline">
+    <div className="rounded-lg overflow-hidden my-4 border-2 border-outline shadow-sm bg-neutral-950 font-sans">
+      <div className="flex items-center justify-between px-4 py-2 bg-inverse-surface border-b-2 border-outline">
         <div className="flex items-center gap-3">
           <span className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">{language}</span>
           {isHtml && (
@@ -176,9 +176,9 @@ export function EmailDraftCard({ to, subject, body }: EmailDraftCardProps) {
   };
 
   return (
-    <div className="w-full border border-outline-variant rounded-xl overflow-hidden shadow-md my-4 font-sans bg-surface-container-highest transition-all duration-200">
+    <div className="w-full border-2 border-outline-variant rounded-xl overflow-hidden shadow-md my-4 font-sans bg-surface-container-highest transition-all duration-200">
       {/* Mail Header Window Controls */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-surface-container dark:bg-neutral-950 border-b border-outline-variant">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-surface-container dark:bg-neutral-950 border-b-2 border-outline-variant">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-[#FF5F56] inline-block" />
           <span className="w-3 h-3 rounded-full bg-[#FFBD2E] inline-block" />
@@ -189,7 +189,7 @@ export function EmailDraftCard({ to, subject, body }: EmailDraftCardProps) {
       </div>
 
       {/* Mail Address Form fields */}
-      <div className="p-3.5 border-b border-outline-variant text-xs sm:text-sm space-y-2 bg-surface-container-low dark:bg-neutral-950/20">
+      <div className="p-3.5 border-b-2 border-outline-variant text-xs sm:text-sm space-y-2 bg-surface-container-low dark:bg-neutral-950/20">
         <div className="flex items-baseline gap-2">
           <span className="text-on-surface-variant font-medium w-16 text-right select-none">To:</span>
           <span className="font-semibold text-on-surface ">{to}</span>
@@ -201,15 +201,15 @@ export function EmailDraftCard({ to, subject, body }: EmailDraftCardProps) {
       </div>
 
       {/* Mail Envelope Content Body */}
-      <div className="p-5 max-h-[350px] overflow-y-auto bg-surface dark:bg-neutral-950 text-on-surface  text-body-medium sm:text-title-small leading-relaxed whitespace-pre-wrap font-sans border-b border-neutral-100 dark:border-neutral-900">
+      <div className="p-5 max-h-[350px] overflow-y-auto bg-surface dark:bg-neutral-950 text-on-surface  text-body-medium sm:text-title-small leading-relaxed whitespace-pre-wrap font-sans border-b-2 border-neutral-100 dark:border-neutral-900">
         {body}
       </div>
 
       {/* Mail Composer Action bar */}
-      <div className="flex items-center justify-end gap-3 px-4 py-3 bg-surface-container-low dark:bg-neutral-950/40 border-t border-neutral-150 border-outline">
+      <div className="flex items-center justify-end gap-3 px-4 py-3 bg-surface-container-low dark:bg-neutral-950/40 border-t-2 border-neutral-150 border-outline">
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-highest text-xs sm:text-sm font-semibold transition-all cursor-pointer bg-transparent text-on-surface "
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-outline-variant hover:bg-surface-container-highest text-xs sm:text-sm font-semibold transition-all cursor-pointer bg-transparent text-on-surface "
         >
           {copied ? (
             <>
@@ -225,7 +225,7 @@ export function EmailDraftCard({ to, subject, body }: EmailDraftCardProps) {
         </button>
         <button
           onClick={handleSend}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-on-primary hover:opacity-95 text-xs sm:text-sm font-semibold transition-all cursor-pointer border-0 shadow-sm"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-on-primary dark:bg-white dark:text-primary hover:opacity-95 text-xs sm:text-sm font-semibold transition-all cursor-pointer border-0 shadow-sm"
         >
           <Mail size={14} />
           <span>Open Mail App</span>
@@ -283,7 +283,7 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
             </li>
           ),
           h1: ({ children }) => (
-            <h1 className="text-xl sm:text-2xl font-bold mt-5 mb-2.5 text-on-background font-display tracking-tight border-b border-outline-variant pb-1">
+            <h1 className="text-xl sm:text-2xl font-bold mt-5 mb-2.5 text-on-background font-display tracking-tight border-b-2 border-outline-variant pb-1">
               {children}
             </h1>
           ),
@@ -330,16 +330,16 @@ export function MarkdownRenderer({ content, isStreaming }: MarkdownRendererProps
           ),
           table: ({ children }) => (
             <div className="overflow-x-auto my-3.5 w-full">
-              <table className="min-w-full border-collapse border border-outline-variant text-body-medium">
+              <table className="min-w-full border-collapse border-2 border-outline-variant text-body-medium">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => <thead className="bg-surface-container-low">{children}</thead>,
           tbody: ({ children }) => <tbody>{children}</tbody>,
-          tr: ({ children }) => <tr className="border-b border-outline-variant">{children}</tr>,
-          th: ({ children }) => <th className="p-2 border border-outline-variant font-semibold text-left">{children}</th>,
-          td: ({ children }) => <td className="p-2 border border-outline-variant text-on-background">{children}</td>
+          tr: ({ children }) => <tr className="border-b-2 border-outline-variant">{children}</tr>,
+          th: ({ children }) => <th className="p-2 border-2 border-outline-variant font-semibold text-left">{children}</th>,
+          td: ({ children }) => <td className="p-2 border-2 border-outline-variant text-on-background">{children}</td>
         }}
       >
         {text}

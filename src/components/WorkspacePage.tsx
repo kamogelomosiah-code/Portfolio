@@ -454,7 +454,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
     >
       {/* Top Navbar - Glassy Island Style */}
       <div className="absolute top-0 left-0 md:left-20 lg:left-[88px] right-0 z-30 flex justify-center pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-3 sm:px-4">
-        <div className="flex items-center justify-between w-full pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border border-outline-variant/60 px-4 py-2 max-w-4xl">
+        <div className="flex items-center justify-between w-full pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2 max-w-4xl">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-primary shrink-0">
               <Mail size={18} />
@@ -468,7 +468,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               <span className="hidden sm:inline-block text-xs text-on-surface-variant font-mono">{user.email}</span>
               <button 
                 onClick={handleLogout}
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-outline-variant hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-600  cursor-pointer bg-transparent transition-colors"
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg border-2 border-outline-variant hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-600  cursor-pointer bg-transparent transition-colors"
               >
                 Sign Out
               </button>
@@ -489,7 +489,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-md mx-auto mt-8 p-6 sm:p-8 bg-surface border border-outline-variant rounded-xl shadow-lg flex flex-col items-center text-center"
+                className="w-full max-w-md mx-auto mt-8 p-6 sm:p-8 bg-surface border-2 border-outline-variant rounded-xl shadow-lg flex flex-col items-center text-center"
               >
                 <div className="w-16 h-16 rounded-xl bg-primary-container flex items-center justify-center text-primary mb-6">
                   <Mail size={32} />
@@ -502,7 +502,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 </p>
 
                 {errorMsg && (
-                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-600  text-xs rounded-xl flex items-center gap-2">
+                  <div className="mb-4 p-3 bg-red-500/10 border-2 border-red-500/20 text-red-600  text-xs rounded-xl flex items-center gap-2">
                     <AlertCircle size={14} />
                     <span>{errorMsg}</span>
                   </div>
@@ -546,7 +546,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                 className="w-full flex flex-col gap-6"
               >
                 {/* INNER WORKSPACE TABS */}
-                <div className="flex bg-surface border border-outline-variant p-1.5 rounded-xl w-full max-w-md mx-auto">
+                <div className="flex bg-surface border-2 border-outline-variant p-1.5 rounded-xl w-full max-w-md mx-auto">
                   <button
                     onClick={() => setActiveSubTab("gmail")}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer border-0 ${
@@ -590,7 +590,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                   <button 
                     onClick={fetchTabData}
                     disabled={isLoadingData}
-                    className="text-xs flex items-center gap-1 px-2 py-1 rounded-md hover:bg-surface text-on-surface-variant hover:text-on-background border border-transparent hover:border-outline-variant cursor-pointer disabled:opacity-50"
+                    className="text-xs flex items-center gap-1 px-2 py-1 rounded-md hover:bg-surface text-on-surface-variant hover:text-on-background border-2 border-transparent hover:border-outline-variant cursor-pointer disabled:opacity-50"
                   >
                     <RefreshCw size={12} className={isLoadingData ? "animate-spin" : ""} />
                     <span>Refresh</span>
@@ -599,7 +599,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
                 {/* CORE VIEWS LOADING STATS */}
                 {isLoadingData && emails.length === 0 && events.length === 0 && keepNotes.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 bg-surface border border-outline-variant rounded-xl">
+                  <div className="flex flex-col items-center justify-center py-20 bg-surface border-2 border-outline-variant rounded-xl">
                     <Loader2 size={28} className="text-primary animate-spin mb-3" />
                     <span className="text-sm text-on-surface-variant font-mono">Loading data from Google servers...</span>
                   </div>
@@ -613,7 +613,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         <div className="flex justify-end">
                           <button
                             onClick={() => setIsComposingEmail(true)}
-                            className="flex items-center gap-1.5 bg-primary hover:opacity-90 text-on-primary font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl cursor-pointer shadow-sm border-0"
+                            className="flex items-center gap-1.5 bg-primary hover:opacity-90 text-on-primary dark:bg-white dark:text-primary font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl cursor-pointer shadow-sm border-0"
                           >
                             <Plus size={16} />
                             <span>Compose Email</span>
@@ -621,7 +621,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         </div>
 
                         {emails.length === 0 ? (
-                          <div className="p-8 text-center bg-surface border border-outline-variant rounded-xl text-on-surface-variant text-sm">
+                          <div className="p-8 text-center bg-surface border-2 border-outline-variant rounded-xl text-on-surface-variant text-sm">
                             No emails found in your primary inbox.
                           </div>
                         ) : (
@@ -630,7 +630,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                               <div
                                 key={email.id}
                                 onClick={() => setSelectedEmail(email)}
-                                className="p-4 bg-surface border border-outline-variant hover:border-primary rounded-xl cursor-pointer transition-all shadow-sm text-left relative overflow-hidden group"
+                                className="p-4 bg-surface border-2 border-outline-variant hover:border-primary rounded-xl cursor-pointer transition-all shadow-sm text-left relative overflow-hidden group"
                               >
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-400 group-hover:bg-primary transition-colors" />
                                 <div className="flex justify-between items-start gap-4 mb-1 pl-1">
@@ -656,7 +656,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         <div className="flex justify-end">
                           <button
                             onClick={() => setIsAddingEvent(true)}
-                            className="flex items-center gap-1.5 bg-primary hover:opacity-90 text-on-primary font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl cursor-pointer shadow-sm border-0"
+                            className="flex items-center gap-1.5 bg-primary hover:opacity-90 text-on-primary dark:bg-white dark:text-primary font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl cursor-pointer shadow-sm border-0"
                           >
                             <Plus size={16} />
                             <span>Schedule Event</span>
@@ -664,7 +664,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         </div>
 
                         {events.length === 0 ? (
-                          <div className="p-8 text-center bg-surface border border-outline-variant rounded-xl text-on-surface-variant text-sm">
+                          <div className="p-8 text-center bg-surface border-2 border-outline-variant rounded-xl text-on-surface-variant text-sm">
                             No upcoming calendar events found.
                           </div>
                         ) : (
@@ -677,7 +677,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                               return (
                                 <div
                                   key={evt.id}
-                                  className="p-4 sm:p-5 bg-surface border border-outline-variant hover:border-primary/40 rounded-xl transition-all shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left relative overflow-hidden"
+                                  className="p-4 sm:p-5 bg-surface border-2 border-outline-variant hover:border-primary/40 rounded-xl transition-all shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left relative overflow-hidden"
                                 >
                                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-400" />
                                   <div className="flex-1 space-y-2 pl-1">
@@ -699,7 +699,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                                     </div>
 
                                     {evt.description && (
-                                      <p className="text-[12.5px] text-on-surface-variant leading-relaxed bg-background/50 p-2.5 rounded-lg border border-outline-variant mt-1">
+                                      <p className="text-[12.5px] text-on-surface-variant leading-relaxed bg-background/50 p-2.5 rounded-lg border-2 border-outline-variant mt-1">
                                         {evt.description}
                                       </p>
                                     )}
@@ -724,12 +724,12 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                               value={keepSearch}
                               onChange={(e) => setKeepSearch(e.target.value)}
                               placeholder="Search Keep notes..."
-                              className="w-full h-10 pl-10 pr-4 bg-surface border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                              className="w-full h-10 pl-10 pr-4 bg-surface border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                             />
                           </div>
                           <button
                             onClick={() => setIsAddingNote(true)}
-                            className="flex items-center justify-center gap-1.5 bg-primary hover:opacity-90 text-on-primary font-semibold text-xs sm:text-sm px-4 h-10 rounded-xl cursor-pointer shadow-sm border-0 shrink-0"
+                            className="flex items-center justify-center gap-1.5 bg-primary hover:opacity-90 text-on-primary dark:bg-white dark:text-primary font-semibold text-xs sm:text-sm px-4 h-10 rounded-xl cursor-pointer shadow-sm border-0 shrink-0"
                           >
                             <Plus size={16} />
                             <span>New Note</span>
@@ -737,14 +737,14 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                         </div>
 
                         {isKeepSandbox && (
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-800  text-xs rounded-xl flex items-center gap-2">
+                          <div className="p-3 bg-amber-500/10 border-2 border-amber-500/20 text-amber-800  text-xs rounded-xl flex items-center gap-2">
                             <Info size={14} />
                             <span>Consumer Keeps use sandbox persistence mode successfully.</span>
                           </div>
                         )}
 
                         {filteredNotes.length === 0 ? (
-                          <div className="p-8 text-center bg-surface border border-outline-variant rounded-xl text-on-surface-variant text-sm">
+                          <div className="p-8 text-center bg-surface border-2 border-outline-variant rounded-xl text-on-surface-variant text-sm">
                             No notes found matching search.
                           </div>
                         ) : (
@@ -793,7 +793,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
 
       {/* Floating Bottom Navigation */}
       <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant/60 px-2 py-2">
+        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
           {onToggleDrawer && (
             <button 
               onClick={onToggleDrawer}
@@ -830,7 +830,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col max-h-[90vh] overflow-hidden"
+              className="relative w-full max-w-lg bg-surface border-2 border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Compose Email</h2>
@@ -851,7 +851,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     value={emailTo}
                     onChange={(e) => setEmailTo(e.target.value)}
                     placeholder="e.g. client@example.com"
-                    className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                    className="w-full h-10 px-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                   />
                 </div>
 
@@ -863,7 +863,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     value={emailSubject}
                     onChange={(e) => setEmailSubject(e.target.value)}
                     placeholder="Enter email subject line"
-                    className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                    className="w-full h-10 px-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                   />
                 </div>
 
@@ -875,14 +875,14 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     value={emailBody}
                     onChange={(e) => setEmailBody(e.target.value)}
                     placeholder="Type your mail content..."
-                    className="w-full p-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
+                    className="w-full p-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={emailSending}
-                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
+                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary dark:bg-white dark:text-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
                 >
                   {emailSending ? (
                     <>
@@ -918,7 +918,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col text-left"
+              className="relative w-full max-w-lg bg-surface border-2 border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col text-left"
             >
               <div className="flex justify-between items-center mb-4">
                 <span className="text-label-small font-mono font-bold px-2.5 py-1 bg-red-500/10 text-red-600  rounded-md">
@@ -950,7 +950,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                   <div className="text-xs text-on-surface-variant">{selectedEmail.date}</div>
                 </div>
 
-                <div className="border-t border-outline-variant pt-3.5 mt-2">
+                <div className="border-t-2 border-outline-variant pt-3.5 mt-2">
                   <p className="text-body-medium text-on-background leading-relaxed whitespace-pre-wrap">
                     {selectedEmail.snippet}
                   </p>
@@ -977,7 +977,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col max-h-[90vh] overflow-hidden text-left"
+              className="relative w-full max-w-lg bg-surface border-2 border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col max-h-[90vh] overflow-hidden text-left"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Schedule Calendar Event</h2>
@@ -998,7 +998,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     value={eventTitle}
                     onChange={(e) => setEventTitle(e.target.value)}
                     placeholder="e.g. MasterAPI Refinement Sync"
-                    className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                    className="w-full h-10 px-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                   />
                 </div>
 
@@ -1010,7 +1010,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                       required
                       value={eventDate}
                       onChange={(e) => setEventDate(e.target.value)}
-                      className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                      className="w-full h-10 px-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -1020,7 +1020,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                       required
                       value={eventTime}
                       onChange={(e) => setEventTime(e.target.value)}
-                      className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                      className="w-full h-10 px-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                     />
                   </div>
                 </div>
@@ -1031,7 +1031,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     <select
                       value={eventDuration}
                       onChange={(e) => setEventDuration(e.target.value)}
-                      className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                      className="w-full h-10 px-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                     >
                       <option value="30">30 minutes</option>
                       <option value="60">1 hour</option>
@@ -1046,7 +1046,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                       value={eventLocation}
                       onChange={(e) => setEventLocation(e.target.value)}
                       placeholder="Google Meet, Office, etc."
-                      className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                      className="w-full h-10 px-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                     />
                   </div>
                 </div>
@@ -1058,14 +1058,14 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     value={eventDesc}
                     onChange={(e) => setEventDesc(e.target.value)}
                     placeholder="Enter discussion agenda or details"
-                    className="w-full p-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
+                    className="w-full p-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={eventAdding}
-                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
+                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary dark:bg-white dark:text-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
                 >
                   {eventAdding ? (
                     <>
@@ -1101,7 +1101,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-lg bg-surface border border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col text-left"
+              className="relative w-full max-w-lg bg-surface border-2 border-outline-variant p-5 sm:p-6 rounded-xl shadow-xl z-10 flex flex-col text-left"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-[17px] sm:text-[19px] font-bold font-display tracking-tight">Create Keep Note</h2>
@@ -1121,7 +1121,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     value={noteTitle}
                     onChange={(e) => setNoteTitle(e.target.value)}
                     placeholder="Enter note title"
-                    className="w-full h-10 px-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
+                    className="w-full h-10 px-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background"
                   />
                 </div>
 
@@ -1133,13 +1133,13 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder="Type your notes here..."
-                    className="w-full p-3 bg-background border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
+                    className="w-full p-3 bg-background border-2 border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary text-on-background resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2"
+                  className="w-full h-11 bg-primary hover:opacity-90 text-on-primary dark:bg-white dark:text-primary font-semibold text-sm rounded-xl cursor-pointer transition-all border-0 shadow-sm flex items-center justify-center gap-2"
                 >
                   <Plus size={15} />
                   <span>Create note</span>

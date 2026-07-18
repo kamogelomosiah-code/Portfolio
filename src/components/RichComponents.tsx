@@ -31,13 +31,13 @@ export function ProjectCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-2xl font-sans">
       {projects.map((project, i) => (
-        <div key={i} className="bg-surface border border-outline-variant rounded-xl p-5 hover:border-primary dark:hover:border-primary transition-colors flex flex-col justify-between shadow-sm">
+        <div key={i} className="bg-surface border-2 border-outline-variant rounded-xl p-5 hover:border-primary dark:hover:border-primary transition-colors flex flex-col justify-between shadow-sm">
           <div>
             <h3 className="font-semibold text-base mb-2 text-on-background text-on-background">{project.title}</h3>
             <p className="text-on-surface-variant text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
             <div className="flex flex-wrap gap-1.5 mb-6">
               {project.tags.map(tag => (
-                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-surface-container-low border border-outline rounded-lg text-on-surface dark:text-gray-300">
+                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-surface-container-low border-2 border-outline rounded-lg text-on-surface dark:text-gray-300">
                   {tag}
                 </span>
                ))}
@@ -62,7 +62,7 @@ export function SkillChips() {
   return (
     <div className="flex flex-wrap gap-2 mt-4 max-w-xl font-sans">
       {skills.map(skill => (
-        <div key={skill} className="px-3 py-1.5 border border-outline-variant bg-surface-container-low rounded-full text-xs font-semibold text-on-surface  hover:bg-inverse-surface hover:text-on-primary dark:hover:bg-surface dark:hover:text-on-background transition-colors cursor-default shadow-sm">
+        <div key={skill} className="px-3 py-1.5 border-2 border-outline-variant bg-surface-container-low rounded-full text-xs font-semibold text-on-surface  hover:bg-inverse-surface hover:text-on-primary dark:hover:bg-surface dark:hover:text-on-background transition-colors cursor-default shadow-sm">
           {skill}
         </div>
       ))}
@@ -158,10 +158,10 @@ REFERENCES
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-surface-container-low border border-outline-variant rounded-xl w-full max-w-lg mt-3 gap-4 shadow-sm hover:border-outline-variant  transition-colors">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-surface-container-low border-2 border-outline-variant rounded-xl w-full max-w-lg mt-3 gap-4 shadow-sm hover:border-outline-variant  transition-colors">
       <div className="flex items-center gap-3.5">
         {/* Document Icon Graphic */}
-        <div className="w-12 h-12 shrink-0 bg-red-100 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border border-red-200/50 dark:border-red-900/20 shadow-sm relative overflow-hidden select-none">
+        <div className="w-12 h-12 shrink-0 bg-red-100 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border-2 border-red-200/50 dark:border-red-900/20 shadow-sm relative overflow-hidden select-none">
           <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
           <svg className="w-6 h-6 text-red-600 " fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -189,7 +189,7 @@ REFERENCES
         {onViewCv && (
           <button
             onClick={onViewCv}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-surface hover:bg-surface-container-highest text-on-surface  px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer border border-outline-variant"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-surface hover:bg-surface-container-highest text-on-surface  px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer border-2 border-outline-variant"
           >
             View Online
           </button>

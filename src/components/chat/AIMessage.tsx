@@ -59,7 +59,7 @@ export function AIMessage({
     <div className="flex items-start gap-4 w-full max-w-full px-1 scroll-mt-4" id={`msg-${msg.id}`}>
       <div className="w-8 h-8 shrink-0 mt-1 flex items-center justify-center">
         {isFirstInGroup ? (
-          <div className="flex items-center justify-center rounded-full bg-surface border border-outline-variant w-8 h-8 shadow-sm">
+          <div className="flex items-center justify-center rounded-full bg-surface border-2 border-outline-variant w-8 h-8 shadow-sm">
             <AppIcon className={`w-4.5 h-4.5 text-primary ${localStatus === "loading" ? "animate-pulse" : ""}`} />
           </div>
         ) : (

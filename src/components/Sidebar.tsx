@@ -9,7 +9,7 @@ interface SidebarProps {
 
 const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps) {
   return (
-    <div className="hidden md:flex w-20 lg:w-[88px] h-screen border-r border-outline-variant flex-col items-center py-6 justify-between shrink-0 fixed left-0 bg-background z-20">
+    <div className="hidden md:flex w-20 lg:w-[88px] h-screen border-r-2 border-outline-variant flex-col items-center py-6 justify-between shrink-0 fixed left-0 bg-background z-20">
       <div className="flex flex-col gap-6 items-center w-full">
         {/* Logo Icon */}
         <div 
