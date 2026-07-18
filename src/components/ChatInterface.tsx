@@ -105,6 +105,133 @@ export default function ChatInterface({
   const [needsAuth, setNeedsAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  // Tap and hold voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingStatus, setRecordingStatus] = useState("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
+
+  const startRecording = async () => {
+    // Try Web Speech API first if supported
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      try {
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          setIsRecording(true);
+          setRecordingStatus("Listening... Speak now");
+        };
+
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          const spoken = finalTranscript || interimTranscript;
+          if (spoken) {
+            setInput(prev => {
+              // Append or update
+              return prev ? prev + " " + spoken : spoken;
+            });
+          }
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error("Speech recognition error", event.error);
+          setRecordingStatus("Speech error: " + event.error);
+          setTimeout(() => setRecordingStatus(""), 3000);
+          setIsRecording(false);
+        };
+
+        recognition.onend = () => {
+          setIsRecording(false);
+          setRecordingStatus("");
+        };
+
+        recognition.start();
+        return;
+      } catch (e) {
+        console.warn("SpeechRecognition failed, falling back to MediaRecorder", e);
+      }
+    }
+
+    // Fallback to MediaRecorder + Hugging Face /api/transcribe
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach(track => track.stop());
+        
+        setRecordingStatus("Transcribing via Hugging Face...");
+        try {
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'speech.webm');
+
+          const res = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData,
+          });
+          const data = await res.json();
+          if (data.text) {
+            setInput(prev => (prev ? prev + " " + data.text : data.text));
+          } else if (data.error) {
+            console.error("Transcription error:", data.error);
+            setRecordingStatus("Transcription note: " + data.error);
+            setTimeout(() => setRecordingStatus(""), 4000);
+          }
+        } catch (err) {
+          console.error("Transcription request failed:", err);
+          setRecordingStatus("Network error during transcription.");
+          setTimeout(() => setRecordingStatus(""), 3000);
+        } finally {
+          setRecordingStatus("");
+          setIsRecording(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingStatus("Listening... Release to transcribe");
+    } catch (err) {
+      console.error("Microphone access denied or unavailable:", err);
+      setRecordingStatus("Microphone access denied. Please check permissions.");
+      setTimeout(() => setRecordingStatus(""), 4000);
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = initAuth(
       (user, token) => {
@@ -169,18 +296,34 @@ export default function ChatInterface({
     }
   }, [messages.length]);
 
-  // Client side typing stream states
-    
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lastScrollY = useRef(0);
 
-  // Smart Clarification / Follow-up Questions State
   const [activeClarifications, setActiveClarifications] = useState<string[]>([]);
+  const scrolledToTopMsgIds = useRef<Set<string>>(new Set());
 
-  // Dedicated helper to trigger precise scroll-to-bottom on the chat container
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === "agent") {
+      if ((lastMsg.status === "streaming" || lastMsg.status === "sent") && !scrolledToTopMsgIds.current.has(lastMsg.id)) {
+        scrolledToTopMsgIds.current.add(lastMsg.id);
+        setTimeout(() => {
+          const el = document.getElementById(`msg-${lastMsg.id}`);
+          if (el && scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({
+              top: el.offsetTop - 16,
+              behavior: 'smooth'
+            });
+          }
+        }, 100);
+      }
+    }
+  }, [messages]);
+
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
@@ -190,15 +333,12 @@ export default function ChatInterface({
     }
   };
 
-  // High-reliability scrolling on message shifts
   useEffect(() => {
-    // Only scroll to bottom initially
     if (messages.length <= 1) {
       scrollToBottom('auto');
     }
   }, []);
 
-  // Resize observer to scroll when bubble height increases dynamically
   useEffect(() => {
     if (!scrollContentRef.current) return;
 
@@ -208,7 +348,7 @@ export default function ChatInterface({
         const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
         const isStreaming = messages.some(m => m.status === 'streaming' || m.status === 'loading');
         if (isNearBottom && !isStreaming) {
-          scrollToBottom('smooth');
+          // Do not auto jump during generation per requirements
         }
       }
     });
@@ -217,9 +357,6 @@ export default function ChatInterface({
     return () => resizeObserver.disconnect();
   }, []);
 
-
-
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -227,17 +364,11 @@ export default function ChatInterface({
     }
   }, [input]);
 
-    const handleScroll = (e: UIEvent<HTMLDivElement>) => {
+  const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     setIsScrolled(scrollTop > 20);
     lastScrollY.current = scrollTop;
     setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
-  };
-
-  // Microphone recording removed
-
-  const getOfflineResponse = (text: string) => {
-    return "The engine can not be reached.";
   };
 
   const handleSend = async (text: string) => {
@@ -261,19 +392,19 @@ export default function ChatInterface({
     
     setMessages(updatedMessages);
     setInput("");
-    setIsLoading(true); // Keep for backwards compatibility, but not used in UI ideally
+    setIsLoading(true);
     setActiveClarifications([]);
-    // Scroll to new agent message
+
+    // Scroll to the top of the response (do not force scroll to bottom)
     setTimeout(() => {
       const el = document.getElementById(`msg-${agentMsgId}`);
       if (el && scrollContainerRef.current) {
         scrollContainerRef.current.scrollTo({
-          top: el.offsetTop - 20,
+          top: el.offsetTop - 16,
           behavior: 'smooth'
         });
       }
     }, 50);
-
 
     try {
       const history = messages.map(m => ({
@@ -298,7 +429,6 @@ export default function ChatInterface({
       let replyText = data.text || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
 
-      // Extract clarifying follow-up questions
       let followUps: string[] = [];
       const clarifyMatch = replyText.match(/\[CLARIFY:\s*([^\]]+)\]/);
       if (clarifyMatch) {
@@ -341,6 +471,21 @@ export default function ChatInterface({
   const renderComposer = (isFixed: boolean) => {
     return (
       <div className={`${isFixed ? 'w-full max-w-3xl' : 'w-full max-w-2xl mx-auto mt-4'} relative flex flex-col items-center pointer-events-auto`}>
+        {/* Recording status banner */}
+        <AnimatePresence>
+          {recordingStatus && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 5 }}
+              className="w-full bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 px-4 py-2 rounded-2xl mb-2 text-center text-body-small font-medium flex items-center justify-center gap-2"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+              <span>{recordingStatus}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Smart Clarification Questions Popup */}
         <AnimatePresence>
           {activeClarifications.length > 0 && (
@@ -348,7 +493,7 @@ export default function ChatInterface({
               initial={{ opacity: 0, y: 15, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="w-full bg-surface border border-primary/20 shadow-xl p-4 mb-3 rounded-none relative z-30 text-left"
+              className="w-full bg-surface border border-primary/20 shadow-xl p-4 mb-3 rounded-2xl relative z-30 text-left"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5 text-primary font-semibold text-body-small sm:text-body-medium">
@@ -358,7 +503,7 @@ export default function ChatInterface({
                 <button
                   type="button"
                   onClick={() => setActiveClarifications([])}
-                  className="text-on-surface-variant hover:text-on-surface-variant  transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center rounded-lg hover:bg-surface-container-highest"
+                  className="text-on-surface-variant hover:text-on-surface transition-colors p-1 border-0 bg-transparent cursor-pointer flex items-center justify-center rounded-2xl hover:bg-surface-container-highest"
                   style={{ minWidth: "44px", minHeight: "44px" }}
                   title="Dismiss suggestions"
                 >
@@ -377,7 +522,7 @@ export default function ChatInterface({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-medium text-on-surface  bg-surface-container-low hover:bg-primary-container hover:text-primary border border-outline-variant hover:border-primary/30 transition-all rounded-none duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
+                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border border-outline-variant hover:border-primary/30 transition-all rounded-2xl duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
                   >
                     {question}
                   </button>
@@ -387,9 +532,8 @@ export default function ChatInterface({
           )}
         </AnimatePresence>
 
-        {/* Input box */}
-        <div className="w-full bg-surface border border-outline-variant shadow-sm rounded-[32px] focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
-          {/* Top Row: text area */}
+        {/* Input box with smooth border radius */}
+        <div className="w-full bg-surface border border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
           <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
             <textarea
               value={input}
@@ -403,7 +547,7 @@ export default function ChatInterface({
               }}
               placeholder="Ask me about math or coding!" 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant  font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading}
               rows={2}
             />
@@ -411,7 +555,6 @@ export default function ChatInterface({
 
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
-            {/* Thinking Mode Toggle button */}
             <button
               type="button"
               onClick={() => {
@@ -419,7 +562,7 @@ export default function ChatInterface({
                   setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
                 }
               }}
-              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-semibold transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
+              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
               style={{
                 backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
                 borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
@@ -437,13 +580,31 @@ export default function ChatInterface({
               )}
             </button>
 
-            {/* Right side: Character count and Send */}
+            {/* Right side: Mic, Character count and Send */}
             <div className="flex items-center gap-2">
               <span className="text-[11.5px] text-on-surface-variant font-mono hidden sm:inline select-none pr-1">
                 {input.length}/1000
               </span>
 
-              {/* Send button (Sized appropriately for Touch Target requirements) */}
+              {/* Tap and Hold Microphone Button */}
+              <button
+                type="button"
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+                onMouseLeave={stopRecording}
+                onTouchStart={startRecording}
+                onTouchEnd={stopRecording}
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
+                  isRecording
+                    ? "bg-rose-500 text-white animate-pulse border-rose-600 shadow-md scale-105"
+                    : "border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+                }`}
+                style={{ minWidth: "44px", minHeight: "44px" }}
+                title="Tap and hold to speak"
+              >
+                <MaterialIcon name="mic" className={`text-title-large ${isRecording ? "animate-bounce" : ""}`} />
+              </button>
+
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isLoading}
@@ -461,7 +622,7 @@ export default function ChatInterface({
           </div>
         </div>
 
-        {/* Footer text with elegant small connection status */}
+        {/* Footer text */}
         <div className="text-center mt-2 w-full flex flex-col sm:flex-row items-center justify-between px-1.5 gap-1.5 sm:gap-0 select-none">
            <div className="flex items-center gap-1.5">
              <span className="relative flex h-2 w-2">
@@ -481,14 +642,8 @@ export default function ChatInterface({
                  </>
                )}
              </span>
-             <span className="text-label-small font-semibold text-on-surface-variant font-mono">
-               {isHfConnected === null ? (
-                 "Checking server..."
-               ) : isHfConnected ? (
-                 "HuggingFace: Active"
-               ) : (
-                 "Offline Mode: Active"
-               )}
+             <span className="text-label-small font-normal text-on-surface-variant font-mono">
+               {isHfConnected === null ? "Checking server..." : isHfConnected ? "HuggingFace: Active" : "Offline Mode: Active"}
              </span>
            </div>
 
@@ -501,63 +656,29 @@ export default function ChatInterface({
   };
 
   const isInitialState = messages.length === 0;
-  const isShrunk = isScrolled || !isInitialState;
 
   return (
     <div className="flex-1 flex h-full overflow-hidden relative bg-background w-full font-sans antialiased">
       
+      {/* Floating Menu Button */}
+      {onToggleDrawer && (
+        <button
+          onClick={onToggleDrawer}
+          className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
+          style={{ minWidth: "44px", minHeight: "44px" }}
+          title="Open Navigation Menu"
+        >
+          <MaterialIcon name="menu" className="text-title-medium" />
+        </button>
+      )}
+
       {/* Main Conversation Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
-        
-        {/* Top Sticky Header */}
-        <div className="sticky top-0 z-30 w-full flex items-center justify-between h-[64px] border-b border-outline-variant bg-surface/95 backdrop-blur-md px-4 shadow-sm">
-          <div className="flex items-center gap-2.5">
-            <button 
-              onClick={onToggleDrawer} 
-              className="md:hidden flex items-center justify-center w-11 h-11 rounded-lg hover:bg-inverse-surface/5  transition-colors text-on-surface-variant cursor-pointer border-0 bg-transparent"
-              style={{ minWidth: "44px", minHeight: "44px" }}
-              title="Navigation Menu"
-            >
-              <MaterialIcon name="menu" className="text-headline-large" />
-            </button>
-            
-            <div className="flex items-center gap-2">
-              <AppIcon className="w-5 h-5 text-primary shrink-0" />
-              <span className="font-semibold text-title-small sm:text-title-medium text-on-background font-display tracking-tight">
-                Kamogelo's GPT
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {needsAuth ? (
-              <button onClick={handleLogin} disabled={isLoggingIn} className="gsi-material-button bg-surface text-on-surface font-semibold py-1.5 px-3 rounded shadow border border-outline-variant flex items-center gap-2 text-body-small hover:bg-surface-container-low cursor-pointer">
-                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-4 h-4">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                  <path fill="none" d="M0 0h48v48H0z"></path>
-                </svg>
-                {isLoggingIn ? "Signing in..." : "Sign in with Google"}
-              </button>
-            ) : (
-              <div className="flex items-center gap-3">
-                <span className="text-body-small text-on-surface-variant font-medium truncate max-w-[150px]">
-                  {user?.email}
-                </span>
-                <button onClick={handleLogout} className="text-label-medium text-red-500 hover:text-red-600 bg-transparent border-0 cursor-pointer font-medium px-2 py-1">
-                  Sign out
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Scrollable chat body */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth pt-2"
+          className="flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth pt-4"
           onScroll={handleScroll}
         >
           <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-4 pb-6 min-h-full">
@@ -574,12 +695,11 @@ export default function ChatInterface({
                         transition={{ duration: 0.5, ease: "easeInOut" }}
                         className="flex flex-col text-left w-full py-8"
                       >
-                        {/* Greeting Hero */}
                         <div className="mb-6">
                           <h1 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-on-background mb-1 leading-none font-display">
                             Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
                           </h1>
-                          <h2 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-[#4F46E5]  mb-4 leading-none font-display">
+                          <h2 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-[#4F46E5] mb-4 leading-none font-display">
                             What would you like to know?
                           </h2>
                           <p className="text-on-surface-variant text-[15.5px] font-normal leading-relaxed">
@@ -590,41 +710,42 @@ export default function ChatInterface({
                     ) : (
                       <motion.div 
                         key="options"
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        initial={{ opacity: 0, scale: 0.97, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.35, ease: "easeOut" }}
                         className="flex flex-col text-left w-full"
                       >
-                        {/* Compact suggestions header */}
                         <div className="mb-3.5">
-                          <p className="text-on-surface-variant text-label-medium font-semibold uppercase tracking-wider">
+                          <p className="text-on-surface-variant text-label-medium font-normal uppercase tracking-wider">
                             Quick Suggestions
                           </p>
                         </div>
 
-                        {/* Reduced Sleek Horizontal Prompt Cards (3 Columns) */}
+                        {/* Clean Quick Cards with smooth border radius, pop-ins, clear font weights */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
                           {PROMPT_SETS[promptSetIndex].slice(0, 3).map((prompt, idx) => (
-                            <button
+                            <motion.button
                               key={idx}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.25, delay: idx * 0.05 }}
                               onClick={() => handleSend(prompt.text)}
-                              className="flex items-center gap-3.5 p-3.5 bg-surface border border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-none shadow-sm"
+                              className="flex items-center gap-3.5 p-3.5 bg-surface border border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-2xl shadow-sm"
                             >
-                              <div className="shrink-0 w-8 h-8 rounded-none bg-primary-container flex items-center justify-center">
+                              <div className="shrink-0 w-8 h-8 rounded-xl bg-primary-container flex items-center justify-center">
                                 {renderPromptIcon(prompt.icon)}
                               </div>
-                              <span className="text-body-small text-on-background font-semibold leading-tight line-clamp-2">
+                              <span className="text-body-small text-on-background font-normal leading-tight line-clamp-2">
                                 {prompt.text}
                               </span>
-                            </button>
+                            </motion.button>
                           ))}
                         </div>
 
-                        {/* Refresh Prompts left-aligned */}
                         <div className="mt-3.5 flex justify-start mb-8">
                           <button
                             onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                            className="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant hover:text-on-background font-semibold transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
+                            className="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant hover:text-on-background font-normal transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
                           >
                             <MaterialIcon name="refresh" className="text-body-medium" />
                             <span>Refresh Suggestions</span>
@@ -641,10 +762,6 @@ export default function ChatInterface({
                   {messages.map((msg, index) => {
                     const isUser = msg.role === "user";
                     const isFirstInGroup = index === 0 || messages[index - 1].role !== msg.role;
-                    const isLastInGroup = index === messages.length - 1 || messages[index + 1].role !== msg.role;
-                    
-                    const isStreaming = msg.status === "streaming";
-                    const textToShow = msg.text;
 
                     return (
                       <div 
@@ -653,10 +770,9 @@ export default function ChatInterface({
                         className={`flex w-full ${isUser ? "justify-end" : "justify-start"} ${isFirstInGroup ? "mt-6" : "mt-2"}`}
                       >
                         {isUser ? (
-                          /* 5 & 6. User: Rounded bubble, right-aligned, accent-colored background */
                           <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%]">
                             <div 
-                              className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-[20px] rounded-tr-[4px] border shadow-sm"
+                              className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm border shadow-sm"
                               style={{ 
                                 backgroundColor: "var(--color-accent-light)", 
                                 borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
@@ -676,14 +792,14 @@ export default function ChatInterface({
                                           <img 
                                             src={attachment.dataUrl} 
                                             alt={attachment.name} 
-                                            className="max-w-full max-h-[160px] object-cover rounded-lg border border-black/10  shadow-sm" 
+                                            className="max-w-full max-h-[160px] object-cover rounded-2xl border border-black/10 shadow-sm" 
                                             referrerPolicy="no-referrer"
                                           />
                                         ) : (
-                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-surface/60  border border-black/5  rounded-lg select-none text-left">
+                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-surface/60 border border-black/5 rounded-2xl select-none text-left">
                                             <MaterialIcon name="description" className="text-title-medium text-primary shrink-0" />
                                             <div className="flex flex-col min-w-0">
-                                              <span className="text-label-medium font-semibold text-on-surface  truncate max-w-[160px]">{attachment.name}</span>
+                                              <span className="text-label-medium font-normal text-on-surface truncate max-w-[160px]">{attachment.name}</span>
                                               <span className="text-[10px] text-on-surface-variant font-mono">{(attachment.size / 1024).toFixed(1)} KB</span>
                                             </div>
                                           </div>
@@ -697,7 +813,7 @@ export default function ChatInterface({
                             {msg.status === "error" && (
                               <button 
                                 onClick={() => handleSend(msg.text)} 
-                                className="mt-1.5 text-red-500 hover:text-red-600 flex items-center gap-1.5 text-label-medium font-semibold bg-transparent border-0 cursor-pointer min-h-[44px]"
+                                className="mt-1.5 text-red-500 hover:text-red-600 flex items-center gap-1.5 text-label-medium font-normal bg-transparent border-0 cursor-pointer min-h-[44px]"
                               >
                                 <MaterialIcon name="error" className="text-body-medium text-red-500 mr-1" />
                                 <span>Failed to send. Click to retry</span>
@@ -729,7 +845,6 @@ export default function ChatInterface({
             </div>
         </div>
 
-
         {/* Floating Scroll Controls */}
         <div className="absolute bottom-[100px] left-0 right-0 flex justify-center pointer-events-none z-20 gap-3">
           {(!isAtBottom || messages.some(m => m.status === 'streaming')) && (
@@ -742,13 +857,13 @@ export default function ChatInterface({
                       const el = document.getElementById(`msg-${streamingMsg.id}`);
                       if (el && scrollContainerRef.current) {
                         scrollContainerRef.current.scrollTo({
-                          top: el.offsetTop - 20,
+                          top: el.offsetTop - 16,
                           behavior: 'smooth'
                         });
                       }
                     }
                   }}
-                  className="flex items-center gap-1 bg-surface border border-outline-variant rounded-full px-3 py-1.5 shadow-md text-primary hover:bg-surface-container-high transition-all text-label-medium font-semibold"
+                  className="flex items-center gap-1 bg-surface border border-outline-variant rounded-full px-3 py-1.5 shadow-md text-primary hover:bg-surface-container-high transition-all text-label-medium font-normal"
                 >
                   <MaterialIcon name="arrow_upward" className="text-body-small" />
                   Response Start
@@ -766,16 +881,12 @@ export default function ChatInterface({
           )}
         </div>
 
-        {/* Custom Composer fixed at bottom - always displayed to be sticky bottom and always visible */}
+        {/* Custom Composer fixed at bottom */}
         <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-background border-t border-outline-variant">
           {renderComposer(true)}
         </div>
 
       </div>
-
-      {/* Model Selection Drawer Bottom Sheet */}
-
-
     </div>
   );
 }
