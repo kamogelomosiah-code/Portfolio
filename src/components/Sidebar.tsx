@@ -3,8 +3,8 @@ import { MaterialIcon } from "./MaterialIcon";
 import { AppIcon } from "./AppIcon";
 
 interface SidebarProps {
-  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace";
-  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace") => void;
+  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace" | "planner";
+  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace" | "planner") => void;
 }
 
 const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps) {
@@ -34,6 +34,21 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
                <MaterialIcon name="forum" className="text-headline-medium" />
             </div>
             <span className="text-label-small font-sans text-center leading-none mt-1">Chat</span>
+          </button>
+
+          <button 
+            onClick={() => onTabChange("planner")}
+            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
+              currentTab === "planner" 
+                ? "text-primary font-semibold" 
+                : "bg-transparent text-on-surface-variant hover:text-on-background font-normal"
+            }`}
+            title="AI Action Planner"
+          >
+            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "planner" ? "bg-primary-container text-primary" : "text-inherit group-hover:bg-surface-container"}`}>
+               <MaterialIcon name="track_changes" className="text-headline-medium" />
+            </div>
+            <span className="text-label-small font-sans text-center leading-none mt-1">Planner</span>
           </button>
 
           <button 

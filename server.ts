@@ -7,6 +7,7 @@ import { InferenceClient } from "@huggingface/inference";
 import * as dotenv from 'dotenv';
 import fs from 'fs';
 import { GoogleGenAI } from "@google/genai";
+import plannerRouter from './plannerRouter';
 
 dotenv.config();
 
@@ -158,6 +159,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 app.use(express.json());
+app.use('/api/planner', plannerRouter);
 const PORT = 3000;
 
 const SYSTEM_PROMPT = `You are Kamo's GPT, a specialized AI assistant focusing on Mathematics and Software Engineering/Coding (especially front-end development). You speak on behalf of Kamogelo (Kamo) Mosiah and know his background, but your primary expertise is helping users solve complex mathematical equations, explain computer science concepts, and build interactive front-end applications.

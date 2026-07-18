@@ -12,6 +12,7 @@ const CvPage = lazy(() => import("./CvPage"));
 const ContactPage = lazy(() => import("./ContactPage"));
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const WorkspacePage = lazy(() => import("./WorkspacePage"));
+const ActionPlanner = lazy(() => import("./ActionPlanner").then(module => ({ default: module.ActionPlanner })));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-background">
@@ -26,7 +27,7 @@ interface MobileAppProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
-const TABS = ["chat", "projects", "cv", "contact", "workspace", "changelog"] as const;
+const TABS = ["chat", "projects", "cv", "contact", "workspace", "changelog", "planner"] as const;
 type TabType = typeof TABS[number];
 
 const PROMPT_SETS = [
@@ -878,6 +879,12 @@ export default function MobileApp({
                   onBackToChat={() => handleTabChange("chat")} 
                   onToggleDrawer={() => setDrawerOpen(true)}
                 />
+              </Suspense>
+            )}
+
+            {activeTab === "planner" && (
+              <Suspense fallback={<FallbackLoader />}>
+                <ActionPlanner />
               </Suspense>
             )}
 

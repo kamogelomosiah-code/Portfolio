@@ -3,15 +3,16 @@ import { MaterialIcon } from "./MaterialIcon";
 import { AppIcon } from "./AppIcon";
 
 interface MenuDrawerProps {
-  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace";
-  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace") => void;
+  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace" | "planner";
+  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace" | "planner") => void;
   isOpen: boolean;
   onToggle: () => void;
 }
 
 export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }: MenuDrawerProps) {
-  const menuItems: Array<{ id: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace"; label: string; icon: React.ReactNode; desc: string }> = [
+  const menuItems: Array<{ id: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace" | "planner"; label: string; icon: React.ReactNode; desc: string }> = [
     { id: "chat", label: "Chat Assistant", icon: <MaterialIcon name="forum" className="text-headline-small" />, desc: "Ask the AI anything" },
+    { id: "planner", label: "AI Action Planner", icon: <MaterialIcon name="track_changes" className="text-headline-small" />, desc: "Goal breakdowns to Calendar & Tasks" },
     { id: "projects", label: "Projects", icon: <MaterialIcon name="code" className="text-headline-small" />, desc: "Explore Live Projects" },
     { id: "cv", label: "Resume / CV", icon: <MaterialIcon name="description" className="text-headline-small" />, desc: "Career history & skills" },
     { id: "contact", label: "Contact", icon: <MaterialIcon name="mail" className="text-headline-small" />, desc: "Get in touch directly" },
