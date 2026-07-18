@@ -418,7 +418,7 @@ export default function MobileApp({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
-              className="w-full bg-rose-500/10 border-2 border-rose-500/30 text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-2xl mb-2 text-center text-label-medium font-medium flex items-center justify-center gap-1.5"
+              className="w-full bg-rose-500/10 border-2 border-rose-500/30 text-rose-600 dark:text-rose-400 px-4 py-1.5 rounded-2xl mb-2 text-center text-label-medium font-medium flex items-center justify-center gap-1.5"
             >
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
               <span>{interimSpeech ? interimSpeech : recordingStatus}</span>
@@ -459,7 +459,7 @@ export default function MobileApp({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-2.5 py-1.5 text-label-medium font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border-2 border-outline-variant/80 hover:border-primary/30 rounded-2xl transition-all active:scale-[0.99] cursor-pointer"
+                    className="w-full text-left px-4 py-1.5 text-label-medium font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border-2 border-outline-variant/80 hover:border-primary/30 rounded-2xl transition-all active:scale-[0.99] cursor-pointer"
                   >
                     {question}
                   </button>
@@ -478,14 +478,14 @@ export default function MobileApp({
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
               placeholder="Ask me about math or coding!" 
-              className="flex-1 bg-transparent text-on-background py-3 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed max-h-[100px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-3 px-4 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed max-h-[100px] overflow-y-auto border-0"
               disabled={isLoading || isGenerating}
               rows={1}
             />
           </div>
 
           {/* Bottom Row: Actions & Send */}
-          <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
+          <div className="flex items-center justify-between mt-2.5 px-4 w-full gap-2 select-none">
             <button
               type="button"
               onClick={() => {
@@ -493,7 +493,7 @@ export default function MobileApp({
                   setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
               style={{
                 backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
                 borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
@@ -560,7 +560,7 @@ export default function MobileApp({
         </div>
 
         {/* Footer info */}
-        <div className="w-full flex items-center justify-between mt-1.5 px-1 select-none text-[10px]">
+        <div className="w-full flex items-center justify-between mt-1.5 px-4 select-none text-[10px]">
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-1.5 w-1.5">
               {isHfConnected === null ? (
@@ -648,11 +648,11 @@ export default function MobileApp({
                 {/* Scrollable Conversation Block */}
                 <div 
                   ref={scrollContainerRef}
-                  className="flex-1 overflow-y-auto w-full px-3.5 pt-4 pb-4 scroll-smooth"
+                  className="flex-1 overflow-y-auto w-full px-4 pt-4 pb-4 scroll-smooth"
                   onScroll={handleScroll}
                 >
                   {isInitialState ? (
-                    <div className="flex flex-col text-left w-full py-6 px-1 min-h-[280px] justify-center">
+                    <div className="flex flex-col text-left w-full py-6 px-4 min-h-[280px] justify-center">
                       <AnimatePresence mode="wait">
                         {introStage === "initial" ? (
                           <motion.div
@@ -761,7 +761,7 @@ export default function MobileApp({
                                                 referrerPolicy="no-referrer"
                                               />
                                             ) : (
-                                              <div className="flex items-center gap-2 px-2.5 py-1.5 bg-surface/60 border-2 border-black/5 rounded-2xl select-none text-left">
+                                              <div className="flex items-center gap-2 px-4 py-1.5 bg-surface/60 border-2 border-black/5 rounded-2xl select-none text-left">
                                                 <MaterialIcon name="description" className="text-body-medium text-primary shrink-0" />
                                                 <div className="flex flex-col min-w-0">
                                                   <span className="text-label-small font-normal text-on-surface truncate max-w-[120px]">{attachment.name}</span>
@@ -796,19 +796,19 @@ export default function MobileApp({
                                     <div className="flex flex-wrap gap-1.5 mt-2 mb-1 select-none">
                                       <button
                                         onClick={() => handleSend("Tell me about your software projects")}
-                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
+                                        className="flex items-center gap-1 px-4 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                       >
                                         <span>📂 View Projects</span>
                                       </button>
                                       <button
                                         onClick={() => handleSend("What are your core technical skills?")}
-                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
+                                        className="flex items-center gap-1 px-4 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                       >
                                         <span>🛠️ Check Skills</span>
                                       </button>
                                       <button
                                         onClick={() => handleSend("Can I see your CV / Resume?")}
-                                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
+                                        className="flex items-center gap-1 px-4 py-1 rounded-full text-label-small font-normal bg-surface-container hover:bg-surface-container-highest text-on-surface hover:text-primary border-2 border-outline-variant transition-all duration-150 cursor-pointer shadow-sm"
                                       >
                                         <span>📄 Download CV</span>
                                       </button>
@@ -828,7 +828,7 @@ export default function MobileApp({
                 </div>
 
                 {/* Mobile Composer */}
-                <div className="w-full pt-3 pb-4 px-3.5 shrink-0 bg-background z-10 border-t-2 border-outline-variant relative">
+                <div className="w-full pt-3 pb-4 px-4 shrink-0 bg-background z-10 border-t-2 border-outline-variant relative">
                   {/* Floating scroll down button */}
                   {!isAtBottom && (
                     <div className="absolute top-0 left-0 right-0 -translate-y-full flex justify-center pointer-events-none z-20 pb-3">

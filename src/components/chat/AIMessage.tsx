@@ -56,7 +56,7 @@ export function AIMessage({
   }, [msg.text, msg.status, msg.id]);
 
   return (
-    <div className="flex items-start gap-4 w-full max-w-full px-1 scroll-mt-4" id={`msg-${msg.id}`}>
+    <div className="flex items-start gap-4 w-full max-w-full px-4 scroll-mt-4" id={`msg-${msg.id}`}>
       <div className="w-8 h-8 shrink-0 mt-1 flex items-center justify-center">
         {isFirstInGroup ? (
           <div className="flex items-center justify-center rounded-full bg-surface border-2 border-outline-variant w-8 h-8 shadow-sm">

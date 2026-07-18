@@ -532,7 +532,7 @@ export default function ChatInterface({
                       handleSend(question);
                       setActiveClarifications([]);
                     }}
-                    className="w-full text-left px-3.5 py-2.5 text-body-small sm:text-[13.5px] font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border-2 border-outline-variant hover:border-primary/30 transition-all rounded-2xl duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
+                    className="w-full text-left px-4 py-2.5 text-body-small sm:text-[13.5px] font-normal text-on-background bg-surface-container-low hover:bg-primary-container hover:text-primary border-2 border-outline-variant hover:border-primary/30 transition-all rounded-2xl duration-150 active:scale-[0.99] cursor-pointer min-h-[44px]"
                   >
                     {question}
                   </button>
@@ -557,14 +557,14 @@ export default function ChatInterface({
               }}
               placeholder="Ask me about math or coding!" 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-on-background py-3 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-3 px-4 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading || isGenerating}
               rows={1}
             />
           </div>
 
           {/* Bottom Row: Actions & Send */}
-          <div className="flex items-center justify-between mt-2.5 px-1 w-full gap-2 select-none">
+          <div className="flex items-center justify-between mt-2.5 px-4 w-full gap-2 select-none">
             <button
               type="button"
               onClick={() => {
@@ -639,7 +639,7 @@ export default function ChatInterface({
         </div>
 
         {/* Footer text */}
-        <div className="text-center mt-2 w-full flex flex-col sm:flex-row items-center justify-between px-1.5 gap-1.5 sm:gap-0 select-none">
+        <div className="text-center mt-2 w-full flex flex-col sm:flex-row items-center justify-between px-4 gap-1.5 sm:gap-0 select-none">
            <div className="flex items-center gap-1.5">
              <span className="relative flex h-2 w-2">
                {isHfConnected === null ? (
@@ -812,7 +812,7 @@ export default function ChatInterface({
                                             referrerPolicy="no-referrer"
                                           />
                                         ) : (
-                                          <div className="flex items-center gap-2.5 px-3 py-2 bg-surface/60 border-2 border-black/5 rounded-2xl select-none text-left">
+                                          <div className="flex items-center gap-2.5 px-4 py-2 bg-surface/60 border-2 border-black/5 rounded-2xl select-none text-left">
                                             <MaterialIcon name="description" className="text-title-medium text-primary shrink-0" />
                                             <div className="flex flex-col min-w-0">
                                               <span className="text-label-medium font-normal text-on-surface truncate max-w-[160px]">{attachment.name}</span>
@@ -881,7 +881,7 @@ export default function ChatInterface({
                         }
                       }
                     }}
-                    className="flex items-center gap-1 bg-surface border-2 border-outline-variant rounded-full px-3 py-1.5 shadow-md text-primary hover:bg-surface-container-high transition-all text-label-medium font-normal"
+                    className="flex items-center gap-1 bg-surface border-2 border-outline-variant rounded-full px-4 py-1.5 shadow-md text-primary hover:bg-surface-container-high transition-all text-label-medium font-normal"
                   >
                     <MaterialIcon name="arrow_upward" className="text-body-small" />
                     Response Start
