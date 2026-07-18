@@ -469,7 +469,7 @@ export default function MobileApp({
           )}
         </AnimatePresence>
 
-        {/* Input box with smooth border radius */}
+        {/* Input box with smooth border-2 radius */}
         <div className="w-full bg-surface border-2 border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative">
           <div className="flex items-start justify-between gap-2.5 w-full min-h-[44px]">
             <textarea
@@ -478,7 +478,7 @@ export default function MobileApp({
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
               placeholder="Ask me about math or coding!" 
-              className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed max-h-[100px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-3 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed max-h-[100px] overflow-y-auto border-0"
               disabled={isLoading || isGenerating}
               rows={1}
             />
@@ -493,7 +493,7 @@ export default function MobileApp({
                   setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-label-small font-medium transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
               style={{
                 backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
                 borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
@@ -529,7 +529,7 @@ export default function MobileApp({
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
                 disabled={isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
                   isRecording
                     ? "bg-rose-500 text-white animate-pulse border-rose-600 shadow-md scale-105"
                     : isGenerating
@@ -545,7 +545,7 @@ export default function MobileApp({
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isLoading || isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
                   input.trim() && !isLoading && !isGenerating
                     ? "border-transparent bg-primary dark:bg-white text-on-primary dark:bg-white dark:text-primary hover:opacity-90 active:scale-95 shadow-sm"
                     : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
@@ -737,7 +737,7 @@ export default function MobileApp({
                             {isUser ? (
                               <div className="flex flex-col items-end max-w-[85%]">
                                 <div 
-                                  className="text-on-background px-4 py-3 rounded-2xl rounded-tr-sm border shadow-sm"
+                                  className="text-on-background px-4 py-3 rounded-2xl rounded-tr-sm border-2 shadow-sm"
                                   style={{ 
                                     backgroundColor: "var(--color-accent-light)", 
                                     borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 

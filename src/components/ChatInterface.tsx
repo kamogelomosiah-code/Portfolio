@@ -542,7 +542,7 @@ export default function ChatInterface({
           )}
         </AnimatePresence>
 
-        {/* Input box with smooth border radius */}
+        {/* Input box with smooth border-2 radius */}
         <div className="w-full bg-surface border-2 border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
           <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
             <textarea
@@ -557,7 +557,7 @@ export default function ChatInterface({
               }}
               placeholder="Ask me about math or coding!" 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-on-background py-1.5 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-3 px-1 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
               disabled={isLoading || isGenerating}
               rows={1}
             />
@@ -572,7 +572,7 @@ export default function ChatInterface({
                   setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
                 }
               }}
-              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border cursor-pointer shrink-0 min-h-[44px]"
+              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
               style={{
                 backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
                 borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
@@ -608,7 +608,7 @@ export default function ChatInterface({
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
                 disabled={isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
                   isRecording
                     ? "bg-rose-500 text-white animate-pulse border-rose-600 shadow-md scale-105"
                     : isGenerating
@@ -624,7 +624,7 @@ export default function ChatInterface({
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isLoading || isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border shrink-0 ${
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
                   input.trim() && !isLoading && !isGenerating
                     ? "border-transparent bg-primary dark:bg-white text-on-primary dark:bg-white dark:text-primary hover:opacity-90 active:scale-95 shadow-sm"
                     : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
@@ -737,7 +737,7 @@ export default function ChatInterface({
                           </p>
                         </div>
 
-                        {/* Clean Quick Cards with smooth border radius, pop-ins, clear font weights */}
+                        {/* Clean Quick Cards with smooth border-2 radius, pop-ins, clear font weights */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
                           {PROMPT_SETS[promptSetIndex].slice(0, 3).map((prompt, idx) => (
                             <motion.button
@@ -788,7 +788,7 @@ export default function ChatInterface({
                         {isUser ? (
                           <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%]">
                             <div 
-                              className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm border shadow-sm"
+                              className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm border-2 shadow-sm"
                               style={{ 
                                 backgroundColor: "var(--color-accent-light)", 
                                 borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 

@@ -752,7 +752,7 @@ export default function WorkspacePage({ onBackToChat, onToggleDrawer }: Workspac
                             {filteredNotes.map((note) => (
                               <div
                                 key={note.id}
-                                className={`p-4 sm:p-5 rounded-xl border flex flex-col justify-between shadow-sm relative group text-left ${
+                                className={`p-4 sm:p-5 rounded-xl border-2 flex flex-col justify-between shadow-sm relative group text-left ${
                                   note.color || "bg-surface border-outline-variant hover:border-primary/40"
                                 }`}
                               >
