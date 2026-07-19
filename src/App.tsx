@@ -185,7 +185,7 @@ export default function App() {
           {currentTab === "planner" && (
             <motion.div key="planner" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
               <Suspense fallback={<FallbackLoader />}>
-                <ActionPlanner />
+                <ActionPlanner onBackToChat={() => setCurrentTab("chat")} onToggleDrawer={() => setDrawerOpen(!drawerOpen)} />
               </Suspense>
             </motion.div>
           )}

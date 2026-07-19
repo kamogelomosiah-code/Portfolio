@@ -5,11 +5,16 @@ import { GoalInput } from './GoalInput';
 import { PlanCard } from './PlanCard';
 import { Plan } from '../../types/planner';
 import { motion, AnimatePresence } from 'motion/react';
-import { Target, ShieldAlert, Sparkles, Calendar, ClipboardCheck, ArrowLeft, Send, CheckCircle } from 'lucide-react';
+import { Target, ShieldAlert, Sparkles, Calendar, ClipboardCheck, ArrowLeft, Send, CheckCircle, Menu } from 'lucide-react';
 
 type PlannerStep = 'input' | 'editing' | 'syncing' | 'tracking';
 
-export const ActionPlanner: React.FC = () => {
+interface ActionPlannerProps {
+  onBackToChat?: () => void;
+  onToggleDrawer?: () => void;
+}
+
+export const ActionPlanner: React.FC<ActionPlannerProps> = ({ onBackToChat, onToggleDrawer }) => {
   const [step, setStep] = useState<PlannerStep>('input');
   const [plan, setPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -205,6 +210,33 @@ export const ActionPlanner: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Floating Bottom Navigation */}
+      {(onBackToChat || onToggleDrawer) && (
+        <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
+          <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
+            {onToggleDrawer && (
+              <button 
+                onClick={onToggleDrawer}
+                className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
+                title="Menu"
+              >
+                <Menu size={24} />
+              </button>
+            )}
+            {onBackToChat && (
+              <button 
+                onClick={onBackToChat}
+                className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
+                title="Back to Chat"
+              >
+                <ArrowLeft size={20} />
+                <span className="font-medium text-title-small">Back to Chat</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

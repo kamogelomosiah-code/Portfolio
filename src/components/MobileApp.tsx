@@ -623,14 +623,16 @@ export default function MobileApp({
     <div className="flex flex-col h-dvh w-full bg-background text-on-background font-sans select-none overflow-hidden relative">
       
       {/* Floating Menu Button */}
-      <button
-        onClick={() => setDrawerOpen(true)}
-        className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
-        style={{ minWidth: "44px", minHeight: "44px" }}
-        title="Open Navigation Menu"
-      >
-        <MaterialIcon name="menu" className="text-title-medium" />
-      </button>
+      {activeTab === "chat" && (
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
+          style={{ minWidth: "44px", minHeight: "44px" }}
+          title="Open Navigation Menu"
+        >
+          <MaterialIcon name="menu" className="text-title-medium" />
+        </button>
+      )}
 
       {/* Screen Container with Swipe-Style Tab Transitions */}
       <main className="flex-1 w-full overflow-hidden relative bg-background">
@@ -884,7 +886,10 @@ export default function MobileApp({
 
             {activeTab === "planner" && (
               <Suspense fallback={<FallbackLoader />}>
-                <ActionPlanner />
+                <ActionPlanner 
+                  onBackToChat={() => handleTabChange("chat")} 
+                  onToggleDrawer={() => setDrawerOpen(true)}
+                />
               </Suspense>
             )}
 
