@@ -296,14 +296,14 @@ export const ActionPlanner: React.FC<ActionPlannerProps> = ({ onBackToChat, onTo
                                   transition={{ duration: 0.2 }}
                                   className="overflow-hidden mt-3 pt-3 border-t border-outline-variant/50"
                                 >
-                                  <div className="bg-white text-gray-800 p-5 rounded-xl border border-gray-200 shadow-inner font-sans max-h-80 overflow-y-auto">
-                                    <div className="border-b border-gray-100 pb-2 mb-3 text-xs text-gray-500">
+                                  <div className="bg-surface text-on-surface p-5 rounded-xl border border-outline-variant shadow-inner font-sans max-h-80 overflow-y-auto">
+                                    <div className="border-b border-outline-variant/50 pb-2 mb-3 text-xs text-on-surface-variant">
                                       <p><strong>From:</strong> Kamo's AI Goal Coach &lt;coach@kamoportfolio.io&gt;</p>
                                       <p><strong>To:</strong> {plan.email}</p>
                                       <p><strong>Subject:</strong> {stepItem.email_subject}</p>
                                     </div>
                                     <div 
-                                      className="text-sm leading-relaxed prose prose-sm text-gray-700"
+                                      className="text-sm leading-relaxed prose prose-sm text-on-surface"
                                       dangerouslySetInnerHTML={{ __html: stepItem.email_body }}
                                     />
                                   </div>

@@ -1,7 +1,7 @@
 import { pipeline, env } from '@xenova/transformers';
 
 // Configure environment for browser environment
-env.allowLocalModels = false;
+env.allowLocalModels = true;
 
 export interface ModelConfig {
   model: string;
@@ -12,28 +12,28 @@ export interface ModelConfig {
 
 export const MODEL_REGISTRY: Record<string, ModelConfig> = {
   math: {
-    model: 'Xenova/tiny-math-gemma-2b',   // ~300 MB
+    model: 'Xenova/gpt2',                 // Test with a simpler model
     task: 'text-generation',
     description: 'Math and calculations',
     fallback: 'reasoning',
   },
   speaking: {
-    model: 'Xenova/distilgpt2',           // ~280 MB
+    model: 'Xenova/gpt2',           // Standardized
     task: 'text-generation',
     description: 'Natural conversation',
     fallback: 'reasoning',
   },
   planning: {
-    model: 'Xenova/bert-base-uncased',    // ~420 MB
-    task: 'feature-extraction',
+    model: 'Xenova/gpt2',                // Change to a text-generation model
+    task: 'text-generation',
     description: 'Task planning and structure',
     fallback: 'reasoning',
   },
   reasoning: {
-    model: 'Xenova/gpt2-small',           // ~350 MB
+    model: 'Xenova/gpt2',           // Standardized
     task: 'text-generation',
     description: 'General reasoning',
-    fallback: 'math',                     // last‑resort fallback
+    fallback: '',                     // No fallback to avoid cycle
   },
 };
 
@@ -71,54 +71,65 @@ export class ModelRouter {
     this.statusListeners.forEach(listener => listener({ ...this.modelStatus }, { ...this.modelProgress }));
   }
 
+  public loadingPromise: Promise<void> | null = null;
+
   // Load all models
   async loadModels() {
-    if (this.initialized || this.loadingInProcess) return;
-    this.loadingInProcess = true;
-    
-    console.log('🔄 Loading models (target < 512 MB each)...');
+    if (this.initialized) return;
+    if (this.loadingPromise) return this.loadingPromise;
 
-    const loadPromises = Object.entries(MODEL_REGISTRY).map(async ([key, config]) => {
-      try {
-        console.log(`📦 Loading ${key} model...`);
-        this.modelStatus[key] = 'loading';
-        this.modelProgress[key] = 0;
-        this.notify();
-        
-        const model = await pipeline(config.task as any, config.model, {
-          progress_callback: (data: any) => {
-            if (data.status === 'progress') {
-              this.modelProgress[key] = data.progress;
-              this.notify();
+    this.loadingPromise = (async () => {
+      this.loadingInProcess = true;
+      console.log('🔄 Loading models sequentially...');
+
+      for (const [key, config] of Object.entries(MODEL_REGISTRY)) {
+        try {
+          console.log(`📦 Loading ${key} model...`);
+          this.modelStatus[key] = 'loading';
+          this.modelProgress[key] = 0;
+          this.notify();
+          
+          const model = await pipeline(config.task as any, config.model, {
+            progress_callback: (data: any) => {
+              if (data.status === 'progress') {
+                this.modelProgress[key] = data.progress;
+                this.notify();
+              }
             }
-          }
-        });
-        
-        this.models[key] = model;
-        this.modelStatus[key] = 'ready';
-        this.modelProgress[key] = 100;
-        this.notify();
-        console.log(`✅ ${key} model ready`);
-      } catch (err: any) {
-        console.warn(`⚠️ ${key} model failed:`, err.message);
-        this.modelStatus[key] = 'failed';
-        this.notify();
-        // attempt fallback immediately
-        await this.loadFallback(key);
+          });
+          
+          this.models[key] = model;
+          this.modelStatus[key] = 'ready';
+          this.modelProgress[key] = 100;
+          this.notify();
+          console.log(`✅ ${key} model ready`);
+        } catch (err: any) {
+          console.warn(`⚠️ ${key} model failed:`, err.message);
+          this.modelStatus[key] = 'failed';
+          this.notify();
+          // attempt fallback immediately
+          await this.loadFallback(key);
+        }
       }
-    });
 
-    await Promise.allSettled(loadPromises);
-    this.initialized = true;
-    this.loadingInProcess = false;
-    this.notify();
-    console.log('🎯 All models processed');
+      this.initialized = true;
+      this.loadingInProcess = false;
+      this.notify();
+      console.log('🎯 All models processed');
+    })();
+
+    await this.loadingPromise;
   }
 
   // Load a fallback model for a failed one
   async loadFallback(modelKey: string) {
     const config = MODEL_REGISTRY[modelKey];
-    if (!config) return;
+    if (!config || !config.fallback) {
+      console.error(`❌ No fallback available for ${modelKey}`);
+      this.modelStatus[modelKey] = 'unavailable';
+      this.notify();
+      return;
+    }
 
     const fallbackKey = config.fallback;
     // if fallback is already loaded, reuse it

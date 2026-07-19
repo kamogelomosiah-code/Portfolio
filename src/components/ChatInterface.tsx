@@ -117,6 +117,8 @@ export default function ChatInterface({
   const [localStatus, setLocalStatus] = useState(() => router.getStatus());
   const [localInitialized, setLocalInitialized] = useState(router.initialized);
   const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
+  const [showThinkingModal, setShowThinkingModal] = useState(false);
+  const [showAiConfigModal, setShowAiConfigModal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -132,6 +134,7 @@ export default function ChatInterface({
       active = false;
     };
   }, []);
+
 
   const isGenerating = messages.some(m => m.status === 'loading' || m.status === 'streaming');
 
@@ -449,33 +452,6 @@ export default function ChatInterface({
     }, 50);
 
     try {
-      if (aiEngine === "local") {
-        if (!router.initialized) {
-          await router.loadModels();
-        }
-        const isThinkMode = selectedModel === "fusion";
-        const result = await router.generateResponse(text.trim(), isThinkMode);
-        
-        const replyText = result.response || "No response generated.";
-        const usedModel = result.model;
-        
-        const updatedAgentMsg: Message = {
-          id: agentMsgId,
-          role: "agent",
-          text: replyText,
-          status: "sent",
-          meta: {
-            engine: "Transformers.js (Local)",
-            model: usedModel,
-            status: result.status
-          }
-        };
-        
-        setMessages(prev => prev.map(m => m.id === agentMsgId ? updatedAgentMsg : m));
-        setIsLoading(false);
-        return;
-      }
-
       const history = messages.map(m => ({
         role: m.role,
         text: m.text
@@ -488,14 +464,14 @@ export default function ChatInterface({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch("https://masterapi-l5j4.onrender.com/generate", {
         method: "POST",
         headers,
-        body: JSON.stringify({ history, message: text.trim(), model: selectedModel }),
+        body: JSON.stringify({ text: text.trim(), max_length: 200, model: selectedModel }),
       });
       
       const data = await res.json();
-      let replyText = data.text || "Sorry, I had trouble processing that.";
+      let replyText = data.generated || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
 
       let followUps: string[] = [];
@@ -624,33 +600,86 @@ export default function ChatInterface({
 
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between mt-2.5 px-4 w-full gap-2 select-none">
-            <button
-              type="button"
-              onClick={() => {
-                if (setSelectedModel) {
-                  setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
-                }
-              }}
-              className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
-              style={{
-                backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
-                borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
-                color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)",
-                opacity: isGenerating ? 0.5 : 1,
-                pointerEvents: isGenerating ? 'none' : 'auto'
-              }}
-              disabled={isGenerating}
-              title={selectedModel === "fusion" ? "Thinking Mode Active" : "Enable Thinking Mode for advanced responses"}
-            >
-              <MaterialIcon name="psychology" className={`text-title-large ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
-              <span>Thinking Mode</span>
-              {selectedModel === "fusion" && (
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
-                </span>
-              )}
-            </button>
+            {/* Thinking Mode & Engine Selection Toggle */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowThinkingModal(true)}
+                className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
+                style={{
+                  backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
+                  borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "var(--outline-variant)",
+                  color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)",
+                  opacity: isGenerating ? 0.5 : 1,
+                  pointerEvents: isGenerating ? 'none' : 'auto'
+                }}
+                disabled={isGenerating}
+                title="Thinking Mode"
+              >
+                <MaterialIcon name="psychology" className={`text-title-large ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
+                <span>Thinking</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAiConfigModal(true)}
+                className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
+                style={{
+                  backgroundColor: aiEngine === "local" ? "var(--color-accent-light)" : "transparent",
+                  borderColor: aiEngine === "local" ? "var(--color-accent)" : "var(--outline-variant)",
+                  color: aiEngine === "local" ? "var(--color-accent)" : "var(--text-muted)",
+                  opacity: isGenerating ? 0.5 : 1,
+                  pointerEvents: isGenerating ? 'none' : 'auto'
+                }}
+                disabled={isGenerating}
+                title="AI Engine Configuration"
+              >
+                <MaterialIcon name="settings" className="text-title-large" />
+                <span>Engine</span>
+              </button>
+            </div>
+
+            {/* Modals */}
+            {showThinkingModal && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowThinkingModal(false)}>
+                <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                  <h4 className="text-lg font-bold text-on-surface mb-4">Thinking Mode</h4>
+                  <button
+                    onClick={() => {
+                      if (setSelectedModel) {
+                        setSelectedModel(selectedModel === "fusion" ? "gemini-2.5-flash" : "fusion");
+                      }
+                    }}
+                    className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between ${selectedModel === "fusion" ? "bg-primary-container border-primary" : "bg-surface-container-low border-outline-variant"}`}
+                  >
+                    <span>Enable Thinking</span>
+                    {selectedModel === "fusion" && <MaterialIcon name="check" className="text-primary" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showAiConfigModal && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowAiConfigModal(false)}>
+                <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                  <h4 className="text-lg font-bold text-on-surface mb-4">AI Engine</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setAiEngine("cloud")}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${aiEngine === "cloud" ? "bg-primary text-on-primary" : "bg-surface-container-low"}`}
+                    >
+                      Cloud Core
+                    </button>
+                    <button
+                      onClick={() => setAiEngine("local")}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${aiEngine === "local" ? "bg-primary text-on-primary" : "bg-surface-container-low"}`}
+                    >
+                      Local WebAI
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Right side: Mic, Character count and Send */}
             <div className="flex items-center gap-2">
@@ -773,144 +802,6 @@ export default function ChatInterface({
           </div>
         </div>
 
-        {/* AI Engine & Status Bar */}
-        <div className="shrink-0 border-b-2 border-outline-variant bg-surface-container-low px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-10 select-none">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-on-surface-variant font-sans uppercase tracking-wider">AI Engine:</span>
-            <div className="inline-flex rounded-full bg-surface-container-high p-0.5 border-2 border-outline-variant shadow-sm">
-              <button
-                onClick={() => setAiEngine("cloud")}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border-0 ${
-                  aiEngine === "cloud"
-                    ? "bg-primary text-on-primary shadow-sm font-bold"
-                    : "text-on-surface-variant hover:text-on-surface bg-transparent"
-                }`}
-              >
-                Cloud Core
-              </button>
-              <button
-                onClick={() => setAiEngine("local")}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border-0 flex items-center gap-1 ${
-                  aiEngine === "local"
-                    ? "bg-primary text-on-primary shadow-sm font-bold"
-                    : "text-on-surface-variant hover:text-on-surface bg-transparent"
-                }`}
-              >
-                <MaterialIcon name="language" className="text-[13px]" />
-                Local WebAI
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {aiEngine === "cloud" ? (
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-xs font-medium text-on-surface-variant font-mono">
-                  Cloud Connected
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2.5">
-                {localInitialized ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-xs font-medium text-on-surface-variant font-mono">
-                      Engine Ready ({localStatus.available}/{localStatus.total})
-                    </span>
-                  </div>
-                ) : localLoading ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                    </span>
-                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 font-mono animate-pulse">
-                      Downloading Models...
-                    </span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => router.loadModels()}
-                    className="px-3 py-1 rounded-full bg-primary text-on-primary hover:opacity-90 text-xs font-bold transition-all cursor-pointer border-0 shadow-sm flex items-center gap-1"
-                  >
-                    <MaterialIcon name="download" className="text-[13px]" />
-                    Load Local AI (HF)
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Local AI Download Progress Panel */}
-        {aiEngine === "local" && !localInitialized && (
-          <div className="bg-surface border-b-2 border-outline-variant p-4 z-10 shadow-inner">
-            <h4 className="text-xs font-bold text-on-surface mb-2 font-mono flex items-center gap-1.5">
-              <MaterialIcon name="memory" className="text-body-medium text-primary" />
-              TRANSFORMERS.JS WEB-ASSEMBLY ENGINE STATUS
-            </h4>
-            
-            <p className="text-xs text-on-surface-variant mb-4 font-normal leading-relaxed max-w-2xl">
-              Local AI loads models directly in your browser. This requires downloading about 1.3 GB of model files once. They will be cached locally for instant future use.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(localStatus.models).map(([key, status]) => {
-                const progress = localStatus.progress[key] || 0;
-                const displayModel = key === "math" ? "TinyMath Gemma" : key === "speaking" ? "DistilGPT-2" : key === "planning" ? "BERT Base" : "GPT-2 Small";
-                const sizeStr = key === "math" ? "300MB" : key === "speaking" ? "280MB" : key === "planning" ? "420MB" : "350MB";
-
-                return (
-                  <div key={key} className="bg-surface-container-high border border-outline-variant rounded-xl p-3 flex flex-col justify-between shadow-sm">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-on-surface truncate capitalize">{key}</span>
-                      <span className="text-[10px] font-mono text-on-surface-variant font-semibold">{sizeStr}</span>
-                    </div>
-                    <div className="text-[11px] text-on-surface-variant font-sans mb-2 truncate">
-                      {displayModel}
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-mono">
-                        <span className={`font-semibold capitalize ${
-                          status === "ready" || status === "fallback" || status === "fallback-loaded"
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : status === "loading"
-                            ? "text-amber-500 animate-pulse"
-                            : "text-on-surface-variant"
-                        }`}>
-                          {status === "idle" ? "Not Loaded" : status}
-                        </span>
-                        {status === "loading" && (
-                          <span className="text-on-surface-variant">{Math.round(progress)}%</span>
-                        )}
-                      </div>
-                      <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden border border-outline-variant/30">
-                        <div
-                          className={`h-full transition-all duration-200 ${
-                            status === "ready" || status === "fallback" || status === "fallback-loaded"
-                              ? "bg-emerald-500"
-                              : status === "loading"
-                              ? "bg-amber-500"
-                              : "bg-surface"
-                          }`}
-                          style={{ width: `${status === "ready" || status === "fallback" || status === "fallback-loaded" ? 100 : progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Scrollable chat body */}
         <div 

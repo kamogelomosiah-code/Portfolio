@@ -100,6 +100,8 @@ export default function MobileApp({
   const [localStatus, setLocalStatus] = useState(() => router.getStatus());
   const [localInitialized, setLocalInitialized] = useState(router.initialized);
   const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
+  const [showThinkingModal, setShowThinkingModal] = useState(false);
+  const [showAiConfigModal, setShowAiConfigModal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -379,46 +381,19 @@ export default function MobileApp({
     }, 50);
 
     try {
-      if (aiEngine === "local") {
-        if (!router.initialized) {
-          await router.loadModels();
-        }
-        const isThinkMode = selectedModel === "fusion";
-        const result = await router.generateResponse(text.trim(), isThinkMode);
-        
-        const replyText = result.response || "No response generated.";
-        const usedModel = result.model;
-        
-        const updatedAgentMsg: Message = {
-          id: agentMsgId,
-          role: "agent",
-          text: replyText,
-          status: "sent",
-          meta: {
-            engine: "Transformers.js (Local)",
-            model: usedModel,
-            status: result.status
-          }
-        };
-        
-        setMessages(prev => prev.map(m => m.id === agentMsgId ? updatedAgentMsg : m));
-        setIsLoading(false);
-        return;
-      }
-
       const history = messages.map(m => ({
         role: m.role,
         text: m.text
       }));
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch("https://masterapi-l5j4.onrender.com/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history, message: text.trim(), model: selectedModel }),
+        body: JSON.stringify({ text: text.trim(), max_length: 200, model: selectedModel }),
       });
       
       const data = await res.json();
-      let replyText = data.text || "Sorry, I had trouble processing that.";
+      let replyText = data.generated || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
 
       let followUps: string[] = [];
@@ -538,33 +513,86 @@ export default function MobileApp({
 
           {/* Bottom Row: Actions & Send */}
           <div className="flex items-center justify-between mt-2.5 px-4 w-full gap-2 select-none">
-            <button
-              type="button"
-              onClick={() => {
-                if (setSelectedModel) {
-                  setSelectedModel(selectedModel === "fusion" ? "MiniMaxAI/MiniMax-M3:preferred" : "fusion");
-                }
-              }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
-              style={{
-                backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
-                borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "transparent",
-                color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)",
-                opacity: isGenerating ? 0.5 : 1,
-                pointerEvents: isGenerating ? 'none' : 'auto'
-              }}
-              disabled={isGenerating}
-              title={selectedModel === "fusion" ? "Thinking Mode Active" : "Enable Thinking Mode for advanced responses"}
-            >
-              <MaterialIcon name="psychology" className={`text-title-medium ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
-              <span>Thinking Mode</span>
-              {selectedModel === "fusion" && (
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
-                </span>
-              )}
-            </button>
+            {/* Thinking Mode & Engine Selection Toggle */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowThinkingModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
+                style={{
+                  backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
+                  borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "var(--outline-variant)",
+                  color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)",
+                  opacity: isGenerating ? 0.5 : 1,
+                  pointerEvents: isGenerating ? 'none' : 'auto'
+                }}
+                disabled={isGenerating}
+                title="Thinking Mode"
+              >
+                <MaterialIcon name="psychology" className={`text-title-medium ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
+                <span>Thinking</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAiConfigModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
+                style={{
+                  backgroundColor: aiEngine === "local" ? "var(--color-accent-light)" : "transparent",
+                  borderColor: aiEngine === "local" ? "var(--color-accent)" : "var(--outline-variant)",
+                  color: aiEngine === "local" ? "var(--color-accent)" : "var(--text-muted)",
+                  opacity: isGenerating ? 0.5 : 1,
+                  pointerEvents: isGenerating ? 'none' : 'auto'
+                }}
+                disabled={isGenerating}
+                title="AI Engine Configuration"
+              >
+                <MaterialIcon name="settings" className="text-title-medium" />
+                <span>Engine</span>
+              </button>
+            </div>
+
+            {/* Modals */}
+            {showThinkingModal && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowThinkingModal(false)}>
+                <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                  <h4 className="text-lg font-bold text-on-surface mb-4">Thinking Mode</h4>
+                  <button
+                    onClick={() => {
+                      if (setSelectedModel) {
+                        setSelectedModel(selectedModel === "fusion" ? "gemini-2.5-flash" : "fusion");
+                      }
+                    }}
+                    className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between ${selectedModel === "fusion" ? "bg-primary-container border-primary" : "bg-surface-container-low border-outline-variant"}`}
+                  >
+                    <span>Enable Thinking</span>
+                    {selectedModel === "fusion" && <MaterialIcon name="check" className="text-primary" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showAiConfigModal && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowAiConfigModal(false)}>
+                <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                  <h4 className="text-lg font-bold text-on-surface mb-4">AI Engine</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setAiEngine("cloud")}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${aiEngine === "cloud" ? "bg-primary text-on-primary" : "bg-surface-container-low"}`}
+                    >
+                      Cloud Core
+                    </button>
+                    <button
+                      onClick={() => setAiEngine("local")}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${aiEngine === "local" ? "bg-primary text-on-primary" : "bg-surface-container-low"}`}
+                    >
+                      Local WebAI
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Right side: Mic, Character count and Send */}
             <div className="flex items-center gap-2">
@@ -722,74 +750,75 @@ export default function MobileApp({
                 </div>
 
                 {/* AI Engine & Status Bar */}
-                <div className="shrink-0 border-b-2 border-outline-variant bg-surface-container-low px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-10 select-none">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-on-surface-variant font-sans uppercase tracking-wider">AI Engine:</span>
-                    <div className="inline-flex rounded-full bg-surface-container-high p-0.5 border border-outline-variant shadow-sm">
+                <div className="shrink-0 border-b-2 border-outline-variant bg-surface-container-low px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-10 select-none">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-on-surface-variant font-sans uppercase tracking-wider">AI Engine:</span>
+                    <div className="inline-flex rounded-full bg-surface-container-high p-0.5 border-2 border-outline-variant shadow-sm">
                       <button
                         onClick={() => setAiEngine("cloud")}
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer border-0 ${
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border-0 ${
                           aiEngine === "cloud"
                             ? "bg-primary text-on-primary shadow-sm font-bold"
                             : "text-on-surface-variant hover:text-on-surface bg-transparent"
                         }`}
                       >
-                        Cloud
+                        Cloud Core
                       </button>
                       <button
                         onClick={() => setAiEngine("local")}
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer border-0 flex items-center gap-0.5 ${
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border-0 flex items-center gap-1 ${
                           aiEngine === "local"
                             ? "bg-primary text-on-primary shadow-sm font-bold"
                             : "text-on-surface-variant hover:text-on-surface bg-transparent"
                         }`}
                       >
-                        <MaterialIcon name="language" className="text-[11px]" />
-                        Local
+                        <MaterialIcon name="language" className="text-[13px]" />
+                        Local WebAI
                       </button>
                     </div>
+
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-3">
                     {aiEngine === "cloud" ? (
-                      <div className="flex items-center gap-1">
-                        <span className="relative flex h-1.5 w-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </span>
-                        <span className="text-[10px] font-medium text-on-surface-variant font-mono">
-                          Cloud Ready
+                        <span className="text-xs font-medium text-on-surface-variant font-mono">
+                          Cloud Connected
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2.5">
                         {localInitialized ? (
-                          <div className="flex items-center gap-1">
-                            <span className="relative flex h-1.5 w-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
-                            <span className="text-[10px] font-medium text-on-surface-variant font-mono">
-                              Local Ready ({localStatus.available}/{localStatus.total})
+                            <span className="text-xs font-medium text-on-surface-variant font-mono">
+                              Engine Ready ({localStatus.available}/{localStatus.total})
                             </span>
                           </div>
                         ) : localLoading ? (
-                          <div className="flex items-center gap-1">
-                            <span className="relative flex h-1.5 w-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                             </span>
-                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 font-mono animate-pulse">
-                              Downloading...
+                            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 font-mono animate-pulse">
+                              Downloading Models...
                             </span>
                           </div>
                         ) : (
                           <button
                             onClick={() => router.loadModels()}
-                            className="px-2 py-0.5 rounded-full bg-primary text-on-primary hover:opacity-90 text-[10px] font-bold transition-all cursor-pointer border-0 shadow-sm flex items-center gap-0.5"
+                            className="px-3 py-1 rounded-full bg-primary text-on-primary hover:opacity-90 text-xs font-bold transition-all cursor-pointer border-0 shadow-sm flex items-center gap-1"
                           >
-                            <MaterialIcon name="download" className="text-[10px]" />
-                            Load
+                            <MaterialIcon name="download" className="text-[13px]" />
+                            Load Local AI (HF)
                           </button>
                         )}
                       </div>
@@ -797,68 +826,8 @@ export default function MobileApp({
                   </div>
                 </div>
 
-                {/* Local AI Download Progress Panel */}
-                {aiEngine === "local" && !localInitialized && (
-                  <div className="bg-surface border-b border-outline-variant p-3 z-10 shadow-inner">
-                    <h4 className="text-[11px] font-bold text-on-surface mb-1 font-mono flex items-center gap-1">
-                      <MaterialIcon name="memory" className="text-body-small text-primary" />
-                      LOCAL HF ENGINE STATUS
-                    </h4>
-                    
-                    <p className="text-[10px] text-on-surface-variant mb-2.5 font-normal leading-relaxed">
-                      Runs models in-browser. Requires ~1.3 GB download once (cached locally).
-                    </p>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.entries(localStatus.models).map(([key, status]) => {
-                        const progress = localStatus.progress[key] || 0;
-                        const displayModel = key === "math" ? "TinyMath" : key === "speaking" ? "DistilGPT" : key === "planning" ? "BERT" : "GPT-2";
-                        const sizeStr = key === "math" ? "300M" : key === "speaking" ? "280M" : key === "planning" ? "420M" : "350M";
 
-                        return (
-                          <div key={key} className="bg-surface-container-high border border-outline-variant rounded-lg p-2.5 flex flex-col justify-between shadow-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10.5px] font-bold text-on-surface truncate capitalize">{key}</span>
-                              <span className="text-[9px] font-mono text-on-surface-variant font-semibold">{sizeStr}</span>
-                            </div>
-                            <div className="text-[9.5px] text-on-surface-variant font-sans truncate mb-1">
-                              {displayModel}
-                            </div>
-
-                            <div className="space-y-0.5">
-                              <div className="flex justify-between text-[8px] font-mono">
-                                <span className={`font-semibold capitalize ${
-                                  status === "ready" || status === "fallback" || status === "fallback-loaded"
-                                    ? "text-emerald-600 dark:text-emerald-400"
-                                    : status === "loading"
-                                    ? "text-amber-500 animate-pulse"
-                                    : "text-on-surface-variant"
-                                }`}>
-                                  {status === "idle" ? "idle" : status}
-                                </span>
-                                {status === "loading" && (
-                                  <span className="text-on-surface-variant">{Math.round(progress)}%</span>
-                                )}
-                              </div>
-                              <div className="h-1 w-full bg-surface-container rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full transition-all duration-200 ${
-                                    status === "ready" || status === "fallback" || status === "fallback-loaded"
-                                      ? "bg-emerald-500"
-                                      : status === "loading"
-                                      ? "bg-amber-500"
-                                      : "bg-surface"
-                                  }`}
-                                  style={{ width: `${status === "ready" || status === "fallback" || status === "fallback-loaded" ? 100 : progress}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
 
                 {/* Scrollable Conversation Block */}
                 <div 

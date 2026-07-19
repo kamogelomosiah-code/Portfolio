@@ -135,11 +135,11 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-on-surface-variant text-label-medium sm:text-body-small">
                   <span className="flex items-center gap-1"><MapPin size={13} className="text-primary" /> Alexandra, Johannesburg, Gauteng</span>
-                  <span className="hidden sm:inline text-gray-300">|</span>
+                  <span className="hidden sm:inline text-on-surface-variant">|</span>
                   <span>South African Citizen</span>
-                  <span className="hidden sm:inline text-gray-300">|</span>
+                  <span className="hidden sm:inline text-on-surface-variant">|</span>
                   <span>Unemployed</span>
-                  <span className="hidden sm:inline text-gray-300">|</span>
+                  <span className="hidden sm:inline text-on-surface-variant">|</span>
                   <span className="font-semibold text-primary">Available immediately</span>
                 </div>
               </div>
