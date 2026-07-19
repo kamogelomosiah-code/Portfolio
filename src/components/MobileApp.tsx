@@ -11,7 +11,6 @@ const ProjectsPage = lazy(() => import("./ProjectsPage"));
 const CvPage = lazy(() => import("./CvPage"));
 const ContactPage = lazy(() => import("./ContactPage"));
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
-const WorkspacePage = lazy(() => import("./WorkspacePage"));
 const ActionPlanner = lazy(() => import("./ActionPlanner").then(module => ({ default: module.ActionPlanner })));
 
 const FallbackLoader = () => (
@@ -27,7 +26,7 @@ interface MobileAppProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
-const TABS = ["chat", "projects", "cv", "contact", "workspace", "changelog", "planner"] as const;
+const TABS = ["chat", "projects", "cv", "contact", "changelog", "planner"] as const;
 type TabType = typeof TABS[number];
 
 const PROMPT_SETS = [
@@ -668,14 +667,30 @@ export default function MobileApp({
                           >
                             <div className="mb-5">
                               <h1 className="text-[30px] font-bold tracking-tight text-on-background mb-0.5 leading-none font-display">
-                                Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
+                                Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent font-display">I'm Kamo's AI</span>
                               </h1>
-                              <h2 className="text-[30px] font-bold tracking-tight text-[#4F46E5] mb-3 leading-none font-display">
-                                What would you like to know?
+                              <h2 className="text-[24px] font-bold tracking-tight text-[#4F46E5] mb-3 leading-tight font-display">
+                                Welcome to my Professional Portfolio
                               </h2>
-                              <p className="text-on-surface-variant text-body-medium font-normal leading-relaxed">
-                                Use one of the most common prompts below or use your own to begin learning about me.
+                              <p className="text-on-surface-variant text-body-medium font-normal leading-relaxed mb-5">
+                                I am Kamo's custom GPT assistant. Explore Kamo's software engineering projects, technical skills, coursework, and achievements. Tap the quick links below to see his CV or live projects list!
                               </p>
+                              <div className="flex flex-wrap gap-2.5 select-none">
+                                <button
+                                  onClick={() => handleTabChange("cv")}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-on-primary font-semibold text-body-medium hover:opacity-90 shadow-md border-0 transition-opacity cursor-pointer min-h-[44px]"
+                                >
+                                  <MaterialIcon name="description" className="text-body-medium" />
+                                  <span>View CV</span>
+                                </button>
+                                <button
+                                  onClick={() => handleTabChange("projects")}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container-high border-2 border-outline-variant text-on-surface hover:bg-surface-container-highest font-semibold text-body-medium transition-all cursor-pointer min-h-[44px]"
+                                >
+                                  <MaterialIcon name="code" className="text-body-medium" />
+                                  <span>Explore Projects</span>
+                                </button>
+                              </div>
                             </div>
                           </motion.div>
                         ) : (
@@ -875,14 +890,7 @@ export default function MobileApp({
               </Suspense>
             )}
 
-            {activeTab === "workspace" && (
-              <Suspense fallback={<FallbackLoader />}>
-                <WorkspacePage 
-                  onBackToChat={() => handleTabChange("chat")} 
-                  onToggleDrawer={() => setDrawerOpen(true)}
-                />
-              </Suspense>
-            )}
+
 
             {activeTab === "planner" && (
               <Suspense fallback={<FallbackLoader />}>

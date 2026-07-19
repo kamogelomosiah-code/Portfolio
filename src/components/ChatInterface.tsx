@@ -85,14 +85,16 @@ export default function ChatInterface({
   onToggleDrawer,
   messages,
   setMessages,
-  onViewCv
+  onViewCv,
+  onViewProjects
 }: { 
   selectedModel?: string,
   setSelectedModel?: (model: string) => void,
   onToggleDrawer?: () => void,
   messages: Message[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  onViewCv?: () => void
+  onViewCv?: () => void,
+  onViewProjects?: () => void
 }) {
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
@@ -713,14 +715,30 @@ export default function ChatInterface({
                       >
                         <div className="mb-6">
                           <h1 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-on-background mb-1 leading-none font-display">
-                            Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent">Friend</span>
+                            Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent font-display">I'm Kamo's AI</span>
                           </h1>
-                          <h2 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-[#4F46E5] mb-4 leading-none font-display">
-                            What would you like to know?
+                          <h2 className="text-display-medium sm:text-[34px] font-bold tracking-tight text-[#4F46E5] mb-4 leading-tight font-display">
+                            Welcome to my Professional Portfolio
                           </h2>
-                          <p className="text-on-surface-variant text-[15.5px] font-normal leading-relaxed">
-                            Use one of the most common prompts below or use your own to begin learning about me.
+                          <p className="text-on-surface-variant text-[15.5px] font-normal leading-relaxed mb-6">
+                            I am Kamo's custom GPT assistant. Explore Kamo's software engineering projects, technical skills, coursework, and career achievements. Use the quick links below to jump straight to his CV or live projects list, or ask me anything to get started!
                           </p>
+                          <div className="flex flex-wrap gap-3 select-none">
+                            <button
+                              onClick={onViewCv}
+                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-on-primary font-semibold text-body-medium hover:opacity-90 shadow-md border-0 transition-opacity cursor-pointer min-h-[44px]"
+                            >
+                              <FileText size={16} />
+                              <span>View Interactive CV</span>
+                            </button>
+                            <button
+                              onClick={onViewProjects}
+                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-container-high border-2 border-outline-variant text-on-surface hover:bg-surface-container-highest font-semibold text-body-medium transition-all cursor-pointer min-h-[44px]"
+                            >
+                              <Code2 size={16} />
+                              <span>Explore Projects</span>
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     ) : (

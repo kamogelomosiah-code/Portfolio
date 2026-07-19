@@ -14,7 +14,6 @@ const ProjectsPage = lazy(() => import("./components/ProjectsPage"));
 const CvPage = lazy(() => import("./components/CvPage"));
 const ContactPage = lazy(() => import("./components/ContactPage"));
 const ChangelogPage = lazy(() => import("./components/ChangelogPage"));
-const WorkspacePage = lazy(() => import("./components/WorkspacePage"));
 const ActionPlanner = lazy(() => import("./components/ActionPlanner").then(module => ({ default: module.ActionPlanner })));
 
 const FallbackLoader = () => (
@@ -25,7 +24,7 @@ const FallbackLoader = () => (
 
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "workspace" | "planner">("chat");
+  const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "planner">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedModel, setSelectedModel] = useState("MiniMaxAI/MiniMax-M3:preferred");
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -151,6 +150,7 @@ export default function App() {
                 messages={messages}
                 setMessages={setMessages}
                 onViewCv={() => setCurrentTab("cv")}
+                onViewProjects={() => setCurrentTab("projects")}
               />
             </motion.div>
           )}
@@ -175,13 +175,7 @@ export default function App() {
               </Suspense>
             </motion.div>
           )}
-          {currentTab === "workspace" && (
-            <motion.div key="workspace" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
-              <Suspense fallback={<FallbackLoader />}>
-                <WorkspacePage onBackToChat={() => setCurrentTab("chat")} onToggleDrawer={() => setDrawerOpen(!drawerOpen)} />
-              </Suspense>
-            </motion.div>
-          )}
+
           {currentTab === "planner" && (
             <motion.div key="planner" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 md:static md:flex-1 h-full w-full">
               <Suspense fallback={<FallbackLoader />}>

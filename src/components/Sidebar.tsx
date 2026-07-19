@@ -3,8 +3,8 @@ import { MaterialIcon } from "./MaterialIcon";
 import { AppIcon } from "./AppIcon";
 
 interface SidebarProps {
-  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace" | "planner";
-  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "workspace" | "planner") => void;
+  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner";
+  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner") => void;
 }
 
 const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps) {
@@ -96,20 +96,7 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
             <span className="text-label-small font-sans text-center leading-none mt-1">Contact</span>
           </button>
 
-          <button 
-            onClick={() => onTabChange("workspace")}
-            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
-              currentTab === "workspace" 
-                ? "text-primary font-semibold" 
-                : "bg-transparent text-on-surface-variant hover:text-on-background font-normal"
-            }`}
-            title="Google Workspace Hub"
-          >
-            <div className={`px-4 py-1 rounded-full flex items-center justify-center transition-all ${currentTab === "workspace" ? "bg-primary-container text-primary" : "text-inherit group-hover:bg-surface-container"}`}>
-               <MaterialIcon name="apps" className="text-headline-medium" />
-            </div>
-            <span className="text-label-small font-sans text-center leading-none mt-1">Workspace</span>
-          </button>
+
 
           <button 
             onClick={() => onTabChange("changelog")}

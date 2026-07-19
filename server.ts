@@ -8,6 +8,7 @@ import * as dotenv from 'dotenv';
 import fs from 'fs';
 import { GoogleGenAI } from "@google/genai";
 import plannerRouter from './plannerRouter';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -167,38 +168,27 @@ const SYSTEM_PROMPT = `You are Kamo's GPT, a specialized AI assistant focusing o
 Additionally, you are the "Goal Achievement Coach" — a premium feature inside my portfolio app.
 
 **YOUR JOB AS GOAL COACH:**
-When a user comes to you and says "I want to achieve X" — you take full ownership of helping them accomplish it.
+When a user says "I want to achieve X" or shares a goal, you help them break it down, find better/strategic ways to achieve it step-by-step, and offer to send the strategic roadmap directly to their email address.
+
+We NEVER connect to Google Accounts or Gmail OAuth. Instead, we ask for their email address and email the roadmap directly!
 
 **HOW YOU WORK:**
 
 1. **DETECT THE GOAL**
    - User says: "I want to..." / "My goal is..." / "Help me..." / "I need to..."
-   - Immediately switch into "Coach Mode"
+   - Offer to break down the goal and map out the timeframe chronologically.
+   - Ask: "What is your email address so I can send this complete, mapped-out strategic roadmap directly to your inbox?"
 
-2. **CLARIFY (Ask 2-3 Questions)**
-   - Make the goal SPECIFIC: "What exactly does success look like?"
-   - Make it MEASURABLE: "How will you know you've achieved it?"
-   - Set a DEADLINE: "By when do you want this done?"
+2. **IF THE USER PROVIDES THEIR EMAIL ADDRESS & GOAL:**
+   - Devise 3-5 progressive, highly strategic milestone steps to achieve the goal.
+   - Map out the timeframe chronologically (e.g. Day 1, Week 1, Week 2, Week 3).
+   - Display the roadmap clearly on screen.
+   - Trigger the automatic email delivery by outputting this exact JSON token at the end of your message:
+     [AUTOMATE_GOAL: {"email_address": "user@example.com", "goal": "The goal summary", "steps": [{"action": "Detailed action step", "frequency": "weekly", "duration_minutes": 45}]}]
+   - The server will intercept this block, send the email instantly using nodemailer, and remove the block before showing your message.
 
-3. **BUILD THE PLAN**
-   - Break it into WEEKLY milestones
-   - Break each milestone into DAILY actions (20-30 min each)
-   - Structure it so it feels achievable
-
-4. **SHOW THE PLAN TO THE USER**
-   - Display the full plan clearly
-   - Ask: "Shall I add this to your Google Calendar, Keep, and set up email reminders?"
-
-5. **IF USER SAYS YES → AUTOMATE EVERYTHING:**
-   - Instead of just saying you will do it, you MUST output a special JSON block at the end of your message to trigger the automation.
-   - Output format MUST BE EXACTLY:
-     [AUTOMATE_GOAL: {"keep_note": "Full goal breakdown with steps", "calendar_events": [{"title":"Event Name", "date":"YYYY-MM-DD", "time":"HH:MM", "description":"..."}], "email": {"subject":"Goal Plan", "body":"..."}}]
-   - The server will intercept this block, execute the Google APIs, and remove the block before showing the message to the user.
-   - Then append your confirmation text, e.g., "Done! ✅ Your first action: ..."
-
-6. **TRACK PROGRESS & ADJUST**
-   - Each day, ask: "Did you complete today's action?"
-   - Adjust timelines if the user falls behind.
+3. **TRACK PROGRESS & ADJUST**
+   - Keep your advice focused on efficient, optimal pathways.
 
 When a user greets you or asks who you are, introduce yourself as Kamo's GPT, a math and coding specialist.
 
@@ -227,33 +217,9 @@ RESPONSE CONSTRAINTS:
   - For projects or work: "[UI:PROJECTS]"
   - For skills or expertise: "[UI:SKILLS]"
   - For CV/resume/contact: "[UI:CV]"
-  - If none fits, append "[UI:CV]" as a default.
+  - If none fits, append "[UI:CV]" as a default.`;
 
-IMPORTANT: You may receive context from the user's Google Drive and Google Keep below. If you do, use it to answer the user's request.`;
-
-async function fetchGoogleData(token: string) {
-  try {
-    const driveRes = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=5&fields=files(id,name,mimeType)', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const driveData = await driveRes.json();
-    
-    const keepRes = await fetch('https://keep.googleapis.com/v1/notes', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const keepData = await keepRes.json();
-
-    return {
-      drive: driveData.files || [],
-      keep: keepData.notes || []
-    };
-  } catch (e) {
-    console.error("Google API Error", e);
-    return null;
-  }
-}
-
-async function processAutomationRequests(text: string, token?: string): Promise<string> {
+async function processAutomationRequests(text: string): Promise<string> {
   const automateRegex = /\[AUTOMATE_GOAL:\s*({[\s\S]*?})\s*\]/;
   const match = text.match(automateRegex);
   
@@ -262,97 +228,105 @@ async function processAutomationRequests(text: string, token?: string): Promise<
   const jsonStr = match[1];
   let newText = text.replace(automateRegex, "").trim();
 
-  if (!token) {
-    console.log("No token provided to process automation requests. Simulating success.");
-    return newText;
-  }
-
   try {
     const data = JSON.parse(jsonStr);
-    
-    // 1. Google Keep Note
-    if (data.keep_note) {
-      try {
-        await fetch("https://keep.googleapis.com/v1/notes", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            title: "Goal Achievement Plan",
-            body: { text: { text: data.keep_note } }
-          })
+    const emailAddress = data.email_address;
+    const goal = data.goal;
+    const steps = data.steps;
+
+    if (emailAddress && goal && Array.isArray(steps)) {
+      let transporter;
+      let isEthereal = false;
+      const host = process.env.SMTP_HOST;
+      const user = process.env.SMTP_USER;
+      const pass = process.env.SMTP_PASS;
+
+      if (host && user && pass) {
+        transporter = nodemailer.createTransport({
+          host,
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_SECURE === 'true',
+          auth: { user, pass }
         });
-        console.log("Keep note created automatically.");
-      } catch (err) {
-        console.error("Automated Keep note failed:", err);
-      }
-    }
-
-    // 2. Google Calendar Events
-    if (data.calendar_events && Array.isArray(data.calendar_events)) {
-      for (const event of data.calendar_events) {
-        try {
-          // If time is missing, default to 09:00
-          const time = event.time || "09:00";
-          const startDateTime = new Date(`${event.date}T${time}:00`).toISOString();
-          const endDateTime = new Date(new Date(startDateTime).getTime() + 60 * 60000).toISOString(); // 1 hour later
-          
-          await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              summary: event.title,
-              description: event.description || "Goal Action Item",
-              start: { dateTime: startDateTime },
-              end: { dateTime: endDateTime }
-            })
-          });
-          console.log(`Calendar event '${event.title}' created automatically.`);
-        } catch (err) {
-          console.error("Automated Calendar event failed:", err);
-        }
-      }
-    }
-
-    // 3. Gmail Notification
-    if (data.email && data.email.subject && data.email.body) {
-      try {
-        // Need to fetch user profile to send to "me" or just send to "me"
-        const emailContent = [
-          `To: me`,
-          `Subject: ${data.email.subject}`,
-          'Content-Type: text/plain; charset="UTF-8"',
-          '',
-          data.email.body
-        ].join('\\n');
-
-        const base64Safe = Buffer.from(emailContent)
-          .toString("base64")
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=+$/, '');
-
-        await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
+      } else {
+        const testAccount = await nodemailer.createTestAccount();
+        transporter = nodemailer.createTransport({
+          host: 'smtp.ethereal.email',
+          port: 587,
+          secure: false,
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass,
           },
-          body: JSON.stringify({ raw: base64Safe })
         });
-        console.log("Email notification sent automatically.");
-      } catch (err) {
-        console.error("Automated Email failed:", err);
+        isEthereal = true;
       }
-    }
 
+      const emailHtml = `
+      <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 2px solid #e2e8f0; border-radius: 24px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+        <div style="border-bottom: 2px solid #4F46E5; padding-bottom: 16px; margin-bottom: 24px;">
+          <h2 style="color: #4F46E5; font-weight: 700; margin: 0; font-size: 24px;">🎯 Chat AI Strategic Goal Roadmap</h2>
+          <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">CodeMind AI-Generated Action Plan</p>
+        </div>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #334155;">
+          Hello! Kamo's Chat AI has prepared this customized, step-by-step strategic roadmap to help you achieve your goal:
+        </p>
+        
+        <div style="background-color: #f8fafc; border-radius: 18px; padding: 24px; border: 1px solid #f1f5f9; margin: 24px 0;">
+          <h3 style="color: #0f172a; margin-top: 0; font-size: 18px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px;">
+            Goal: "${goal}"
+          </h3>
+          <ul style="padding-left: 0; list-style-type: none; margin: 0;">
+            ${steps.map((step, idx) => {
+              let timeframeLabel = "";
+              if (step.frequency === 'daily') timeframeLabel = "Daily action / habit";
+              else if (step.frequency === 'weekly') timeframeLabel = `Week ${idx + 1} - Milestone`;
+              else if (step.frequency === 'monthly') timeframeLabel = `Month ${idx + 1} - Benchmark`;
+              else timeframeLabel = "Key milestone";
+
+              return `
+                <li style="margin-bottom: 20px; padding-left: 32px; position: relative; list-style: none;">
+                  <span style="position: absolute; left: 0; top: 2px; display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 50%; background-color: #e0e7ff; color: #4F46E5; font-size: 11px; font-weight: bold;">
+                    ${idx + 1}
+                  </span>
+                  <strong style="color: #0f172a; display: block; font-size: 15px; margin-bottom: 3px;">${step.action}</strong>
+                  <span style="font-size: 12.5px; color: #64748b; display: block;">
+                    ⏱️ Target Session: ${step.duration_minutes || 30}m | 📅 Time Frame: ${timeframeLabel}
+                  </span>
+                </li>
+              `;
+            }).join('')}
+          </ul>
+        </div>
+        
+        <p style="font-size: 14px; line-height: 1.5; color: #475569;">
+          This plan maps out the progressive timeline required for successful execution. Consistency is key!
+        </p>
+        
+        <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 28px 0;" />
+        <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 0;">
+          This roadmap was automatically sent by Kamo's AI Portfolio Assistant. &reg;
+        </p>
+      </div>
+      `;
+
+      const mailOptions = {
+        from: process.env.SMTP_FROM || '"CodeMind Assistant" <assistant@kamocodes.com>',
+        to: emailAddress,
+        subject: `🎯 Chat AI Strategic Roadmap: "${goal.slice(0, 50)}"`,
+        html: emailHtml,
+      };
+
+      const info = await transporter.sendMail(mailOptions);
+      if (isEthereal) {
+        const previewUrl = nodemailer.getTestMessageUrl(info);
+        newText += `\n\n*(Ethereal Sandbox Preview: [View Sent Email](${previewUrl}))*`;
+      }
+      console.log(`[CHAT PLANNER] Successfully sent automated roadmap email to ${emailAddress}`);
+    }
   } catch (error) {
-    console.error("Failed to parse AUTOMATE_GOAL JSON or execute APIs:", error);
+    console.error("Failed to execute local chat roadmap automation:", error);
   }
 
   return newText;
@@ -432,17 +406,7 @@ app.post('/api/chat', async (req, res) => {
     const isThinkMode = model === 'fusion'; // "Think Longer"
     
     const textResponse = await withTokenRotation(async (token, openaiClient, hfClient) => {
-      const authHeader = req.headers.authorization;
-      let googleContext = "";
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const userToken = authHeader.split(' ')[1];
-        const data = await fetchGoogleData(userToken);
-        if (data) {
-          googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
-        }
-      }
-
-      const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
+      const activeSystemPrompt = SYSTEM_PROMPT;
 
       if (isThinkMode) {
         // 1. Initial Answer pass (Model A)
@@ -530,32 +494,15 @@ Synthesize the final, polished, and highly accurate answer. Incorporate the impr
       }
     });
 
-    const authHeader = req.headers.authorization;
-    let userToken = "";
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      userToken = authHeader.split(' ')[1];
-    }
-    const finalResponse = await processAutomationRequests(textResponse, userToken);
+    const finalResponse = await processAutomationRequests(textResponse);
     res.json({ text: finalResponse });
   } catch (error: any) {
-    const errorMsg = error.message || JSON.stringify(error);
     console.log("[INFO] Transitioning request to Gemini model...");
     
     try {
-      const authHeader = req.headers.authorization;
-      let userToken = "";
-      let googleContext = "";
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        userToken = authHeader.split(' ')[1];
-        const data = await fetchGoogleData(userToken);
-        if (data) {
-          googleContext = `\n\nGoogle Drive Files Context:\n${JSON.stringify(data.drive, null, 2)}\n\nGoogle Keep Notes Context:\n${JSON.stringify(data.keep, null, 2)}`;
-        }
-      }
-      const activeSystemPrompt = SYSTEM_PROMPT + googleContext;
-
+      const activeSystemPrompt = SYSTEM_PROMPT;
       const geminiResponse = await callGeminiChatFallback(activeSystemPrompt, formattedHistory, message);
-      const finalResponse = await processAutomationRequests(geminiResponse, userToken);
+      const finalResponse = await processAutomationRequests(geminiResponse);
       return res.json({ text: finalResponse });
     } catch (geminiError: any) {
       console.log("[INFO] All primary systems bypassed. Using offline helper.");

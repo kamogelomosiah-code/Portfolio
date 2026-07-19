@@ -1,8 +1,8 @@
 // src/components/ActionPlanner/PlanCard.tsx
 import React, { useState } from 'react';
 import { Plan, Step } from '../../types/planner';
-import { motion } from 'motion/react';
-import { Calendar, Clock, Plus, Trash2, CheckCircle2, ChevronRight, Edit2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Clock, Plus, Trash2, CheckCircle2, ChevronDown, ChevronUp, Mail, Edit3, Calendar } from 'lucide-react';
 
 interface Props {
   plan: Plan;
@@ -13,6 +13,11 @@ interface Props {
 
 export const PlanCard: React.FC<Props> = ({ plan, onConfirm, onEdit, loading }) => {
   const [localSteps, setLocalSteps] = useState<Step[]>(plan.steps);
+  const [expandedEmails, setExpandedEmails] = useState<Record<string, boolean>>({});
+
+  const toggleEmailExpand = (id: string) => {
+    setExpandedEmails(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const updateStep = (index: number, field: keyof Step, value: any) => {
     const newSteps = [...localSteps];
@@ -25,9 +30,12 @@ export const PlanCard: React.FC<Props> = ({ plan, onConfirm, onEdit, loading }) 
     const newStep: Step = {
       id: Math.random().toString(36).substring(7),
       action: 'New strategic action step',
-      frequency: 'daily',
+      timeframe: `Week ${localSteps.length + 1}`,
       duration_minutes: 15,
       completed: false,
+      email_subject: `[Step ${localSteps.length + 1}] Coaching Update: New Action Item`,
+      email_body: `<p>This is a custom action item added to your strategic plan. Keep pushing forward!</p>`,
+      email_status: 'pending'
     };
     const newSteps = [...localSteps, newStep];
     setLocalSteps(newSteps);
@@ -44,82 +52,158 @@ export const PlanCard: React.FC<Props> = ({ plan, onConfirm, onEdit, loading }) 
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl mx-auto w-full bg-surface border-2 border-outline-variant/60 rounded-[28px] shadow-sm p-6 sm:p-8 flex flex-col gap-6"
+      className="max-w-3xl mx-auto w-full bg-surface border-2 border-outline-variant/60 rounded-[28px] shadow-sm p-5 sm:p-8 flex flex-col gap-6 text-left"
     >
-      <div className="border-b-2 border-primary pb-4">
-        <div className="flex items-center gap-2 text-primary font-semibold text-label-small uppercase tracking-wider mb-1">
-          <span>🎯 Strategic Blueprint</span>
+      {/* Header Info */}
+      <div className="border-b-2 border-primary/20 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span className="bg-primary-container text-primary font-bold text-xs uppercase tracking-wider px-3 py-1 rounded-full">
+            🎯 Strategic Roadmap Draft
+          </span>
+          <span className="text-body-small text-on-surface-variant font-mono">
+            Sending to: <strong className="text-on-background">{plan.email}</strong>
+          </span>
         </div>
         <h2 className="text-display-small font-bold text-on-background tracking-tight">
           {plan.goal_summary}
         </h2>
-        <p className="text-body-medium text-on-surface-variant mt-1">
-          Configure, fine-tune, and verify your micro-habit roadmap before syncing with your Google account.
+        <div className="flex gap-2 items-center mt-2 text-primary font-medium text-body-medium">
+          <Calendar size={16} />
+          <span>Mapped Timeframe: <strong>{plan.timeframe_overview}</strong></span>
+        </div>
+        <p className="text-body-small text-on-surface-variant mt-2 leading-relaxed">
+          The AI has organized your goal chronologically. Please configure and fine-tune your actions below. When confirmed, all step emails will be dispatched immediately.
         </p>
       </div>
 
+      {/* Steps List */}
       <div className="space-y-4">
-        {localSteps.map((step, idx) => (
-          <div 
-            key={step.id} 
-            className="flex gap-4 items-start p-4 bg-surface-container/30 border border-outline-variant/50 rounded-2xl relative group"
-          >
-            <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0 mt-1">
-              {idx + 1}
-            </span>
-            <div className="flex-1 space-y-3">
-              <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  value={step.action}
-                  onChange={(e) => updateStep(idx, 'action', e.target.value)}
-                  placeholder="Action Description"
-                  className="flex-1 bg-transparent border-b-2 border-transparent focus:border-primary/50 text-on-background font-medium text-body-large py-0.5 focus:outline-none transition-colors"
-                />
+        {localSteps.map((step, idx) => {
+          const isExpanded = !!expandedEmails[step.id];
+          return (
+            <div 
+              key={step.id} 
+              className="border border-outline-variant/60 rounded-2xl bg-surface-container/10 p-4 transition-all hover:shadow-sm"
+            >
+              <div className="flex gap-4 items-start">
+                {/* Step Index Circle */}
+                <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0 mt-1">
+                  {idx + 1}
+                </span>
+
+                <div className="flex-1 space-y-3">
+                  {/* Action text input */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                      Step Action
+                    </label>
+                    <input
+                      type="text"
+                      value={step.action}
+                      onChange={(e) => updateStep(idx, 'action', e.target.value)}
+                      placeholder="e.g. Run code profiling and memory checks"
+                      className="w-full bg-transparent border-b-2 border-outline-variant/30 focus:border-primary text-on-background font-semibold text-body-large py-1 focus:outline-none transition-colors"
+                    />
+                  </div>
+
+                  {/* Timeframe & Duration & Controls */}
+                  <div className="flex flex-wrap gap-2.5 items-center">
+                    
+                    {/* Timeframe designator */}
+                    <div className="flex items-center gap-1.5 text-on-surface-variant bg-surface border border-outline-variant/60 rounded-xl px-3 py-1.5 text-body-small">
+                      <span className="font-semibold text-[11px] text-primary uppercase">Schedule:</span>
+                      <input
+                        type="text"
+                        value={step.timeframe}
+                        onChange={(e) => updateStep(idx, 'timeframe', e.target.value)}
+                        className="w-16 bg-transparent text-on-background focus:outline-none border-none font-semibold text-body-small"
+                        title="Enter timeframe e.g. Week 1, Day 3"
+                      />
+                    </div>
+
+                    {/* Duration input */}
+                    <div className="flex items-center gap-1.5 text-on-surface-variant bg-surface border border-outline-variant/60 rounded-xl px-3 py-1.5 text-body-small">
+                      <Clock size={13} className="text-primary" />
+                      <input
+                        type="number"
+                        value={step.duration_minutes}
+                        onChange={(e) => updateStep(idx, 'duration_minutes', parseInt(e.target.value) || 5)}
+                        className="w-10 bg-transparent text-on-background text-center focus:outline-none border-none font-semibold text-body-small"
+                        min={1}
+                        max={180}
+                      />
+                      <span className="text-[11.5px]">mins</span>
+                    </div>
+
+                    {/* Email preview expander toggle */}
+                    <button
+                      type="button"
+                      onClick={() => toggleEmailExpand(step.id)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-primary/20 text-primary hover:bg-primary/5 transition-colors cursor-pointer text-xs font-semibold bg-transparent"
+                    >
+                      <Mail size={13} />
+                      <span>{isExpanded ? 'Hide Email' : 'Preview Email'}</span>
+                      {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+
+                    {/* Trash Button */}
+                    <button
+                      onClick={() => deleteStep(idx)}
+                      disabled={localSteps.length <= 1}
+                      className="ml-auto text-on-surface-variant hover:text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                      title="Remove step"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3 items-center">
-                <div className="flex items-center gap-2 text-on-surface-variant bg-surface border border-outline-variant/60 rounded-xl px-3 py-1.5 text-body-small">
-                  <Calendar size={14} className="text-primary" />
-                  <select
-                    value={step.frequency}
-                    onChange={(e) => updateStep(idx, 'frequency', e.target.value as any)}
-                    className="bg-transparent border-none text-on-background focus:outline-none text-body-small cursor-pointer font-medium"
+
+              {/* Email Content Editor Expandable Section */}
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden mt-3 pt-3 border-t border-outline-variant/50 flex flex-col gap-3 pl-12"
                   >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="one-time">One-time</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2 text-on-surface-variant bg-surface border border-outline-variant/60 rounded-xl px-3 py-1.5 text-body-small">
-                  <Clock size={14} className="text-primary" />
-                  <input
-                    type="number"
-                    value={step.duration_minutes}
-                    onChange={(e) => updateStep(idx, 'duration_minutes', parseInt(e.target.value) || 5)}
-                    className="w-12 bg-transparent text-on-background text-center focus:outline-none border-none font-medium text-body-small"
-                    min={1}
-                    max={180}
-                  />
-                  <span>mins</span>
-                </div>
-
-                <button
-                  onClick={() => deleteStep(idx)}
-                  disabled={localSteps.length <= 1}
-                  className="ml-auto text-on-surface-variant hover:text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                  title="Remove step"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+                    <div className="bg-surface border border-outline-variant/60 rounded-xl p-4 space-y-2.5">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                          Email Subject
+                        </label>
+                        <input
+                          type="text"
+                          value={step.email_subject}
+                          onChange={(e) => updateStep(idx, 'email_subject', e.target.value)}
+                          className="w-full bg-transparent border-b border-outline-variant/40 focus:border-primary text-on-background font-medium text-body-medium focus:outline-none pb-1 transition-colors"
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                          Email Body (HTML/Markdown support)
+                        </label>
+                        <textarea
+                          value={step.email_body}
+                          onChange={(e) => updateStep(idx, 'email_body', e.target.value)}
+                          rows={6}
+                          className="w-full bg-surface-container/30 border border-outline-variant/40 rounded-lg p-2 text-body-small font-mono text-on-background focus:outline-none focus:border-primary"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 pt-6 border-t border-outline-variant/40">
+      {/* Action Footer */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-2 pt-6 border-t border-outline-variant/40">
         <button
           onClick={addStep}
           className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-on-surface-variant hover:text-on-background border-2 border-outline-variant hover:border-outline bg-transparent transition-colors cursor-pointer"
@@ -128,25 +212,23 @@ export const PlanCard: React.FC<Props> = ({ plan, onConfirm, onEdit, loading }) 
           Add Custom Step
         </button>
 
-        <div className="flex w-full sm:w-auto gap-3">
-          <button
-            onClick={() => onConfirm({ ...plan, steps: localSteps })}
-            disabled={loading}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer border-0 shadow-sm"
-          >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
-                Syncing items...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={16} />
-                Deploy to Google Workspace
-              </>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={() => onConfirm({ ...plan, steps: localSteps })}
+          disabled={loading}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer border-0 shadow-sm"
+        >
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
+              Dispatching Blueprint Emails...
+            </>
+          ) : (
+            <>
+              <CheckCircle2 size={16} />
+              Confirm &amp; Dispatch Roadmap
+            </>
+          )}
+        </button>
       </div>
     </motion.div>
   );
