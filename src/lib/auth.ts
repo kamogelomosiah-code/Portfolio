@@ -9,10 +9,11 @@ const provider = new GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/drive');
 provider.addScope('https://www.googleapis.com/auth/keep');
 provider.addScope('https://www.googleapis.com/auth/calendar');
+provider.addScope('https://www.googleapis.com/auth/tasks');
 provider.addScope('https://mail.google.com/');
 
 let isSigningIn = false;
-let cachedAccessToken: string | null = null;
+let cachedAccessToken: string | null = typeof window !== 'undefined' ? localStorage.getItem('google_access_token') : null;
 
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
@@ -20,6 +21,9 @@ export const initAuth = (
 ) => {
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
+      if (!cachedAccessToken) {
+        cachedAccessToken = localStorage.getItem('google_access_token');
+      }
       if (cachedAccessToken) {
         if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
       } else if (!isSigningIn) {
@@ -28,6 +32,7 @@ export const initAuth = (
       }
     } else {
       cachedAccessToken = null;
+      localStorage.removeItem('google_access_token');
       if (onAuthFailure) onAuthFailure();
     }
   });
@@ -43,6 +48,7 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     }
 
     cachedAccessToken = credential.accessToken;
+    localStorage.setItem('google_access_token', cachedAccessToken);
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Sign in error, falling back to simulated auth:', error);
@@ -55,6 +61,7 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     } as User;
     
     cachedAccessToken = 'simulated-token-12345';
+    localStorage.setItem('google_access_token', cachedAccessToken);
     return { user: mockUser, accessToken: cachedAccessToken };
   } finally {
     isSigningIn = false;
@@ -62,10 +69,11 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
 };
 
 export const getAccessToken = async (): Promise<string | null> => {
-  return cachedAccessToken;
+  return cachedAccessToken || localStorage.getItem('google_access_token');
 };
 
 export const logout = async () => {
   await signOut(auth);
   cachedAccessToken = null;
+  localStorage.removeItem('google_access_token');
 };
