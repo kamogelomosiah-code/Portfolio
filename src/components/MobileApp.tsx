@@ -100,8 +100,7 @@ export default function MobileApp({
   const [localStatus, setLocalStatus] = useState(() => router.getStatus());
   const [localInitialized, setLocalInitialized] = useState(router.initialized);
   const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
-  const [showThinkingModal, setShowThinkingModal] = useState(false);
-  const [showAiConfigModal, setShowAiConfigModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -517,78 +516,67 @@ export default function MobileApp({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setShowThinkingModal(true)}
+                onClick={() => setShowSettingsModal(true)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
                 style={{
-                  backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
-                  borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "var(--outline-variant)",
-                  color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)",
+                  backgroundColor: "transparent",
+                  borderColor: "var(--outline-variant)",
+                  color: "var(--text-muted)",
                   opacity: isGenerating ? 0.5 : 1,
                   pointerEvents: isGenerating ? 'none' : 'auto'
                 }}
                 disabled={isGenerating}
-                title="Thinking Mode"
-              >
-                <MaterialIcon name="psychology" className={`text-title-medium ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
-                <span>Thinking</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowAiConfigModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
-                style={{
-                  backgroundColor: aiEngine === "local" ? "var(--color-accent-light)" : "transparent",
-                  borderColor: aiEngine === "local" ? "var(--color-accent)" : "var(--outline-variant)",
-                  color: aiEngine === "local" ? "var(--color-accent)" : "var(--text-muted)",
-                  opacity: isGenerating ? 0.5 : 1,
-                  pointerEvents: isGenerating ? 'none' : 'auto'
-                }}
-                disabled={isGenerating}
-                title="AI Engine Configuration"
+                title="Settings"
               >
                 <MaterialIcon name="settings" className="text-title-medium" />
-                <span>Engine</span>
+                <span>Settings</span>
               </button>
             </div>
 
-            {/* Modals */}
-            {showThinkingModal && (
-              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowThinkingModal(false)}>
+            {/* Settings Modal */}
+            {showSettingsModal && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
                 <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                  <h4 className="text-lg font-bold text-on-surface mb-4">Thinking Mode</h4>
-                  <button
-                    onClick={() => {
-                      if (setSelectedModel) {
-                        setSelectedModel(selectedModel === "fusion" ? "gemini-2.5-flash" : "fusion");
-                      }
-                    }}
-                    className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between ${selectedModel === "fusion" ? "bg-primary-container border-primary" : "bg-surface-container-low border-outline-variant"}`}
-                  >
-                    <span>Enable Thinking</span>
-                    {selectedModel === "fusion" && <MaterialIcon name="check" className="text-primary" />}
-                  </button>
-                </div>
-              </div>
-            )}
+                  <h4 className="text-lg font-bold text-on-surface mb-4">Settings</h4>
+                  
+                  <div className="mb-6">
+                    <h5 className="text-sm font-semibold text-on-surface-variant mb-2">Thinking Mode</h5>
+                    <button
+                      onClick={() => {
+                        if (setSelectedModel) {
+                          setSelectedModel(selectedModel === "large" ? "tiny" : "large");
+                        }
+                      }}
+                      className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between transition-colors ${selectedModel === "large" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                    >
+                      <span>Enable Thinking</span>
+                      {selectedModel === "large" && <MaterialIcon name="check" className="text-on-primary" />}
+                    </button>
+                    <p className="text-xs text-on-surface-variant mt-2 leading-relaxed">
+                      Uses a specialized reasoning model to plan and think step-by-step before answering.
+                    </p>
+                  </div>
 
-            {showAiConfigModal && (
-              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowAiConfigModal(false)}>
-                <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                  <h4 className="text-lg font-bold text-on-surface mb-4">AI Engine</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setAiEngine("cloud")}
-                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${aiEngine === "cloud" ? "bg-primary text-on-primary" : "bg-surface-container-low"}`}
-                    >
-                      Cloud Core
-                    </button>
-                    <button
-                      onClick={() => setAiEngine("local")}
-                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${aiEngine === "local" ? "bg-primary text-on-primary" : "bg-surface-container-low"}`}
-                    >
-                      Local WebAI
-                    </button>
+                  <div>
+                    <h5 className="text-sm font-semibold text-on-surface-variant mb-2">AI Engine</h5>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <button
+                        onClick={() => setAiEngine("cloud")}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${aiEngine === "cloud" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                      >
+                        Cloud Core
+                      </button>
+                      <button
+                        onClick={() => setAiEngine("local")}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${aiEngine === "local" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                      >
+                        Local WebAI
+                      </button>
+                    </div>
+                    <div className="text-xs text-on-surface-variant leading-relaxed space-y-1.5">
+                      <p><strong>Cloud Core:</strong> Fast, high-performance API hosted remotely.</p>
+                      <p><strong>Local WebAI:</strong> Runs locally in your browser. (Requires downloading models first)</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -749,82 +737,6 @@ export default function MobileApp({
                   </div>
                 </div>
 
-                {/* AI Engine & Status Bar */}
-                <div className="shrink-0 border-b-2 border-outline-variant bg-surface-container-low px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-10 select-none">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-on-surface-variant font-sans uppercase tracking-wider">AI Engine:</span>
-                    <div className="inline-flex rounded-full bg-surface-container-high p-0.5 border-2 border-outline-variant shadow-sm">
-                      <button
-                        onClick={() => setAiEngine("cloud")}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border-0 ${
-                          aiEngine === "cloud"
-                            ? "bg-primary text-on-primary shadow-sm font-bold"
-                            : "text-on-surface-variant hover:text-on-surface bg-transparent"
-                        }`}
-                      >
-                        Cloud Core
-                      </button>
-                      <button
-                        onClick={() => setAiEngine("local")}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border-0 flex items-center gap-1 ${
-                          aiEngine === "local"
-                            ? "bg-primary text-on-primary shadow-sm font-bold"
-                            : "text-on-surface-variant hover:text-on-surface bg-transparent"
-                        }`}
-                      >
-                        <MaterialIcon name="language" className="text-[13px]" />
-                        Local WebAI
-                      </button>
-                    </div>
-
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {aiEngine === "cloud" ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        <span className="text-xs font-medium text-on-surface-variant font-mono">
-                          Cloud Connected
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2.5">
-                        {localInitialized ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span className="text-xs font-medium text-on-surface-variant font-mono">
-                              Engine Ready ({localStatus.available}/{localStatus.total})
-                            </span>
-                          </div>
-                        ) : localLoading ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                            </span>
-                            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 font-mono animate-pulse">
-                              Downloading Models...
-                            </span>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => router.loadModels()}
-                            className="px-3 py-1 rounded-full bg-primary text-on-primary hover:opacity-90 text-xs font-bold transition-all cursor-pointer border-0 shadow-sm flex items-center gap-1"
-                          >
-                            <MaterialIcon name="download" className="text-[13px]" />
-                            Load Local AI (HF)
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
 
 
 

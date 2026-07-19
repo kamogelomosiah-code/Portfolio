@@ -285,13 +285,13 @@ export default function ProjectsPage({ onBackToChat, onToggleDrawer }: ProjectsP
                     <p className="text-body-medium text-on-surface-variant mt-1 mb-4 text-left">
                       {project.subtitle}
                     </p>
-                    <p className="text-[#444746] text-title-small leading-relaxed mb-6 text-left">
+                    <p className="text-on-surface dark:text-white text-title-small leading-relaxed mb-6 text-left">
                       {project.description}
                     </p>
 
                     <div className="flex flex-wrap gap-2 mb-6 justify-start">
                       {project.tags.map((tag) => (
-                        <span key={tag} className="text-label-medium font-medium px-3 py-1.5 bg-[#F1F3F4] rounded-full text-[#444746] hover:bg-[var(--border-light)] transition-colors cursor-default border-2 border-transparent">
+                        <span key={tag} className="text-label-medium font-medium px-3 py-1.5 bg-surface-container-high rounded-full text-on-surface dark:text-white hover:bg-surface-container-highest transition-colors cursor-default border-2 border-transparent">
                           {tag}
                         </span>
                       ))}

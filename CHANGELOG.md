@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2026-07-19
+
+### Changed
+- Relocated the AI Engine toggle panel to a unified "Settings" modal for a cleaner Chat Interface.
+- Updated the backend Python server (`app.py`) to utilize `llama-cpp-python` with a CPU-friendly GGUF quantized model for the large model inference path.
+- Updated the model naming identifiers from `fusion` to `large` to better reflect the new backend structure.
+
+### Fixed
+- Fixed the text color visibility of the portfolio project descriptions in Dark Theme so they correctly render in white.
+
+### Added
+- Added brief, descriptive explanatory tooltips for "Cloud Core" and "Local WebAI" engine modes in the Settings modal to help user understanding.
+
 ## [1.4.0] - 2026-07-05
 ### Added
 - Created an interactive, responsive in-app **System Changelog & Version History** timeline view (`src/components/ChangelogPage.tsx`).

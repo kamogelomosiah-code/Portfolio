@@ -26,7 +26,7 @@ const FallbackLoader = () => (
 export default function App() {
   const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "planner">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
-    const [selectedModel, setSelectedModel] = useState("MiniMaxAI/MiniMax-M3:preferred");
+    const [selectedModel, setSelectedModel] = useState("tiny");
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const saved = sessionStorage.getItem("chat_messages");

@@ -86,7 +86,7 @@ function renderPromptIcon(iconName: string) {
 }
 
 export default function ChatInterface({ 
-  selectedModel = "gemini-2.5-flash",
+  selectedModel = "tiny",
   setSelectedModel,
   onToggleDrawer,
   messages,
@@ -117,8 +117,7 @@ export default function ChatInterface({
   const [localStatus, setLocalStatus] = useState(() => router.getStatus());
   const [localInitialized, setLocalInitialized] = useState(router.initialized);
   const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
-  const [showThinkingModal, setShowThinkingModal] = useState(false);
-  const [showAiConfigModal, setShowAiConfigModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -604,78 +603,67 @@ export default function ChatInterface({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setShowThinkingModal(true)}
+                onClick={() => setShowSettingsModal(true)}
                 className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
                 style={{
-                  backgroundColor: selectedModel === "fusion" ? "var(--color-accent-light)" : "transparent",
-                  borderColor: selectedModel === "fusion" ? "var(--color-accent)" : "var(--outline-variant)",
-                  color: selectedModel === "fusion" ? "var(--color-accent)" : "var(--text-muted)",
+                  backgroundColor: "transparent",
+                  borderColor: "var(--outline-variant)",
+                  color: "var(--text-muted)",
                   opacity: isGenerating ? 0.5 : 1,
                   pointerEvents: isGenerating ? 'none' : 'auto'
                 }}
                 disabled={isGenerating}
-                title="Thinking Mode"
-              >
-                <MaterialIcon name="psychology" className={`text-title-large ${selectedModel === "fusion" ? "animate-pulse" : ""}`} />
-                <span>Thinking</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowAiConfigModal(true)}
-                className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
-                style={{
-                  backgroundColor: aiEngine === "local" ? "var(--color-accent-light)" : "transparent",
-                  borderColor: aiEngine === "local" ? "var(--color-accent)" : "var(--outline-variant)",
-                  color: aiEngine === "local" ? "var(--color-accent)" : "var(--text-muted)",
-                  opacity: isGenerating ? 0.5 : 1,
-                  pointerEvents: isGenerating ? 'none' : 'auto'
-                }}
-                disabled={isGenerating}
-                title="AI Engine Configuration"
+                title="Settings"
               >
                 <MaterialIcon name="settings" className="text-title-large" />
-                <span>Engine</span>
+                <span>Settings</span>
               </button>
             </div>
 
-            {/* Modals */}
-            {showThinkingModal && (
-              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowThinkingModal(false)}>
+            {/* Settings Modal */}
+            {showSettingsModal && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
                 <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                  <h4 className="text-lg font-bold text-on-surface mb-4">Thinking Mode</h4>
-                  <button
-                    onClick={() => {
-                      if (setSelectedModel) {
-                        setSelectedModel(selectedModel === "fusion" ? "gemini-2.5-flash" : "fusion");
-                      }
-                    }}
-                    className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between ${selectedModel === "fusion" ? "bg-primary-container border-primary" : "bg-surface-container-low border-outline-variant"}`}
-                  >
-                    <span>Enable Thinking</span>
-                    {selectedModel === "fusion" && <MaterialIcon name="check" className="text-primary" />}
-                  </button>
-                </div>
-              </div>
-            )}
+                  <h4 className="text-lg font-bold text-on-surface mb-4">Settings</h4>
+                  
+                  <div className="mb-6">
+                    <h5 className="text-sm font-semibold text-on-surface-variant mb-2">Thinking Mode</h5>
+                    <button
+                      onClick={() => {
+                        if (setSelectedModel) {
+                          setSelectedModel(selectedModel === "large" ? "tiny" : "large");
+                        }
+                      }}
+                      className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between transition-colors ${selectedModel === "large" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                    >
+                      <span>Enable Thinking</span>
+                      {selectedModel === "large" && <MaterialIcon name="check" className="text-on-primary" />}
+                    </button>
+                    <p className="text-xs text-on-surface-variant mt-2 leading-relaxed">
+                      Uses a specialized reasoning model to plan and think step-by-step before answering.
+                    </p>
+                  </div>
 
-            {showAiConfigModal && (
-              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowAiConfigModal(false)}>
-                <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                  <h4 className="text-lg font-bold text-on-surface mb-4">AI Engine</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setAiEngine("cloud")}
-                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${aiEngine === "cloud" ? "bg-primary text-on-primary" : "bg-surface-container-low"}`}
-                    >
-                      Cloud Core
-                    </button>
-                    <button
-                      onClick={() => setAiEngine("local")}
-                      className={`px-3 py-2 rounded-lg text-sm font-semibold ${aiEngine === "local" ? "bg-primary text-on-primary" : "bg-surface-container-low"}`}
-                    >
-                      Local WebAI
-                    </button>
+                  <div>
+                    <h5 className="text-sm font-semibold text-on-surface-variant mb-2">AI Engine</h5>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <button
+                        onClick={() => setAiEngine("cloud")}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${aiEngine === "cloud" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                      >
+                        Cloud Core
+                      </button>
+                      <button
+                        onClick={() => setAiEngine("local")}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${aiEngine === "local" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                      >
+                        Local WebAI
+                      </button>
+                    </div>
+                    <div className="text-xs text-on-surface-variant leading-relaxed space-y-1.5">
+                      <p><strong>Cloud Core:</strong> Fast, high-performance API hosted remotely.</p>
+                      <p><strong>Local WebAI:</strong> Runs locally in your browser. (Requires downloading models first)</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -766,41 +754,6 @@ export default function ChatInterface({
       
       {/* Main Conversation Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
-
-        {/* Pinned Top Header Bar */}
-        <div className="h-16 shrink-0 border-b-2 border-outline-variant bg-surface flex items-center justify-between px-4 z-20">
-          {/* Menu icon on the left on its own */}
-          <div className="flex items-center">
-            {onToggleDrawer && (
-              <button
-                onClick={onToggleDrawer}
-                className="w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-sm flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
-                style={{ minWidth: "44px", minHeight: "44px" }}
-                title="Open Navigation Menu"
-              >
-                <MaterialIcon name="menu" className="text-title-medium" />
-              </button>
-            )}
-          </div>
-
-          {/* Quick Selections pushed to the right */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onViewCv}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 font-semibold text-xs transition-all cursor-pointer border-0"
-            >
-              <MaterialIcon name="description" className="text-body-medium" />
-              <span>View CV</span>
-            </button>
-            <button
-              onClick={onViewProjects}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high border-2 border-outline-variant text-on-surface hover:bg-surface-container-highest font-semibold text-xs transition-all cursor-pointer"
-            >
-              <MaterialIcon name="code" className="text-body-medium" />
-              <span>Projects</span>
-            </button>
-          </div>
-        </div>
 
 
         {/* Scrollable chat body */}
