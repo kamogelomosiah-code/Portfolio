@@ -14,6 +14,7 @@ import { MarkdownRenderer } from "./MarkdownRenderer";
 import { MaterialIcon } from "./MaterialIcon";
 import { initAuth, googleSignIn, logout, getAccessToken } from "../lib/auth";
 import type { User as FirebaseUser } from "firebase/auth";
+import { router } from "../lib/modelRouter";
 
 export type Attachment = {
   name: string;
@@ -29,6 +30,11 @@ export type Message = {
   uiBlock?: "projects" | "skills" | "cv" | null;
   status?: "sending" | "sent" | "error" | "loading" | "streaming";
   attachments?: Attachment[];
+  meta?: {
+    engine?: string;
+    model?: string;
+    status?: string;
+  };
 };
 
 const PROMPT_SETS = [
@@ -106,6 +112,26 @@ export default function ChatInterface({
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [needsAuth, setNeedsAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  const [aiEngine, setAiEngine] = useState<"cloud" | "local">("cloud");
+  const [localStatus, setLocalStatus] = useState(() => router.getStatus());
+  const [localInitialized, setLocalInitialized] = useState(router.initialized);
+  const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
+
+  useEffect(() => {
+    let active = true;
+    const tick = () => {
+      if (!active) return;
+      setLocalStatus(router.getStatus());
+      setLocalInitialized(router.initialized);
+      setLocalLoading(router.loadingInProcess);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const isGenerating = messages.some(m => m.status === 'loading' || m.status === 'streaming');
 
@@ -372,7 +398,11 @@ export default function ChatInterface({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const maxHeight = 140;
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+      textareaRef.current.style.overflowY = scrollHeight > maxHeight ? "auto" : "hidden";
+      textareaRef.current.scrollTop = 0;
     }
   }, [input]);
 
@@ -419,6 +449,33 @@ export default function ChatInterface({
     }, 50);
 
     try {
+      if (aiEngine === "local") {
+        if (!router.initialized) {
+          await router.loadModels();
+        }
+        const isThinkMode = selectedModel === "fusion";
+        const result = await router.generateResponse(text.trim(), isThinkMode);
+        
+        const replyText = result.response || "No response generated.";
+        const usedModel = result.model;
+        
+        const updatedAgentMsg: Message = {
+          id: agentMsgId,
+          role: "agent",
+          text: replyText,
+          status: "sent",
+          meta: {
+            engine: "Transformers.js (Local)",
+            model: usedModel,
+            status: result.status
+          }
+        };
+        
+        setMessages(prev => prev.map(m => m.id === agentMsgId ? updatedAgentMsg : m));
+        setIsLoading(false);
+        return;
+      }
+
       const history = messages.map(m => ({
         role: m.role,
         text: m.text
@@ -559,7 +616,7 @@ export default function ChatInterface({
               }}
               placeholder="Ask me about math or coding!" 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-on-background py-3 px-4 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed max-h-[140px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-2.5 px-3 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed border-0"
               disabled={isLoading || isGenerating}
               rows={1}
             />
@@ -678,20 +735,182 @@ export default function ChatInterface({
   return (
     <div className="flex-1 flex h-full overflow-hidden relative bg-background w-full font-sans antialiased">
       
-      {/* Floating Menu Button */}
-      {onToggleDrawer && (
-        <button
-          onClick={onToggleDrawer}
-          className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
-          style={{ minWidth: "44px", minHeight: "44px" }}
-          title="Open Navigation Menu"
-        >
-          <MaterialIcon name="menu" className="text-title-medium" />
-        </button>
-      )}
-
       {/* Main Conversation Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
+
+        {/* Pinned Top Header Bar */}
+        <div className="h-16 shrink-0 border-b-2 border-outline-variant bg-surface flex items-center justify-between px-4 z-20">
+          {/* Menu icon on the left on its own */}
+          <div className="flex items-center">
+            {onToggleDrawer && (
+              <button
+                onClick={onToggleDrawer}
+                className="w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-sm flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
+                style={{ minWidth: "44px", minHeight: "44px" }}
+                title="Open Navigation Menu"
+              >
+                <MaterialIcon name="menu" className="text-title-medium" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick Selections pushed to the right */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onViewCv}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 font-semibold text-xs transition-all cursor-pointer border-0"
+            >
+              <MaterialIcon name="description" className="text-body-medium" />
+              <span>View CV</span>
+            </button>
+            <button
+              onClick={onViewProjects}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high border-2 border-outline-variant text-on-surface hover:bg-surface-container-highest font-semibold text-xs transition-all cursor-pointer"
+            >
+              <MaterialIcon name="code" className="text-body-medium" />
+              <span>Projects</span>
+            </button>
+          </div>
+        </div>
+
+        {/* AI Engine & Status Bar */}
+        <div className="shrink-0 border-b-2 border-outline-variant bg-surface-container-low px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 z-10 select-none">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-on-surface-variant font-sans uppercase tracking-wider">AI Engine:</span>
+            <div className="inline-flex rounded-full bg-surface-container-high p-0.5 border-2 border-outline-variant shadow-sm">
+              <button
+                onClick={() => setAiEngine("cloud")}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border-0 ${
+                  aiEngine === "cloud"
+                    ? "bg-primary text-on-primary shadow-sm font-bold"
+                    : "text-on-surface-variant hover:text-on-surface bg-transparent"
+                }`}
+              >
+                Cloud Core
+              </button>
+              <button
+                onClick={() => setAiEngine("local")}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer border-0 flex items-center gap-1 ${
+                  aiEngine === "local"
+                    ? "bg-primary text-on-primary shadow-sm font-bold"
+                    : "text-on-surface-variant hover:text-on-surface bg-transparent"
+                }`}
+              >
+                <MaterialIcon name="language" className="text-[13px]" />
+                Local WebAI
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {aiEngine === "cloud" ? (
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-medium text-on-surface-variant font-mono">
+                  Cloud Connected
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2.5">
+                {localInitialized ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-xs font-medium text-on-surface-variant font-mono">
+                      Engine Ready ({localStatus.available}/{localStatus.total})
+                    </span>
+                  </div>
+                ) : localLoading ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 font-mono animate-pulse">
+                      Downloading Models...
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => router.loadModels()}
+                    className="px-3 py-1 rounded-full bg-primary text-on-primary hover:opacity-90 text-xs font-bold transition-all cursor-pointer border-0 shadow-sm flex items-center gap-1"
+                  >
+                    <MaterialIcon name="download" className="text-[13px]" />
+                    Load Local AI (HF)
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Local AI Download Progress Panel */}
+        {aiEngine === "local" && !localInitialized && (
+          <div className="bg-surface border-b-2 border-outline-variant p-4 z-10 shadow-inner">
+            <h4 className="text-xs font-bold text-on-surface mb-2 font-mono flex items-center gap-1.5">
+              <MaterialIcon name="memory" className="text-body-medium text-primary" />
+              TRANSFORMERS.JS WEB-ASSEMBLY ENGINE STATUS
+            </h4>
+            
+            <p className="text-xs text-on-surface-variant mb-4 font-normal leading-relaxed max-w-2xl">
+              Local AI loads models directly in your browser. This requires downloading about 1.3 GB of model files once. They will be cached locally for instant future use.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              {Object.entries(localStatus.models).map(([key, status]) => {
+                const progress = localStatus.progress[key] || 0;
+                const displayModel = key === "math" ? "TinyMath Gemma" : key === "speaking" ? "DistilGPT-2" : key === "planning" ? "BERT Base" : "GPT-2 Small";
+                const sizeStr = key === "math" ? "300MB" : key === "speaking" ? "280MB" : key === "planning" ? "420MB" : "350MB";
+
+                return (
+                  <div key={key} className="bg-surface-container-high border border-outline-variant rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-bold text-on-surface truncate capitalize">{key}</span>
+                      <span className="text-[10px] font-mono text-on-surface-variant font-semibold">{sizeStr}</span>
+                    </div>
+                    <div className="text-[11px] text-on-surface-variant font-sans mb-2 truncate">
+                      {displayModel}
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-mono">
+                        <span className={`font-semibold capitalize ${
+                          status === "ready" || status === "fallback" || status === "fallback-loaded"
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : status === "loading"
+                            ? "text-amber-500 animate-pulse"
+                            : "text-on-surface-variant"
+                        }`}>
+                          {status === "idle" ? "Not Loaded" : status}
+                        </span>
+                        {status === "loading" && (
+                          <span className="text-on-surface-variant">{Math.round(progress)}%</span>
+                        )}
+                      </div>
+                      <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden border border-outline-variant/30">
+                        <div
+                          className={`h-full transition-all duration-200 ${
+                            status === "ready" || status === "fallback" || status === "fallback-loaded"
+                              ? "bg-emerald-500"
+                              : status === "loading"
+                              ? "bg-amber-500"
+                              : "bg-surface"
+                          }`}
+                          style={{ width: `${status === "ready" || status === "fallback" || status === "fallback-loaded" ? 100 : progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Scrollable chat body */}
         <div 

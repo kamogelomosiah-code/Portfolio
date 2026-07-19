@@ -6,6 +6,7 @@ import { AppIcon } from "./AppIcon";
 import { Message, Attachment } from "./ChatInterface";
 import { AIMessage } from "./chat/AIMessage";
 import MenuDrawer from "./MenuDrawer";
+import { router } from "../lib/modelRouter";
 
 const ProjectsPage = lazy(() => import("./ProjectsPage"));
 const CvPage = lazy(() => import("./CvPage"));
@@ -94,6 +95,26 @@ export default function MobileApp({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
+
+  const [aiEngine, setAiEngine] = useState<"cloud" | "local">("cloud");
+  const [localStatus, setLocalStatus] = useState(() => router.getStatus());
+  const [localInitialized, setLocalInitialized] = useState(router.initialized);
+  const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
+
+  useEffect(() => {
+    let active = true;
+    const tick = () => {
+      if (!active) return;
+      setLocalStatus(router.getStatus());
+      setLocalInitialized(router.initialized);
+      setLocalLoading(router.loadingInProcess);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const isGenerating = messages.some(m => m.status === 'loading' || m.status === 'streaming');
 
@@ -308,7 +329,11 @@ export default function MobileApp({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const maxHeight = 100;
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+      textareaRef.current.style.overflowY = scrollHeight > maxHeight ? "auto" : "hidden";
+      textareaRef.current.scrollTop = 0;
     }
   }, [input]);
 
@@ -354,6 +379,33 @@ export default function MobileApp({
     }, 50);
 
     try {
+      if (aiEngine === "local") {
+        if (!router.initialized) {
+          await router.loadModels();
+        }
+        const isThinkMode = selectedModel === "fusion";
+        const result = await router.generateResponse(text.trim(), isThinkMode);
+        
+        const replyText = result.response || "No response generated.";
+        const usedModel = result.model;
+        
+        const updatedAgentMsg: Message = {
+          id: agentMsgId,
+          role: "agent",
+          text: replyText,
+          status: "sent",
+          meta: {
+            engine: "Transformers.js (Local)",
+            model: usedModel,
+            status: result.status
+          }
+        };
+        
+        setMessages(prev => prev.map(m => m.id === agentMsgId ? updatedAgentMsg : m));
+        setIsLoading(false);
+        return;
+      }
+
       const history = messages.map(m => ({
         role: m.role,
         text: m.text
@@ -478,7 +530,7 @@ export default function MobileApp({
               onChange={(e) => setInput(e.target.value)}
               onFocus={handleInputFocus}
               placeholder="Ask me about math or coding!" 
-              className="flex-1 bg-transparent text-on-background py-3 px-4 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed max-h-[100px] overflow-y-auto border-0"
+              className="flex-1 bg-transparent text-on-background py-2 px-3 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed border-0"
               disabled={isLoading || isGenerating}
               rows={1}
             />
@@ -621,18 +673,6 @@ export default function MobileApp({
   return (
     <div className="flex flex-col h-dvh w-full bg-background text-on-background font-sans select-none overflow-hidden relative">
       
-      {/* Floating Menu Button */}
-      {activeTab === "chat" && (
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="absolute top-3 left-3 z-30 w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-md flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
-          style={{ minWidth: "44px", minHeight: "44px" }}
-          title="Open Navigation Menu"
-        >
-          <MaterialIcon name="menu" className="text-title-medium" />
-        </button>
-      )}
-
       {/* Screen Container with Swipe-Style Tab Transitions */}
       <main className="flex-1 w-full overflow-hidden relative bg-background">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
@@ -647,6 +687,179 @@ export default function MobileApp({
           >
             {activeTab === "chat" && (
               <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+                
+                {/* Pinned Top Header Bar */}
+                <div className="h-16 shrink-0 border-b-2 border-outline-variant bg-surface flex items-center justify-between px-4 z-20">
+                  {/* Menu icon on the left on its own */}
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => setDrawerOpen(true)}
+                      className="w-11 h-11 rounded-full bg-surface border-2 border-outline-variant shadow-sm flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer"
+                      style={{ minWidth: "44px", minHeight: "44px" }}
+                      title="Open Navigation Menu"
+                    >
+                      <MaterialIcon name="menu" className="text-title-medium" />
+                    </button>
+                  </div>
+
+                  {/* Quick Selections pushed to the right */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleTabChange("cv")}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 font-semibold text-xs transition-all cursor-pointer border-0"
+                    >
+                      <MaterialIcon name="description" className="text-body-medium" />
+                      <span>CV</span>
+                    </button>
+                    <button
+                      onClick={() => handleTabChange("projects")}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-high border-2 border-outline-variant text-on-surface hover:bg-surface-container-highest font-semibold text-xs transition-all cursor-pointer"
+                    >
+                      <MaterialIcon name="code" className="text-body-medium" />
+                      <span>Projects</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* AI Engine & Status Bar */}
+                <div className="shrink-0 border-b-2 border-outline-variant bg-surface-container-low px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-10 select-none">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-on-surface-variant font-sans uppercase tracking-wider">AI Engine:</span>
+                    <div className="inline-flex rounded-full bg-surface-container-high p-0.5 border border-outline-variant shadow-sm">
+                      <button
+                        onClick={() => setAiEngine("cloud")}
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer border-0 ${
+                          aiEngine === "cloud"
+                            ? "bg-primary text-on-primary shadow-sm font-bold"
+                            : "text-on-surface-variant hover:text-on-surface bg-transparent"
+                        }`}
+                      >
+                        Cloud
+                      </button>
+                      <button
+                        onClick={() => setAiEngine("local")}
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all cursor-pointer border-0 flex items-center gap-0.5 ${
+                          aiEngine === "local"
+                            ? "bg-primary text-on-primary shadow-sm font-bold"
+                            : "text-on-surface-variant hover:text-on-surface bg-transparent"
+                        }`}
+                      >
+                        <MaterialIcon name="language" className="text-[11px]" />
+                        Local
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {aiEngine === "cloud" ? (
+                      <div className="flex items-center gap-1">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                        </span>
+                        <span className="text-[10px] font-medium text-on-surface-variant font-mono">
+                          Cloud Ready
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        {localInitialized ? (
+                          <div className="flex items-center gap-1">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[10px] font-medium text-on-surface-variant font-mono">
+                              Local Ready ({localStatus.available}/{localStatus.total})
+                            </span>
+                          </div>
+                        ) : localLoading ? (
+                          <div className="flex items-center gap-1">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                            </span>
+                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 font-mono animate-pulse">
+                              Downloading...
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => router.loadModels()}
+                            className="px-2 py-0.5 rounded-full bg-primary text-on-primary hover:opacity-90 text-[10px] font-bold transition-all cursor-pointer border-0 shadow-sm flex items-center gap-0.5"
+                          >
+                            <MaterialIcon name="download" className="text-[10px]" />
+                            Load
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Local AI Download Progress Panel */}
+                {aiEngine === "local" && !localInitialized && (
+                  <div className="bg-surface border-b border-outline-variant p-3 z-10 shadow-inner">
+                    <h4 className="text-[11px] font-bold text-on-surface mb-1 font-mono flex items-center gap-1">
+                      <MaterialIcon name="memory" className="text-body-small text-primary" />
+                      LOCAL HF ENGINE STATUS
+                    </h4>
+                    
+                    <p className="text-[10px] text-on-surface-variant mb-2.5 font-normal leading-relaxed">
+                      Runs models in-browser. Requires ~1.3 GB download once (cached locally).
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(localStatus.models).map(([key, status]) => {
+                        const progress = localStatus.progress[key] || 0;
+                        const displayModel = key === "math" ? "TinyMath" : key === "speaking" ? "DistilGPT" : key === "planning" ? "BERT" : "GPT-2";
+                        const sizeStr = key === "math" ? "300M" : key === "speaking" ? "280M" : key === "planning" ? "420M" : "350M";
+
+                        return (
+                          <div key={key} className="bg-surface-container-high border border-outline-variant rounded-lg p-2.5 flex flex-col justify-between shadow-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10.5px] font-bold text-on-surface truncate capitalize">{key}</span>
+                              <span className="text-[9px] font-mono text-on-surface-variant font-semibold">{sizeStr}</span>
+                            </div>
+                            <div className="text-[9.5px] text-on-surface-variant font-sans truncate mb-1">
+                              {displayModel}
+                            </div>
+
+                            <div className="space-y-0.5">
+                              <div className="flex justify-between text-[8px] font-mono">
+                                <span className={`font-semibold capitalize ${
+                                  status === "ready" || status === "fallback" || status === "fallback-loaded"
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : status === "loading"
+                                    ? "text-amber-500 animate-pulse"
+                                    : "text-on-surface-variant"
+                                }`}>
+                                  {status === "idle" ? "idle" : status}
+                                </span>
+                                {status === "loading" && (
+                                  <span className="text-on-surface-variant">{Math.round(progress)}%</span>
+                                )}
+                              </div>
+                              <div className="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-200 ${
+                                    status === "ready" || status === "fallback" || status === "fallback-loaded"
+                                      ? "bg-emerald-500"
+                                      : status === "loading"
+                                      ? "bg-amber-500"
+                                      : "bg-surface"
+                                  }`}
+                                  style={{ width: `${status === "ready" || status === "fallback" || status === "fallback-loaded" ? 100 : progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Scrollable Conversation Block */}
                 <div 
                   ref={scrollContainerRef}

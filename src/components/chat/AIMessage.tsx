@@ -89,6 +89,20 @@ export function AIMessage({
               <div className="text-base sm:text-lg md:text-xl leading-relaxed">
                 <MarkdownRenderer content={displayedText} isStreaming={localStatus === "streaming"} />
               </div>
+              {localStatus === "sent" && (msg as any).meta && (
+                <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-mono text-on-surface-variant bg-surface-container-high/45 px-2.5 py-1 rounded-full border border-outline-variant select-none">
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                  <span className="font-semibold text-primary">{(msg as any).meta.engine}</span>
+                  <span className="opacity-40">•</span>
+                  <span>Model: <span className="text-on-surface font-semibold">{(msg as any).meta.model}</span></span>
+                  {(msg as any).meta.status && (
+                    <>
+                      <span className="opacity-40">•</span>
+                      <span>Status: <span className="text-on-surface">{(msg as any).meta.status}</span></span>
+                    </>
+                  )}
+                </div>
+              )}
               {localStatus === "sent" && msg.uiBlock && renderUIBlock && (
                 <div className="mt-4 flex flex-col gap-3 w-full max-w-3xl">
                   {renderUIBlock(msg.uiBlock)}
