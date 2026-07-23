@@ -150,7 +150,7 @@ REFERENCES
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "Kamogelo_Mosia_CV.txt";
+    link.download = "Kamogelo_CV.pdf";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -158,43 +158,34 @@ REFERENCES
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 bg-surface-container-low border-2 border-outline-variant rounded-xl w-full max-w-lg mt-3 gap-4 shadow-sm hover:border-outline-variant  transition-colors">
-      <div className="flex items-center gap-3.5">
+    <div className="flex flex-row items-center justify-between p-3.5 sm:p-4 bg-surface-container-low border-2 border-outline-variant rounded-2xl w-full max-w-md mt-3 gap-3 shadow-sm hover:border-primary/40 transition-all">
+      <div className="flex items-center gap-3 min-w-0">
         {/* Document Icon Graphic */}
-        <div className="w-12 h-12 shrink-0 bg-red-100 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border-2 border-red-200/50 dark:border-red-900/20 shadow-sm relative overflow-hidden select-none">
+        <div className="w-11 h-11 shrink-0 bg-red-500/10 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border border-red-500/20 shadow-xs relative overflow-hidden select-none">
           <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
-          <svg className="w-6 h-6 text-red-600 " fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <span className="text-[8px] font-extrabold text-red-600  uppercase tracking-widest mt-0.5 font-mono">PDF</span>
+          <span className="text-[8px] font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest font-mono">PDF</span>
         </div>
         
-        <div className="flex flex-col text-left">
-          <span className="font-bold text-body-medium text-on-surface  leading-snug truncate max-w-[220px] sm:max-w-[280px]">
-            Kamogelo_Mosia_CV.pdf
+        <div className="flex flex-col text-left min-w-0">
+          <span className="font-bold text-sm text-on-surface leading-snug truncate">
+            Kamogelo_CV.pdf
           </span>
-          <span className="text-label-medium text-on-surface-variant font-medium mt-0.5">
-            184 KB • Official CV/Resume
+          <span className="text-xs text-on-surface-variant font-medium mt-0.5">
+            184 KB • Official CV
           </span>
         </div>
       </div>
 
-      <div className="flex sm:flex-col items-stretch gap-2 shrink-0">
-        <button
-          onClick={handleDownload}
-          className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-inverse-surface hover:bg-surface-container-highest text-on-primary px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer shadow-sm border-0"
-        >
-          <Download size={14} /> Download
-        </button>
-        {onViewCv && (
-          <button
-            onClick={onViewCv}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-surface hover:bg-surface-container-highest text-on-surface  px-4 py-2 rounded-xl transition-all font-semibold text-body-small sm:text-[13.5px] cursor-pointer border-2 border-outline-variant"
-          >
-            View Online
-          </button>
-        )}
-      </div>
+      <button
+        onClick={handleDownload}
+        className="flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-on-primary px-4 py-2.5 rounded-xl transition-all font-semibold text-xs sm:text-sm cursor-pointer shadow-sm border-0 shrink-0"
+      >
+        <Download size={15} />
+        <span>Download</span>
+      </button>
     </div>
   );
 }
