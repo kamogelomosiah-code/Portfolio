@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import OpenAI from 'openai';
@@ -159,6 +160,7 @@ async function callGeminiTranscriptionFallback(buffer: Buffer, mimetype: string)
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use('/api/planner', plannerRouter);
 const PORT = 3000;

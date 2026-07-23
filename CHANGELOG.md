@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.1] - 2026-07-20
+
+### Fixed
+- Restored and fixed the Cloud AI API calling routes by pointing client queries directly to the server's native `/api/chat` orchestration backend.
+- Resolved external 503/offline errors from third-party hosting services by mapping the frontend models to the robust server-side multi-model orchestration pipeline (`fusion` for Think Longer mode and `swift` for Quick mode).
+- Rewrote the `useLocalLLM` custom hook to leverage the `/api/hf-health` endpoint for accurate model status detection and to proxy requests securely to `/api/chat`.
+
 ## [1.5.0] - 2026-07-19
 
 ### Changed
+- Integrated custom `useLocalLLM` React hook into the application's root state for handling remote Model LLM connections.
+- Dynamically disable the "Enable Thinking" (Large Model) toggle via `/status` polling to ensure it is only accessible when the model is fully loaded.
+- Updated the API URLs to dynamically respect the `VITE_LLM_API_URL` environment variable for seamless deployment across frontend/backend boundaries.
 - Relocated the AI Engine toggle panel to a unified "Settings" modal for a cleaner Chat Interface.
 - Updated the backend Python server (`app.py`) to utilize `llama-cpp-python` with a CPU-friendly GGUF quantized model for the large model inference path.
 - Updated the model naming identifiers from `fusion` to `large` to better reflect the new backend structure.

@@ -23,7 +23,10 @@ const FallbackLoader = () => (
 );
 
 
+import { useLocalLLM } from "./hooks/useLocalLLM";
+
 export default function App() {
+  const { status: llmStatus, isLargeReady } = useLocalLLM();
   const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "planner">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedModel, setSelectedModel] = useState("tiny");
@@ -129,6 +132,8 @@ export default function App() {
         setSelectedModel={setSelectedModel}
         messages={messages}
         setMessages={setMessages}
+        llmStatus={llmStatus}
+        isLargeReady={isLargeReady}
       />
     );
   }
@@ -151,6 +156,8 @@ export default function App() {
                 setMessages={setMessages}
                 onViewCv={() => setCurrentTab("cv")}
                 onViewProjects={() => setCurrentTab("projects")}
+                llmStatus={llmStatus}
+                isLargeReady={isLargeReady}
               />
             </motion.div>
           )}

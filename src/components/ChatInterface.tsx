@@ -92,7 +92,9 @@ export default function ChatInterface({
   messages,
   setMessages,
   onViewCv,
-  onViewProjects
+  onViewProjects,
+  llmStatus,
+  isLargeReady
 }: { 
   selectedModel?: string,
   setSelectedModel?: (model: string) => void,
@@ -100,7 +102,9 @@ export default function ChatInterface({
   messages: Message[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   onViewCv?: () => void,
-  onViewProjects?: () => void
+  onViewProjects?: () => void,
+  llmStatus?: any,
+  isLargeReady?: boolean
 }) {
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
@@ -463,14 +467,18 @@ export default function ChatInterface({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch("https://masterapi-l5j4.onrender.com/generate", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers,
-        body: JSON.stringify({ text: text.trim(), max_length: 200, model: selectedModel }),
+        body: JSON.stringify({ 
+          history, 
+          message: text.trim(), 
+          model: selectedModel === "large" ? "fusion" : "swift" 
+        }),
       });
       
       const data = await res.json();
-      let replyText = data.generated || "Sorry, I had trouble processing that.";
+      let replyText = data.text || data.generated || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
 
       let followUps: string[] = [];
@@ -628,15 +636,24 @@ export default function ChatInterface({
                   
                   <div className="mb-6">
                     <h5 className="text-sm font-semibold text-on-surface-variant mb-2">Thinking Mode</h5>
+                    
+                    {llmStatus && (
+                      <div className="mb-3 text-xs text-on-surface-variant flex flex-col gap-1">
+                        <div>Tiny model: {llmStatus.tiny_model}</div>
+                        <div>Large model: {llmStatus.large_model?.status}</div>
+                      </div>
+                    )}
+                    
                     <button
                       onClick={() => {
-                        if (setSelectedModel) {
+                        if (setSelectedModel && isLargeReady !== false) {
                           setSelectedModel(selectedModel === "large" ? "tiny" : "large");
                         }
                       }}
-                      className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between transition-colors ${selectedModel === "large" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                      disabled={isLargeReady === false}
+                      className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between transition-colors ${selectedModel === "large" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"} ${isLargeReady === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
-                      <span>Enable Thinking</span>
+                      <span>Enable Thinking {isLargeReady === false ? "(not ready yet)" : ""}</span>
                       {selectedModel === "large" && <MaterialIcon name="check" className="text-on-primary" />}
                     </button>
                     <p className="text-xs text-on-surface-variant mt-2 leading-relaxed">
