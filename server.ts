@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import OpenAI from 'openai';
+import Groq from 'groq-sdk';
 import multer from 'multer';
 import { InferenceClient } from "@huggingface/inference";
 import * as dotenv from 'dotenv';
@@ -12,6 +13,14 @@ import plannerRouter from './plannerRouter';
 import nodemailer from 'nodemailer';
 
 dotenv.config();
+
+let groqClient: Groq | null = null;
+function getGroqClient() {
+  if (!groqClient && process.env.GROQ_API_KEY) {
+    groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  }
+  return groqClient;
+}
 
 let meData = {};
 try {
@@ -360,6 +369,22 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       return res.status(400).json({ error: "No audio file provided." });
     }
 
+    const groq = getGroqClient();
+    if (groq) {
+      try {
+        const transcription = await groq.audio.transcriptions.create({
+          file: req.file.buffer as any,
+          model: 'whisper-large-v3',
+          response_format: 'json',
+        });
+        if (transcription?.text && transcription.text.trim()) {
+          return res.status(200).json({ text: transcription.text.trim() });
+        }
+      } catch (groqAudioErr: any) {
+        console.log("Groq Whisper audio transcription failed, falling back:", groqAudioErr?.message || groqAudioErr);
+      }
+    }
+
     let outputText = "";
     try {
       outputText = await withTokenRotation(async (token, openaiClient, hfClient) => {
@@ -401,8 +426,34 @@ app.post('/api/chat', async (req, res) => {
   
   const formattedHistory = (history || []).map((msg: any) => ({
       role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.text
+      content: msg.text || msg.content || ""
   }));
+
+  const groq = getGroqClient();
+  if (groq) {
+    try {
+      const groqModel = model === 'fusion' ? 'llama-3.3-70b-versatile' : 'llama-3.1-8b-instant';
+      const messages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...formattedHistory,
+        ...(message ? [{ role: 'user', content: message }] : [])
+      ];
+
+      const completion = await groq.chat.completions.create({
+        model: groqModel,
+        messages: messages as any,
+        temperature: 0.7,
+        max_tokens: 1024,
+        top_p: 0.9,
+      });
+
+      let rawReply = completion.choices[0]?.message?.content || 'No response generated.';
+      const finalReply = await processAutomationRequests(rawReply);
+      return res.json({ text: finalReply, reply: finalReply });
+    } catch (groqErr: any) {
+      console.error('[Groq Chat Error, falling back to rotation/Gemini]:', groqErr?.message || groqErr);
+    }
+  }
 
   try {
     const isThinkMode = model === 'fusion'; // "Think Longer"
@@ -497,7 +548,7 @@ Synthesize the final, polished, and highly accurate answer. Incorporate the impr
     });
 
     const finalResponse = await processAutomationRequests(textResponse);
-    res.json({ text: finalResponse });
+    res.json({ text: finalResponse, reply: finalResponse });
   } catch (error: any) {
     console.log("[INFO] Transitioning request to Gemini model...");
     
@@ -505,10 +556,11 @@ Synthesize the final, polished, and highly accurate answer. Incorporate the impr
       const activeSystemPrompt = SYSTEM_PROMPT;
       const geminiResponse = await callGeminiChatFallback(activeSystemPrompt, formattedHistory, message);
       const finalResponse = await processAutomationRequests(geminiResponse);
-      return res.json({ text: finalResponse });
+      return res.json({ text: finalResponse, reply: finalResponse });
     } catch (geminiError: any) {
       console.log("[INFO] All primary systems bypassed. Using offline helper.");
-      res.status(200).json({ text: getOfflineFallbackResponse(message) });
+      const fallbackMsg = getOfflineFallbackResponse(message);
+      res.status(200).json({ text: fallbackMsg, reply: fallbackMsg });
     }
   }
 });
@@ -516,6 +568,11 @@ Synthesize the final, polished, and highly accurate answer. Incorporate the impr
 app.post('/api/ping-model', async (req, res) => {
   const { model } = req.body;
   try {
+    const groq = getGroqClient();
+    if (groq) {
+      return res.json({ success: true, provider: 'Groq' });
+    }
+
     let resolvedModel = model || 'swift';
     if (resolvedModel === 'swift') {
       resolvedModel = 'MiniMaxAI/MiniMax-M3:preferred';
@@ -553,6 +610,11 @@ app.post('/api/ping-model', async (req, res) => {
 
 app.get('/api/hf-health', async (req, res) => {
   try {
+    const groq = getGroqClient();
+    if (groq) {
+      return res.json({ connected: true, provider: 'Groq' });
+    }
+
     const connected = await withTokenRotation(async (token, openaiClient, hfClient) => {
       await openaiClient.chat.completions.create({
         model: "meta-llama/Llama-3.3-70B-Instruct",
