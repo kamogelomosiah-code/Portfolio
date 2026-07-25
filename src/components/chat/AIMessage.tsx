@@ -56,25 +56,25 @@ export function AIMessage({
   }, [msg.text, msg.status, msg.id]);
 
   return (
-    <div className="flex items-start gap-4 w-full max-w-full px-4 scroll-mt-4" id={`msg-${msg.id}`}>
-      <div className="w-8 h-8 shrink-0 mt-1 flex items-center justify-center">
+    <div className="flex items-start gap-2.5 sm:gap-4 w-full max-w-full px-1 sm:px-4 scroll-mt-4" id={`msg-${msg.id}`}>
+      <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 mt-1 flex items-center justify-center">
         {isFirstInGroup ? (
-          <div className="flex items-center justify-center rounded-full bg-[#13131c] w-8 h-8 shadow-sm">
-            <AppIcon className={`w-4.5 h-4.5 text-[#4A90E2] ${localStatus === "loading" ? "animate-pulse" : ""}`} />
+          <div className="flex items-center justify-center rounded-full bg-[#13131c] w-7 h-7 sm:w-8 sm:h-8 shadow-sm">
+            <AppIcon className={`w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#4A90E2] ${localStatus === "loading" ? "animate-pulse" : ""}`} />
           </div>
         ) : (
-          <div className="w-8 h-8" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8" />
         )}
       </div>
       
       <div className="flex-1 flex flex-col items-start w-full min-w-0">
         {isFirstInGroup && (
-          <span className="font-semibold text-[15px] sm:text-base text-gray-400 mb-1">
+          <span className="font-semibold text-[14px] sm:text-base text-gray-400 mb-1">
             Kamogelo Mosiah
           </span>
         )}
         
-        <div className="text-gray-100 bg-[#13131c] rounded-2xl rounded-tl-sm px-5 py-4 pb-1 w-full text-left max-w-3xl min-h-[24px] shadow-sm">
+        <div className="text-gray-100 bg-[#13131c] rounded-2xl rounded-tl-sm px-3.5 sm:px-5 py-3.5 sm:py-4 pb-1 w-full text-left max-w-3xl min-h-[24px] shadow-sm">
           {localStatus === "loading" ? (
             <div className="flex items-center gap-1.5 text-gray-400 pt-1">
               <span className="text-base sm:text-lg font-normal italic">Thinking</span>

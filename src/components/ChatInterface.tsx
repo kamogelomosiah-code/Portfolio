@@ -619,7 +619,7 @@ export default function ChatInterface({
           className="flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth z-10"
           onScroll={handleScroll}
         >
-          <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-10 pb-12 min-h-full">
+          <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-2 sm:px-6 pt-6 sm:pt-10 pb-12 min-h-full">
             
             {isInitialState ? (
               <div className="flex flex-col items-center justify-center text-center w-full max-w-2xl mx-auto flex-1 py-12">
@@ -656,11 +656,11 @@ export default function ChatInterface({
                       className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
                     >
                       {isUser ? (
-                        <div className="flex flex-col max-w-[85%] sm:max-w-[75%] items-end">
+                        <div className="flex flex-col max-w-[92%] sm:max-w-[75%] items-end">
                           <div className="flex items-center gap-2 mb-1.5 px-1">
                             <span className="text-[13px] font-medium text-gray-400">You</span>
                           </div>
-                          <div className="px-5 py-3.5 rounded-2xl shadow-sm bg-[#4A90E2] text-white rounded-tr-sm">
+                          <div className="px-3.5 sm:px-5 py-3 sm:py-3.5 rounded-2xl shadow-sm bg-[#4A90E2] text-white rounded-tr-sm">
                             <p className="text-[15px] whitespace-pre-wrap font-normal leading-relaxed break-words">
                               {msg.text}
                             </p>
