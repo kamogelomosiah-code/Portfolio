@@ -522,7 +522,7 @@ export default function ChatInterface({
 
   const renderComposer = (isFixed: boolean) => {
     return (
-      <div className={`${isFixed ? 'w-full max-w-3xl' : 'w-full max-w-2xl mx-auto mt-4'} relative flex flex-col items-center pointer-events-auto`}>
+      <div className={`${isFixed ? 'w-full max-w-[800px]' : 'w-full max-w-[800px] mx-auto mt-4'} relative flex flex-col items-center pointer-events-auto`}>
         {/* Recording status banner */}
         <AnimatePresence>
           {(recordingStatus || interimSpeech) && (
@@ -585,50 +585,58 @@ export default function ChatInterface({
         </AnimatePresence>
 
         {/* Input box with smooth border-2 radius */}
-        <div className="w-full bg-surface border-2 border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
-          <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
+        <div className="w-full max-w-[800px] bg-surface-container-high rounded-[32px] sm:rounded-[100px] px-2 py-1 shadow-md focus-within:shadow-[0_0_0_2px_rgba(124,58,237,0.2),0_4px_20px_rgba(0,0,0,0.08)] transition-all flex flex-col relative border-none">
+          <div className="flex items-center justify-between gap-3 w-full min-h-[46px] px-2 sm:px-4">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onFocus={() => { if (introStage !== "options") setIntroStage("options"); }}
-              onKeyDown={(e) => {
+              onKeyDown={(e) => { 
                  if (e.key === "Enter" && !e.shiftKey) {
                      e.preventDefault();
                      handleSend(input);
                  }
               }}
-              placeholder="Ask me about math or coding!" 
+              placeholder="Chat with Claude..." 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-on-background py-2.5 px-3 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed border-0"
+              className="flex-1 bg-transparent border-none outline-none text-[16px] py-3 text-on-surface resize-none min-h-[48px] max-h-[200px]"
               disabled={isLoading || isGenerating}
               rows={1}
             />
           </div>
-
           {/* Bottom Row: Actions & Send */}
-          <div className="flex items-center justify-between mt-2.5 px-4 w-full gap-2 select-none">
-            {/* Thinking Mode & Engine Selection Toggle */}
+          <div className="flex items-center justify-between mt-1 sm:mt-0 px-2 sm:px-4 w-full gap-2 select-none pb-2 sm:pb-0 shrink-0">
+            {/* Left side actions (Attachment) */}
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setShowSettingsModal(true)}
-                className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
-                style={{
-                  backgroundColor: "transparent",
-                  borderColor: "var(--outline-variant)",
-                  color: "var(--text-muted)",
-                  opacity: isGenerating ? 0.5 : 1,
-                  pointerEvents: isGenerating ? 'none' : 'auto'
-                }}
-                disabled={isGenerating}
-                title="Settings"
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer border-none bg-transparent hover:bg-surface-container-highest text-on-surface-variant"
+                title="Add attachment"
               >
-                <MaterialIcon name="settings" className="text-title-large" />
-                <span>Settings</span>
+                <MaterialIcon name="attach_file" className="text-[20px]" />
               </button>
             </div>
+            
+            {/* Send Button */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSend(input)}
+                disabled={!input.trim() || isLoading || isGenerating}
+                className={`w-[40px] h-[40px] rounded-full flex items-center justify-center transition-all cursor-pointer border-none shrink-0 ${
+                  input.trim() && !isLoading && !isGenerating
+                    ? "bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-md"
+                    : "bg-surface-container-highest text-on-surface-variant cursor-not-allowed"
+                }`}
+                style={{ minWidth: "40px", minHeight: "40px" }}
+                title="Send message"
+              >
+                <MaterialIcon name="arrow_upward" className="text-[20px]" />
+              </button>
+            </div>
+          </div>
+        </div>
 
-            {/* Settings Modal */}
+        {/* Settings Modal */}
             {showSettingsModal && (
               <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
                 <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
@@ -686,53 +694,20 @@ export default function ChatInterface({
               </div>
             )}
 
-            {/* Right side: Mic, Character count and Send */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11.5px] text-on-surface-variant font-mono hidden sm:inline select-none pr-1">
-                {input.length}/1000
-              </span>
-
-              {/* Tap and Hold Microphone Button */}
-              <button
-                type="button"
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-                onMouseLeave={stopRecording}
-                onTouchStart={startRecording}
-                onTouchEnd={stopRecording}
-                disabled={isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
-                  isRecording
-                    ? "bg-rose-500 text-white animate-pulse border-rose-600 shadow-md scale-105"
-                    : isGenerating
-                    ? "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
-                    : "border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
-                }`}
-                style={{ minWidth: "44px", minHeight: "44px" }}
-                title="Tap and hold to speak"
-              >
-                <MaterialIcon name="mic" className={`text-title-large ${isRecording ? "animate-bounce" : ""}`} />
-              </button>
-
-              <button
-                onClick={() => handleSend(input)}
-                disabled={!input.trim() || isLoading || isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
-                  input.trim() && !isLoading && !isGenerating
-                    ? "border-transparent bg-primary dark:bg-white text-on-primary dark:bg-white dark:text-primary hover:opacity-90 active:scale-95 shadow-sm"
-                    : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
-                }`}
-                style={{ minWidth: "44px", minHeight: "44px" }}
-                title="Send message"
-              >
-                <MaterialIcon name="send" className="text-title-large" />
-              </button>
-            </div>
-          </div>
+            
+        <div 
+          className="text-[13px] font-medium text-on-surface-variant mt-2 flex items-center justify-center gap-1.5 select-none hover:text-primary transition-colors cursor-pointer w-full text-center"
+          onMouseDown={startRecording}
+          onMouseUp={stopRecording}
+          onMouseLeave={stopRecording}
+          onTouchStart={startRecording}
+          onTouchEnd={stopRecording}
+        >
+          <MaterialIcon name="mic" className={`text-[14px] ${isRecording ? "animate-bounce text-rose-500" : ""}`} />
+          Hold to speak
         </div>
-
         {/* Footer text */}
-        <div className="text-center mt-2 w-full flex flex-col sm:flex-row items-center justify-between px-4 gap-1.5 sm:gap-0 select-none">
+        <div className="text-center mt-2 w-full flex flex-col sm:flex-row items-center justify-between px-4 gap-1.5 sm:gap-0 select-none hidden">
            <div className="flex items-center gap-1.5">
              <span className="relative flex h-2 w-2">
                {isHfConnected === null ? (
@@ -767,7 +742,19 @@ export default function ChatInterface({
   const isInitialState = messages.length === 0;
 
   return (
-    <div className="flex-1 flex h-full overflow-hidden relative bg-background w-full font-sans antialiased">
+    <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-surface w-full font-sans antialiased text-on-surface">
+      {/* Top Bar (Claude UI) */}
+      <div className="h-[72px] px-4 sm:px-8 flex justify-between items-center bg-transparent shrink-0">
+        <div className="font-bold text-[22px] sm:text-[28px] text-on-surface">Hello, night owl</div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button className="hidden sm:flex bg-surface-container-low text-on-surface hover:shadow-md px-[18px] py-2 rounded-full font-medium text-sm transition-all duration-200 border-none outline-none cursor-pointer">
+            Get more with Claude Pro
+          </button>
+          <button className="bg-primary text-on-primary hover:shadow-lg hover:brightness-105 px-[14px] sm:px-[20px] py-[6px] sm:py-[8px] rounded-full font-medium text-xs sm:text-sm transition-all duration-200 border-none outline-none cursor-pointer">
+            Upgrade to Pro
+          </button>
+        </div>
+      </div>
       
       {/* Main Conversation Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
@@ -813,7 +800,7 @@ export default function ChatInterface({
                             </button>
                             <button
                               onClick={onViewProjects}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-container-high border-2 border-outline-variant text-on-surface hover:bg-surface-container-highest font-semibold text-body-medium transition-all cursor-pointer min-h-[44px]"
+                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-container-low border-none shadow-sm hover:shadow-md text-on-surface hover:bg-surface-container font-semibold text-body-medium transition-all cursor-pointer min-h-[44px]"
                             >
                               <Code2 size={16} />
                               <span>Explore Projects</span>
@@ -844,7 +831,7 @@ export default function ChatInterface({
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.25, delay: idx * 0.05 }}
                               onClick={() => handleSend(prompt.text)}
-                              className="flex items-center gap-3.5 p-3.5 bg-surface border-2 border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-2xl shadow-sm"
+                              className="flex items-center gap-3.5 p-3.5 bg-surface-container-low hover:bg-surface-container-high transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-[16px] shadow-sm border-none"
                             >
                               <div className="shrink-0 w-8 h-8 rounded-xl bg-primary-container flex items-center justify-center">
                                 {renderPromptIcon(prompt.icon)}
@@ -886,11 +873,7 @@ export default function ChatInterface({
                         {isUser ? (
                           <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%]">
                             <div 
-                              className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm border-2 shadow-sm"
-                              style={{ 
-                                backgroundColor: "var(--color-accent-light)", 
-                                borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
-                              }}
+                              className="px-4 py-3 sm:px-5 sm:py-4 rounded-[24px] rounded-br-[4px] shadow-none border-none bg-surface-container-high text-on-surface"
                             >
                               <p className="text-[14.5px] sm:text-title-small whitespace-pre-wrap font-normal leading-relaxed break-words">
                                 {msg.text}
@@ -956,11 +939,21 @@ export default function ChatInterface({
                   <div ref={endOfMessagesRef} className="h-4" />
                 </div>
               )}
+              
+              <div className="w-full flex justify-center mt-2 mb-2 pointer-events-auto pb-4">
+                <button 
+                  onClick={() => setShowSettingsModal(true)}
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-sm font-medium rounded-full shadow-sm transition-all border-none cursor-pointer"
+                >
+                  <MaterialIcon name="auto_awesome" className="text-[14px]" />
+                  {selectedModel === 'large' ? 'Sonnet 5 Thinking' : 'Claude 3.5 Haiku'}
+                </button>
+              </div>
             </div>
         </div>
 
         {/* Custom Composer fixed at bottom */}
-        <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-background border-t-2 border-outline-variant relative">
+        <div className="w-full shrink-0 pt-0 pb-6 px-4 sm:px-8 flex justify-center z-10 bg-transparent border-none relative">
           {/* Floating Scroll Controls */}
           <div className="absolute top-0 left-0 right-0 -translate-y-full flex justify-center pointer-events-none z-20 pb-3 gap-3">
             {(!isAtBottom || messages.some(m => m.status === 'streaming')) && (
