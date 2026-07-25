@@ -31,19 +31,19 @@ export function ProjectCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-2xl font-sans">
       {projects.map((project, i) => (
-        <div key={i} className="bg-surface border-2 border-outline-variant rounded-xl p-5 hover:border-primary dark:hover:border-primary transition-colors flex flex-col justify-between shadow-sm">
+        <div key={i} className="bg-[#13131c] border border-transparent hover:border-[#4A90E2]/60 rounded-xl p-5 transition-all flex flex-col justify-between shadow-md">
           <div>
-            <h3 className="font-semibold text-base mb-2 text-on-background text-on-background">{project.title}</h3>
-            <p className="text-on-surface-variant text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
+            <h3 className="font-semibold text-base mb-2 text-white">{project.title}</h3>
+            <p className="text-gray-400 text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
             <div className="flex flex-wrap gap-1.5 mb-6">
               {project.tags.map(tag => (
-                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-surface-container-low border-2 border-outline rounded-lg text-on-surface dark:text-gray-300">
+                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2.5 py-1 bg-white/5 rounded-lg text-gray-300">
                   {tag}
                 </span>
                ))}
             </div>
           </div>
-          <a href={project.link} target="_blank" rel="noreferrer" className="flex items-center text-xs sm:text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
+          <a href={project.link} target="_blank" rel="noreferrer" className="flex items-center text-xs sm:text-sm font-semibold text-[#4A90E2] hover:text-[#4A90E2]/80 transition-colors">
             View Project <ExternalLink size={14} className="ml-1" />
           </a>
         </div>
@@ -62,7 +62,7 @@ export function SkillChips() {
   return (
     <div className="flex flex-wrap gap-2 mt-4 max-w-xl font-sans">
       {skills.map(skill => (
-        <div key={skill} className="px-3 py-1.5 border-2 border-outline-variant bg-surface-container-low rounded-full text-xs font-semibold text-on-surface  hover:bg-inverse-surface hover:text-on-primary dark:hover:bg-surface dark:hover:text-on-background transition-colors cursor-default shadow-sm">
+        <div key={skill} className="px-3.5 py-1.5 bg-[#13131c] hover:bg-[#1a1a28] rounded-full text-xs font-semibold text-gray-300 hover:text-white transition-colors cursor-default shadow-sm">
           {skill}
         </div>
       ))}
@@ -158,7 +158,7 @@ REFERENCES
   };
 
   return (
-    <div className="flex flex-row items-center justify-between p-3.5 sm:p-4 bg-surface-container-low border-2 border-outline-variant rounded-2xl w-full max-w-md mt-3 gap-3 shadow-sm hover:border-primary/40 transition-all">
+    <div className="flex flex-row items-center justify-between p-3.5 sm:p-4 bg-[#1a1a24]-container-low border-2 border-white/10 rounded-2xl w-full max-w-md mt-3 gap-3 shadow-sm hover:border-primary/40 transition-all">
       <div className="flex items-center gap-3 min-w-0">
         {/* Document Icon Graphic */}
         <div className="w-11 h-11 shrink-0 bg-red-500/10 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border border-red-500/20 shadow-xs relative overflow-hidden select-none">
@@ -170,10 +170,10 @@ REFERENCES
         </div>
         
         <div className="flex flex-col text-left min-w-0">
-          <span className="font-bold text-sm text-on-surface leading-snug truncate">
+          <span className="font-bold text-sm text-gray-300 leading-snug truncate">
             Kamogelo_CV.pdf
           </span>
-          <span className="text-xs text-on-surface-variant font-medium mt-0.5">
+          <span className="text-xs text-gray-400 font-medium mt-0.5">
             184 KB • Official CV
           </span>
         </div>
@@ -181,7 +181,7 @@ REFERENCES
 
       <button
         onClick={handleDownload}
-        className="flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-on-primary px-4 py-2.5 rounded-xl transition-all font-semibold text-xs sm:text-sm cursor-pointer shadow-sm border-0 shrink-0"
+        className="flex items-center justify-center gap-2 bg-[#4A90E2] hover:opacity-90 text-white px-4 py-2.5 rounded-xl transition-all font-semibold text-xs sm:text-sm cursor-pointer shadow-sm border-0 shrink-0"
       >
         <Download size={15} />
         <span>Download</span>
