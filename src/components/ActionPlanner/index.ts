@@ -1,2 +1,1 @@
-// src/components/ActionPlanner/index.ts
-export { ActionPlanner } from './ActionPlanner';
+export { default as ActionPlanner } from './ActionPlanner';

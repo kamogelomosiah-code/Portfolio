@@ -1,371 +1,485 @@
-// src/components/ActionPlanner/ActionPlanner.tsx
-import React, { useState } from 'react';
-import { GoalInput } from './GoalInput';
-import { PlanCard } from './PlanCard';
-import { Plan, Step } from '../../types/planner';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Target, ShieldAlert, Sparkles, Calendar, ArrowLeft, Mail, CheckCircle, ExternalLink, Menu, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { MaterialIcon } from '../MaterialIcon';
+import { Plan, Step } from '../../types/planner';
+import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO } from 'date-fns';
 
-type PlannerStep = 'input' | 'editing' | 'syncing' | 'tracking';
+type ViewMode = '2-week' | 'month';
 
 interface ActionPlannerProps {
   onBackToChat?: () => void;
   onToggleDrawer?: () => void;
 }
 
-export const ActionPlanner: React.FC<ActionPlannerProps> = ({ onBackToChat, onToggleDrawer }) => {
-  const [step, setStep] = useState<PlannerStep>('input');
-  const [plan, setPlan] = useState<Plan | null>(null);
+export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPlannerProps) {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  const [isAddingGoal, setIsAddingGoal] = useState(false);
+  const [goalPrompt, setGoalPrompt] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedStepMail, setExpandedStepMail] = useState<string | null>(null);
-  const [resendingStepId, setResendingStepId] = useState<string | null>(null);
-  const [resendStatus, setResendStatus] = useState<string | null>(null);
 
-  const handleGenerate = async (goalText: string, emailText: string) => {
+  const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
+
+  // Load from local storage
+  useEffect(() => {
+    const saved = localStorage.getItem('ai_action_plans');
+    if (saved) {
+      try {
+        setPlans(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  // Save to local storage
+  useEffect(() => {
+    localStorage.setItem('ai_action_plans', JSON.stringify(plans));
+  }, [plans]);
+
+  const generatePlan = async () => {
+    if (!goalPrompt || !email) return;
     setLoading(true);
-    setError(null);
     try {
+      const existingGoals = plans.map(p => ({
+        title: p.goal_title,
+        deadline: p.main_deadline
+      }));
+
       const res = await fetch('/api/planner/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal: goalText, email: emailText }),
+        body: JSON.stringify({ prompt: goalPrompt, email, existingGoals })
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Generation failed');
-      setPlan(data.plan);
-      setStep('editing');
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong while formulating the strategic blueprint.');
-      setStep('input');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirm = async (confirmedPlan: Plan) => {
-    setLoading(true);
-    setError(null);
-    setStep('syncing');
-    try {
-      const res = await fetch('/api/planner/confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: confirmedPlan }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Email dispatch failed');
-      setPlan(data.plan);
-      setStep('tracking');
-    } catch (err: any) {
-      setError(err.message || 'Could not dispatch plan steps to your email. Please try again.');
-      setStep('editing');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResendSingleEmail = async (stepItem: Step) => {
-    if (!plan) return;
-    setResendingStepId(stepItem.id);
-    setResendStatus(null);
-    try {
-      const res = await fetch('/api/planner/send-step-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: plan.email,
-          goal_summary: plan.goal_summary,
-          step: stepItem
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setResendStatus(`Successfully resent step email to ${plan.email}!`);
-        if (data.previewUrl) {
-          setPlan(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              steps: prev.steps.map(s => s.id === stepItem.id ? { ...s, preview_url: data.previewUrl } : s)
-            };
-          });
-        }
+      if (data.success && data.goals) {
+        setPlans(prev => [...prev, ...data.goals]);
+        setIsAddingGoal(false);
+        setGoalPrompt('');
       } else {
-        throw new Error(data.error || 'Direct mail dispatch failed');
+        alert(data.error);
       }
-    } catch (err: any) {
-      setResendStatus(`Error sending email: ${err.message}`);
+    } catch (err) {
+      console.error(err);
     } finally {
-      setResendingStepId(null);
-      setTimeout(() => setResendStatus(null), 4000);
+      setLoading(false);
     }
   };
 
-  const handleEdit = (updatedPlan: Plan) => {
-    setPlan(updatedPlan);
+  const toggleStep = (planId: string, stepId: string) => {
+    setPlans(prev => prev.map(p => {
+      if (p.id !== planId) return p;
+      return {
+        ...p,
+        steps: p.steps.map(s => s.id === stepId ? { ...s, completed: !s.completed } : s)
+      };
+    }));
+  };
+
+  const changeStepDate = (planId: string, stepId: string, newDate: string) => {
+    if (!newDate) return;
+    setPlans(prev => prev.map(p => {
+      if (p.id !== planId) return p;
+      return {
+        ...p,
+        steps: p.steps.map(s => s.id === stepId ? { ...s, scheduled_date: newDate } : s)
+      };
+    }));
+  };
+  
+  const deletePlan = (planId: string) => {
+    if (confirm("Are you sure you want to delete this goal and all its steps?")) {
+      setPlans(prev => prev.filter(p => p.id !== planId));
+    }
+  };
+
+  const renderCalendar = () => {
+    let start, end;
+    if (viewMode === '2-week') {
+      start = startOfWeek(currentDate);
+      end = endOfWeek(addDays(currentDate, 7));
+    } else {
+      start = startOfWeek(startOfMonth(currentDate));
+      end = endOfWeek(endOfMonth(currentDate));
+    }
+    
+    const days = eachDayOfInterval({ start, end });
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return (
+      <div className="w-full bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+          <div className="flex gap-1.5 p-1 bg-surface-container-low rounded-lg border border-outline-variant/30">
+            <button 
+              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${viewMode === '2-week' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
+              onClick={() => setViewMode('2-week')}
+            >2-Week</button>
+            <button 
+              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${viewMode === 'month' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
+              onClick={() => setViewMode('month')}
+            >Month</button>
+          </div>
+          <h3 className="font-bold text-title-large text-on-surface">
+            {format(currentDate, 'MMMM yyyy')}
+          </h3>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setCurrentDate(addDays(currentDate, viewMode === '2-week' ? -14 : -30))}
+              className="p-2 rounded-full border border-outline-variant hover:bg-surface-container transition-colors text-on-surface"
+            >
+              <MaterialIcon name="chevron_left" />
+            </button>
+            <button 
+              onClick={() => setCurrentDate(addDays(currentDate, viewMode === '2-week' ? 14 : 30))}
+              className="p-2 rounded-full border border-outline-variant hover:bg-surface-container transition-colors text-on-surface"
+            >
+              <MaterialIcon name="chevron_right" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-7 gap-1 md:gap-2">
+          {weekDays.map(d => (
+            <div key={d} className="text-center text-label-large font-bold text-on-surface-variant py-2 uppercase tracking-wider">
+              {d}
+            </div>
+          ))}
+          {days.map((d, i) => {
+            const dateStr = format(d, 'yyyy-MM-dd');
+            
+            // Gather items for this day across all plans
+            const dayDeadlines = plans.filter(p => p.main_deadline === dateStr);
+            const daySteps = plans.flatMap(p => p.steps.filter(s => s.scheduled_date === dateStr).map(s => ({ ...s, planTitle: p.goal_title })));
+            
+            const hasEvents = dayDeadlines.length > 0 || daySteps.length > 0;
+            
+            return (
+              <div 
+                key={i} 
+                onClick={() => setSelectedEventDate(dateStr)}
+                className={`min-h-[100px] md:min-h-[120px] p-2 border rounded-xl flex flex-col transition-all cursor-pointer
+                  ${!isSameMonth(d, currentDate) && viewMode === 'month' ? 'bg-surface-container-low/30 border-outline-variant/30 text-on-surface-variant/50' : 'bg-surface border-outline-variant/70 text-on-surface'} 
+                  ${isSameDay(d, new Date()) ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
+                  hover:border-primary/50 hover:bg-primary/5 hover:shadow-sm
+                `}
+              >
+                <div className={`text-right text-label-large font-bold mb-2 ${isSameDay(d, new Date()) ? 'text-primary' : ''}`}>
+                  {format(d, 'd')}
+                </div>
+                
+                <div className="flex flex-col gap-1 overflow-y-auto">
+                  {dayDeadlines.map(p => (
+                    <div key={`deadline-${p.id}`} className="bg-primary text-on-primary text-[10px] md:text-xs p-1.5 px-2 rounded-md font-bold truncate flex items-center gap-1 shadow-sm" title={`Deadline: ${p.goal_title}`}>
+                      <MaterialIcon name="flag" className="text-[12px] md:text-[14px]" />
+                      {p.goal_title}
+                    </div>
+                  ))}
+                  
+                  {daySteps.map(step => (
+                    <div key={`step-${step.id}`} className={`
+                      text-[10px] md:text-xs p-1.5 px-2 rounded-md font-semibold truncate border 
+                      ${step.completed ? 'bg-surface-container-high border-outline-variant text-on-surface-variant line-through' : 'bg-secondary/10 border-secondary/30 text-secondary'}
+                    `} title={`${step.planTitle}: ${step.task}`}>
+                      {step.task}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="flex-1 w-full bg-background text-on-background flex flex-col overflow-hidden relative">
-      {/* Top Header Section */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-4 sm:px-6">
-        <div className="flex items-center justify-between w-full pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2.5 max-w-4xl">
-          <div className="flex items-center gap-2 m-0 p-0">
-            <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-primary shrink-0">
-              <Target size={18} />
-            </div>
-            <h1 className="font-medium text-title-medium sm:text-title-large text-on-background tracking-normal font-display m-0 p-0 ml-1">
-              AI Action Planner &reg;
-            </h1>
-          </div>
-          {step !== 'input' && (
-            <button
-              onClick={() => {
-                setStep('input');
-                setError(null);
-                setExpandedStepMail(null);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary-container/20 border-2 border-transparent hover:border-primary/20 rounded-lg cursor-pointer bg-transparent transition-all"
+    <div className="h-full flex flex-col bg-surface">
+      {/* Mobile Top Bar */}
+      <div className="md:hidden flex items-center justify-between p-4 border-b-2 border-outline-variant bg-surface-container-lowest sticky top-0 z-20">
+        <div className="flex items-center gap-3">
+          {onToggleDrawer && (
+            <button 
+              onClick={onToggleDrawer}
+              className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors"
             >
-              <ArrowLeft size={14} />
-              Reset Plan
+              <MaterialIcon name="menu" className="text-title-medium" />
             </button>
           )}
+          <h2 className="text-title-medium font-bold text-on-surface flex items-center gap-2">
+            <MaterialIcon name="event_note" className="text-primary" />
+            Action Calendar
+          </h2>
+        </div>
+        {onBackToChat && (
+          <button 
+            onClick={onBackToChat}
+            className="text-body-medium font-semibold text-primary hover:text-primary/80 transition-colors"
+          >
+            Done
+          </button>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="max-w-6xl mx-auto space-y-8">
+          
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+              <h1 className="text-headline-medium font-bold text-on-surface tracking-tight flex items-center gap-2">
+                <MaterialIcon name="event_note" className="text-primary" />
+                AI Action Calendar
+              </h1>
+              <p className="text-title-medium text-on-surface-variant mt-1">
+                Your goals and daily actionable steps mapped out.
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => setIsAddingGoal(true)}
+              className="flex items-center justify-center gap-2 bg-primary text-on-primary px-5 py-3 rounded-xl font-bold text-title-small hover:opacity-90 transition-opacity shadow-sm whitespace-nowrap"
+            >
+              <MaterialIcon name="add" />
+              Plan New Goal
+            </button>
+          </div>
+
+          {/* Active Goals Overview */}
+          {plans.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {plans.map(p => (
+                <div key={p.id} className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-sm relative group">
+                  <button 
+                    onClick={() => deletePlan(p.id)}
+                    className="absolute top-4 right-4 p-1.5 rounded-md text-on-surface-variant hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete Goal"
+                  >
+                    <MaterialIcon name="delete" className="text-body-large" />
+                  </button>
+                  <h3 className="font-bold text-title-medium text-on-surface pr-8">{p.goal_title}</h3>
+                  <div className="flex items-center gap-2 mt-2 text-body-small text-on-surface-variant">
+                    <MaterialIcon name="flag" className="text-body-medium text-primary" />
+                    Target: <span className="font-semibold">{p.main_deadline}</span>
+                  </div>
+                  {p.path_of_least_resistance && (
+                    <div className="mt-3 p-3 bg-secondary-container/30 rounded-xl border border-secondary-container text-body-small text-on-surface">
+                      <strong className="block text-secondary mb-1">Path of Least Resistance:</strong>
+                      {p.path_of_least_resistance}
+                    </div>
+                  )}
+                  <div className="mt-4 flex items-center justify-between text-body-small font-medium text-on-surface-variant">
+                    <span>{p.steps.filter(s => s.completed).length} / {p.steps.length} Steps Completed</span>
+                    <div className="w-1/2 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary" 
+                        style={{ width: `${(p.steps.filter(s => s.completed).length / Math.max(p.steps.length, 1)) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {renderCalendar()}
         </div>
       </div>
 
-      {/* Main Scrollable Content */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6 pt-[calc(env(safe-area-inset-top)+88px)]">
-        <div className="w-full max-w-3xl pt-4 sm:pt-8 flex flex-col gap-6">
-          {/* Instructions Block */}
-          {step === 'input' && (
-            <div className="flex flex-col gap-2 text-left">
-              <h2 className="text-display-small font-bold text-on-background tracking-tight">
-                Plan Strategically. Achieve Effortlessly.
-              </h2>
-              <p className="text-body-medium text-on-surface-variant max-w-2xl leading-relaxed">
-                Enter your strategic goal and email address. CodeMind Assistant will break your goal down into step-by-step phases, map out a custom chronological schedule, and immediately dispatch beautiful action guides directly to your inbox.
-              </p>
-            </div>
-          )}
-
-          {/* Error Banner */}
-          {error && (
-            <div className="w-full p-4 bg-red-500/10 border-2 border-red-500/25 rounded-2xl text-red-600 dark:text-red-400 text-body-medium flex items-start gap-3 shadow-sm text-left">
-              <ShieldAlert size={20} className="shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <span className="font-semibold">Operation Alert:</span> {error}
+      {/* Add Goal Modal */}
+      <AnimatePresence>
+        {isAddingGoal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={() => !loading && setIsAddingGoal(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-surface-container-lowest w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-outline-variant p-6 md:p-8"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-headline-small font-bold text-on-surface">Plan with AI</h2>
+                  <p className="text-body-medium text-on-surface-variant mt-1">Break down your prompt into structured goals and steps.</p>
+                </div>
+                <button onClick={() => !loading && setIsAddingGoal(false)} className="p-2 bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors">
+                  <MaterialIcon name="close" />
+                </button>
               </div>
-              <button 
-                onClick={() => setError(null)} 
-                className="text-red-500 hover:text-red-700 bg-transparent border-0 cursor-pointer font-bold text-body-large px-1"
-              >
-                ×
-              </button>
-            </div>
-          )}
 
-          {/* Dynamic Steps Container */}
-          <div className="w-full">
-            <AnimatePresence mode="wait">
-              {step === 'input' && (
-                <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <GoalInput onSubmit={handleGenerate} loading={loading} />
-                </motion.div>
-              )}
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-title-small font-bold text-on-surface">What do you want to achieve?</label>
+                  <textarea 
+                    value={goalPrompt}
+                    onChange={e => setGoalPrompt(e.target.value)}
+                    placeholder="e.g., I want to run a marathon in 6 months, and I also need to finish my React course by next week."
+                    className="w-full bg-surface-container-low text-on-surface px-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all resize-none min-h-[120px] text-body-large"
+                  />
+                  <p className="text-body-small text-on-surface-variant">The AI will analyze your existing goals on the calendar to recommend the best timeline.</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="block text-title-small font-bold text-on-surface">Email for automated reminders</label>
+                  <div className="relative">
+                    <MaterialIcon name="mail" className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                    <input 
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="w-full bg-surface-container-low text-on-surface pl-12 pr-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all text-body-large"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <button 
+                    onClick={() => setIsAddingGoal(false)}
+                    disabled={loading}
+                    className="px-6 py-3 rounded-xl font-bold text-title-small text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={generatePlan}
+                    disabled={loading || !goalPrompt || !email}
+                    className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-title-small hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm min-w-[160px]"
+                  >
+                    {loading ? (
+                      <>
+                        <MaterialIcon name="autorenew" className="animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <MaterialIcon name="auto_awesome" />
+                        Generate Plan
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Day View Modal */}
+      <AnimatePresence>
+        {selectedEventDate && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={() => setSelectedEventDate(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-surface-container-lowest w-full max-w-lg rounded-[28px] overflow-hidden shadow-2xl border border-outline-variant flex flex-col max-h-[85vh]"
+            >
+              <div className="p-6 border-b border-outline-variant flex justify-between items-center shrink-0">
+                <h3 className="text-headline-small font-bold text-on-surface">
+                  {format(parseISO(selectedEventDate), 'MMMM d, yyyy')}
+                </h3>
+                <button onClick={() => setSelectedEventDate(null)} className="p-2.5 bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors shrink-0">
+                  <MaterialIcon name="close" />
+                </button>
+              </div>
               
-              {step === 'editing' && plan && (
-                <motion.div key="editing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <PlanCard plan={plan} onConfirm={handleConfirm} onEdit={handleEdit} loading={loading} />
-                </motion.div>
-              )}
-
-              {step === 'syncing' && (
-                <motion.div 
-                  key="syncing" 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface border-2 border-outline-variant/60 rounded-[28px] shadow-sm p-8"
-                >
-                  <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4" />
-                  <h3 className="font-bold text-title-large text-on-background mb-1">Dispatching Your Roadmap</h3>
-                  <p className="text-body-medium text-center max-w-md">
-                    Formatting customized coaching content, handshaking with secure mail server, and sending step-by-step guidelines to your inbox...
-                  </p>
-                </motion.div>
-              )}
-
-              {step === 'tracking' && plan && (
-                <motion.div 
-                  key="tracking" 
-                  initial={{ opacity: 0, scale: 0.95 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  className="p-6 sm:p-8 bg-surface border-2 border-primary/20 rounded-[28px] shadow-lg flex flex-col gap-6 max-w-2xl mx-auto w-full text-left"
-                >
-                  <div className="flex items-center gap-4 border-b border-outline-variant/50 pb-4">
-                    <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center text-green-600 shrink-0">
-                      <CheckCircle size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-headline-small font-bold text-on-background">Roadmap Dispatched!</h3>
-                      <p className="text-body-small text-on-surface-variant mt-0.5">
-                        Coaching blueprint emails successfully generated and sent to <strong className="text-on-background font-semibold">{plan.email}</strong>.
-                      </p>
+              <div className="p-6 overflow-y-auto space-y-6">
+                {/* Deadlines */}
+                {plans.filter(p => p.main_deadline === selectedEventDate).length > 0 && (
+                  <div>
+                    <h4 className="text-label-large font-bold text-on-surface-variant uppercase tracking-wider mb-3">Deadlines Today</h4>
+                    <div className="space-y-3">
+                      {plans.filter(p => p.main_deadline === selectedEventDate).map(p => (
+                        <div key={`dl-${p.id}`} className="flex items-center gap-4 p-4 bg-primary text-on-primary rounded-xl shadow-sm">
+                          <div className="p-2 bg-white/20 rounded-full shrink-0">
+                            <MaterialIcon name="emoji_events" className="text-title-medium" />
+                          </div>
+                          <p className="font-bold text-title-medium">{p.goal_title}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
+                )}
 
-                  {resendStatus && (
-                    <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl text-primary font-medium text-body-small">
-                      {resendStatus}
-                    </div>
-                  )}
-
-                  {/* Mail Dispatch Dashboard / Chronological Outbox */}
-                  <div className="space-y-3.5">
-                    <h4 className="text-[12px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">
-                      📬 Email Dispatch &amp; Timeframe Monitor
-                    </h4>
-                    
-                    <div className="space-y-3">
-                      {plan.steps.map((stepItem, idx) => {
-                        const isExpanded = expandedStepMail === stepItem.id;
-                        return (
-                          <div 
-                            key={stepItem.id} 
-                            className="border border-outline-variant/60 bg-surface-container/20 rounded-xl p-4 transition-all"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div className="flex items-center gap-3">
-                                <span className="bg-green-500/10 text-green-600 border border-green-500/20 font-bold text-xs px-2.5 py-1 rounded-full shrink-0">
-                                  {stepItem.timeframe}
-                                </span>
-                                <div className="text-left">
-                                  <h5 className="font-semibold text-body-medium text-on-background leading-snug">
-                                    {stepItem.action}
-                                  </h5>
-                                  <p className="text-[11px] text-on-surface-variant mt-0.5 flex items-center gap-1">
-                                    <Mail size={11} className="text-primary" />
-                                    Subject: <span className="font-medium italic text-on-background">{stepItem.email_subject}</span>
+                {/* Steps */}
+                <div>
+                  <h4 className="text-label-large font-bold text-on-surface-variant uppercase tracking-wider mb-3">Action Steps</h4>
+                  <div className="space-y-3">
+                    {plans.map(p => {
+                      const stepsForDay = p.steps.filter(s => s.scheduled_date === selectedEventDate);
+                      if (stepsForDay.length === 0) return null;
+                      
+                      return (
+                        <div key={`plan-steps-${p.id}`} className="space-y-2">
+                          <p className="text-body-small font-semibold text-primary px-1">{p.goal_title}</p>
+                          {stepsForDay.map(step => (
+                            <div 
+                              key={step.id} 
+                              className={`flex flex-col gap-2 p-4 border-2 rounded-xl transition-all ${
+                                step.completed 
+                                  ? 'border-outline-variant bg-surface-container-low/50' 
+                                  : 'border-outline-variant bg-surface-container-lowest shadow-sm'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div 
+                                  onClick={() => toggleStep(p.id, step.id)}
+                                  className={`mt-0.5 shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors cursor-pointer ${
+                                  step.completed 
+                                    ? 'bg-primary border-primary text-on-primary' 
+                                    : 'border-outline-variant text-transparent hover:border-primary'
+                                }`}>
+                                  <MaterialIcon name="check" className="text-body-small" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className={`font-bold text-body-large transition-all ${
+                                    step.completed ? 'text-on-surface-variant line-through' : 'text-on-surface'
+                                  }`}>
+                                    {step.task}
                                   </p>
                                 </div>
                               </div>
-
-                              <div className="flex flex-wrap gap-2 items-center ml-auto">
-                                {stepItem.preview_url && (
-                                  <a
-                                    href={stepItem.preview_url}
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    className="px-3 py-1.5 rounded-lg border-2 border-primary/20 text-primary hover:bg-primary/5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 no-underline shrink-0"
-                                  >
-                                    <ExternalLink size={12} />
-                                    <span>Preview Email</span>
-                                  </a>
-                                )}
-                                <button
-                                  onClick={() => setExpandedStepMail(isExpanded ? null : stepItem.id)}
-                                  className="px-3 py-1.5 rounded-lg border border-outline-variant hover:border-outline text-xs font-semibold text-on-surface-variant transition-colors bg-transparent cursor-pointer flex items-center gap-1"
-                                >
-                                  {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                                  <span>{isExpanded ? 'Hide Mail' : 'Read Mail'}</span>
-                                </button>
-                                <button
-                                  onClick={() => handleResendSingleEmail(stepItem)}
-                                  disabled={resendingStepId === stepItem.id}
-                                  className="px-3 py-1.5 rounded-lg bg-primary hover:opacity-90 disabled:opacity-50 text-xs font-semibold text-on-primary transition-all cursor-pointer border-0 shadow-sm flex items-center gap-1.5"
-                                >
-                                  {resendingStepId === stepItem.id ? (
-                                    <div className="w-3 h-3 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
-                                  ) : (
-                                    <Mail size={12} />
-                                  )}
-                                  <span>Resend</span>
-                                </button>
+                              <div className="pl-9 flex items-center gap-2">
+                                <span className="text-body-small text-on-surface-variant font-medium">Reschedule:</span>
+                                <input 
+                                  type="date" 
+                                  value={step.scheduled_date}
+                                  onChange={e => changeStepDate(p.id, step.id, e.target.value)}
+                                  className="text-body-small bg-surface-container-low border border-outline-variant rounded-md px-2 py-1 text-on-surface outline-none focus:border-primary"
+                                />
                               </div>
                             </div>
-
-                            {/* Expandable Simulated Email Body */}
-                            <AnimatePresence>
-                              {isExpanded && (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: 'auto' }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                  className="overflow-hidden mt-3 pt-3 border-t border-outline-variant/50"
-                                >
-                                  <div className="bg-surface text-on-surface p-5 rounded-xl border border-outline-variant shadow-inner font-sans max-h-80 overflow-y-auto">
-                                    <div className="border-b border-outline-variant/50 pb-2 mb-3 text-xs text-on-surface-variant">
-                                      <p><strong>From:</strong> Kamo's AI Goal Coach &lt;coach@kamoportfolio.io&gt;</p>
-                                      <p><strong>To:</strong> {plan.email}</p>
-                                      <p><strong>Subject:</strong> {stepItem.email_subject}</p>
-                                    </div>
-                                    <div 
-                                      className="text-sm leading-relaxed prose prose-sm text-on-surface"
-                                      dangerouslySetInnerHTML={{ __html: stepItem.email_body }}
-                                    />
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Finished Action Options */}
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4 w-full sm:w-auto">
-                    <button 
-                      onClick={() => { setStep('input'); setPlan(null); setExpandedStepMail(null); }} 
-                      className="w-full sm:w-auto px-6 py-2.5 rounded-xl border-2 border-outline-variant text-on-surface-variant hover:text-on-background hover:border-outline font-semibold bg-transparent transition-colors cursor-pointer"
-                    >
-                      + Track Another Goal
-                    </button>
-                    {onBackToChat && (
-                      <button 
-                        onClick={onBackToChat}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-on-primary hover:opacity-90 font-semibold cursor-pointer shadow-sm border-0 transition-opacity"
-                      >
-                        Back to Chat Interface
-                      </button>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    
+                    {plans.flatMap(p => p.steps).filter(s => s.scheduled_date === selectedEventDate).length === 0 && (
+                      <div className="text-center py-8 px-4 bg-surface-container-low rounded-xl">
+                        <MaterialIcon name="event_available" className="text-headline-small text-on-surface-variant mb-2" />
+                        <p className="text-body-medium text-on-surface-variant">No tasks scheduled for today.</p>
+                      </div>
                     )}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-      
-      {/* Floating Bottom Navigation */}
-      {(onBackToChat || onToggleDrawer) && (
-        <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-          <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
-            {onToggleDrawer && (
-              <button 
-                onClick={onToggleDrawer}
-                className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
-                title="Menu"
-              >
-                <Menu size={24} />
-              </button>
-            )}
-            {onBackToChat && (
-              <button 
-                onClick={onBackToChat}
-                className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
-                title="Back to Chat"
-              >
-                <ArrowLeft size={20} />
-                <span className="font-medium text-title-small">Back to Chat</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-};
+}
