@@ -56,32 +56,32 @@ export function AIMessage({
   }, [msg.text, msg.status, msg.id]);
 
   return (
-    <div className="flex items-start gap-2.5 sm:gap-4 w-full max-w-full px-1 sm:px-4 scroll-mt-4" id={`msg-${msg.id}`}>
-      <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 mt-1 flex items-center justify-center">
+    <div className="flex items-start gap-4 w-full max-w-full px-4 scroll-mt-4" id={`msg-${msg.id}`}>
+      <div className="w-8 h-8 shrink-0 mt-1 flex items-center justify-center">
         {isFirstInGroup ? (
-          <div className="flex items-center justify-center rounded-full bg-[#13131c] w-7 h-7 sm:w-8 sm:h-8 shadow-sm">
-            <AppIcon className={`w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#4A90E2] ${localStatus === "loading" ? "animate-pulse" : ""}`} />
+          <div className="card rounded-full flex items-center justify-center w-8 h-8">
+            <AppIcon className={`w-4.5 h-4.5 text-primary ${localStatus === "loading" ? "animate-pulse" : ""}`} />
           </div>
         ) : (
-          <div className="w-7 h-7 sm:w-8 sm:h-8" />
+          <div className="w-8 h-8" />
         )}
       </div>
       
       <div className="flex-1 flex flex-col items-start w-full min-w-0">
         {isFirstInGroup && (
-          <span className="font-semibold text-[14px] sm:text-base text-gray-400 mb-1">
+          <span className="font-semibold text-[15px] sm:text-base text-on-surface-variant mb-1">
             Kamogelo Mosiah
           </span>
         )}
         
-        <div className="text-gray-100 bg-[#13131c] rounded-2xl rounded-tl-sm px-3.5 sm:px-5 py-3.5 sm:py-4 pb-1 w-full text-left max-w-3xl min-h-[24px] shadow-sm">
+        <div className="text-on-background bg-transparent pb-1 w-full text-left max-w-3xl min-h-[24px]">
           {localStatus === "loading" ? (
-            <div className="flex items-center gap-1.5 text-gray-400 pt-1">
+            <div className="flex items-center gap-1.5 text-on-surface-variant pt-1">
               <span className="text-base sm:text-lg font-normal italic">Thinking</span>
               <span className="flex gap-1 items-center h-full ml-1">
-                <span className="w-1.5 h-1.5 bg-[#00B4D8] rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                <span className="w-1.5 h-1.5 bg-[#00B4D8] rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                <span className="w-1.5 h-1.5 bg-[#00B4D8] rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
               </span>
             </div>
           ) : (
@@ -90,15 +90,15 @@ export function AIMessage({
                 <MarkdownRenderer content={displayedText} isStreaming={localStatus === "streaming"} />
               </div>
               {localStatus === "sent" && (msg as any).meta && (
-                <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-mono text-gray-400 bg-black/30 px-2.5 py-1 rounded-full select-none">
-                  <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                  <span className="font-semibold text-[#4A90E2]">{(msg as any).meta.engine}</span>
+                <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-mono text-on-surface-variant bg-surface-container-high/45 px-2.5 py-1 rounded-full select-none shadow-sm">
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                  <span className="font-semibold text-primary">{(msg as any).meta.engine}</span>
                   <span className="opacity-40">•</span>
-                  <span>Model: <span className="text-white font-semibold">{(msg as any).meta.model}</span></span>
+                  <span>Model: <span className="text-on-surface font-semibold">{(msg as any).meta.model}</span></span>
                   {(msg as any).meta.status && (
                     <>
                       <span className="opacity-40">•</span>
-                      <span>Status: <span className="text-white">{(msg as any).meta.status}</span></span>
+                      <span>Status: <span className="text-on-surface">{(msg as any).meta.status}</span></span>
                     </>
                   )}
                 </div>

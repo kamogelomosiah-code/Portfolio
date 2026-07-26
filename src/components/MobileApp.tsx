@@ -503,8 +503,8 @@ export default function MobileApp({
           )}
         </AnimatePresence>
 
-        {/* Input box with smooth border-2 radius */}
-        <div className="w-full bg-surface border-2 border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4 pb-3.5 relative">
+        {/* Input box with smooth shadow radius */}
+        <div className="card w-full focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] transition-all flex flex-col p-4 pb-3.5 relative">
           <div className="flex items-start justify-between gap-2.5 w-full min-h-[44px]">
             <textarea
               ref={textareaRef}
@@ -525,10 +525,9 @@ export default function MobileApp({
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-label-small font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
+                className="pill-btn flex items-center gap-1.5 px-4 py-2 text-label-small font-medium transition-all duration-200 cursor-pointer shrink-0 min-h-[44px]"
                 style={{
-                  backgroundColor: "transparent",
-                  borderColor: "var(--outline-variant)",
+                  backgroundColor: "var(--surface-alt)",
                   color: "var(--text-muted)",
                   opacity: isGenerating ? 0.5 : 1,
                   pointerEvents: isGenerating ? 'none' : 'auto'
@@ -544,7 +543,7 @@ export default function MobileApp({
             {/* Settings Modal */}
             {showSettingsModal && (
               <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
-                <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                <div className="settings-card p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
                   <h4 className="text-lg font-bold text-on-surface mb-4">Settings</h4>
                   
                   <div className="mb-6">
@@ -564,7 +563,7 @@ export default function MobileApp({
                         }
                       }}
                       disabled={isLargeReady === false}
-                      className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between transition-colors ${selectedModel === "large" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"} ${isLargeReady === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      className={`w-full px-4 py-2 pill-btn text-sm font-medium flex items-center justify-between transition-colors ${selectedModel === "large" ? "pill-btn-primary" : "bg-surface-alt text-on-surface hover:bg-surface-container"} ${isLargeReady === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
                       <span>Enable Thinking {isLargeReady === false ? "(not ready yet)" : ""}</span>
                       {selectedModel === "large" && <MaterialIcon name="check" className="text-on-primary" />}
@@ -579,13 +578,13 @@ export default function MobileApp({
                     <div className="grid grid-cols-2 gap-2 mb-3">
                       <button
                         onClick={() => setAiEngine("cloud")}
-                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${aiEngine === "cloud" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                        className={`px-3 py-2 pill-btn text-sm font-semibold transition-colors ${aiEngine === "cloud" ? "pill-btn-primary" : "bg-surface-alt text-on-surface hover:bg-surface-container"}`}
                       >
                         Cloud Core
                       </button>
                       <button
                         onClick={() => setAiEngine("local")}
-                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${aiEngine === "local" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
+                        className={`px-3 py-2 pill-btn text-sm font-semibold transition-colors ${aiEngine === "local" ? "pill-btn-primary" : "bg-surface-alt text-on-surface hover:bg-surface-container"}`}
                       >
                         Local WebAI
                       </button>
@@ -614,12 +613,12 @@ export default function MobileApp({
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
                 disabled={isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
+                className={`pill-btn w-11 h-11 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
                   isRecording
-                    ? "bg-rose-500 text-white animate-pulse border-rose-600 shadow-md scale-105"
+                    ? "bg-rose-500 text-white animate-pulse shadow-md scale-105"
                     : isGenerating
-                    ? "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
-                    : "border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+                    ? "bg-surface-alt text-on-surface-variant cursor-not-allowed opacity-50"
+                    : "bg-surface-alt text-on-surface-variant hover:bg-surface-container"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
                 title="Tap and hold to speak"
@@ -630,10 +629,10 @@ export default function MobileApp({
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isLoading || isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
+                className={`pill-btn w-11 h-11 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
                   input.trim() && !isLoading && !isGenerating
-                    ? "border-transparent bg-primary dark:bg-white text-on-primary dark:bg-white dark:text-primary hover:opacity-90 active:scale-95 shadow-sm"
-                    : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
+                    ? "pill-btn-primary hover:opacity-90 active:scale-95 shadow-sm"
+                    : "bg-surface-alt text-on-surface-variant cursor-not-allowed opacity-50"
                 }`}
                 style={{ minWidth: "44px", minHeight: "44px" }}
                 title="Send message"
@@ -736,17 +735,17 @@ export default function MobileApp({
                   </div>
 
                   {/* Quick Selections pushed to the right */}
-                  <div className="flex items-center gap-2">
+                  <div className="toggle-group items-center">
                     <button
                       onClick={() => handleTabChange("cv")}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 font-semibold text-xs transition-all cursor-pointer border-0"
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 ${activeTab === 'cv' ? 'active' : 'inactive'}`}
                     >
                       <MaterialIcon name="description" className="text-body-medium" />
                       <span>CV</span>
                     </button>
                     <button
                       onClick={() => handleTabChange("projects")}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-high border-2 border-outline-variant text-on-surface hover:bg-surface-container-highest font-semibold text-xs transition-all cursor-pointer"
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 ${activeTab === 'projects' ? 'active' : 'inactive'}`}
                     >
                       <MaterialIcon name="code" className="text-body-medium" />
                       <span>Projects</span>
@@ -826,7 +825,7 @@ export default function MobileApp({
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ duration: 0.2, delay: idx * 0.05 }}
                                   onClick={() => handleSend(prompt.text)}
-                                  className="flex items-center gap-3 p-3 bg-surface border-2 border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[54px] rounded-2xl shadow-sm"
+                                  className="suggestion-btn flex items-center gap-3 p-3 text-left min-h-[54px] cursor-pointer"
                                 >
                                   <div className="shrink-0 w-7 h-7 rounded-xl bg-primary-container flex items-center justify-center">
                                     {renderPromptIcon(prompt.icon)}

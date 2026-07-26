@@ -17,24 +17,11 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
   const [currentDate, setCurrentDate] = useState(new Date());
   
   const [isAddingGoal, setIsAddingGoal] = useState(false);
-  const [addMode, setAddMode] = useState<'ai' | 'manual'>('ai');
   const [goalPrompt, setGoalPrompt] = useState('');
   const [email, setEmail] = useState('');
-  const [manualTitle, setManualTitle] = useState('');
-  const [manualDeadline, setManualDeadline] = useState('');
-  const [manualPath, setManualPath] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
-  const [newStepTask, setNewStepTask] = useState('');
-  const [selectedPlanForStep, setSelectedPlanForStep] = useState<string>('');
-  
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
-
-  const showNotification = (msg: string) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 3500);
-  };
 
   // Load from local storage
   useEffect(() => {
@@ -46,110 +33,10 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
     }
   }, []);
 
-  // Auto Save to local storage
+  // Save to local storage
   useEffect(() => {
     localStorage.setItem('ai_action_plans', JSON.stringify(plans));
   }, [plans]);
-
-  const handleManualSave = () => {
-    localStorage.setItem('ai_action_plans', JSON.stringify(plans));
-    showNotification("Action Planner data successfully saved!");
-  };
-
-  const handleExportJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(plans, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `action_planner_backup_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    showNotification("Exported backup JSON file!");
-  };
-
-  const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const imported = JSON.parse(event.target?.result as string);
-        if (Array.isArray(imported)) {
-          setPlans(imported);
-          localStorage.setItem('ai_action_plans', JSON.stringify(imported));
-          showNotification("Imported plans successfully!");
-        } else {
-          alert("Invalid JSON format. Expected an array of plans.");
-        }
-      } catch (err) {
-        alert("Failed to parse JSON file.");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
-  const addManualGoal = () => {
-    if (!manualTitle || !manualDeadline) return;
-    const newPlan: Plan = {
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      goal_title: manualTitle,
-      main_deadline: manualDeadline,
-      path_of_least_resistance: manualPath || undefined,
-      steps: [],
-      reminders: []
-    };
-    setPlans(prev => [...prev, newPlan]);
-    setManualTitle('');
-    setManualDeadline('');
-    setManualPath('');
-    setIsAddingGoal(false);
-    showNotification("New goal saved to Action Planner!");
-  };
-
-  const addStepToSelectedDate = () => {
-    if (!newStepTask || !selectedEventDate) return;
-    let targetPlanId = selectedPlanForStep;
-    if (!targetPlanId && plans.length > 0) {
-      targetPlanId = plans[0].id;
-    }
-
-    if (!targetPlanId) {
-      // Create a default general goal if none exists
-      const defaultGoalId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-      const defaultPlan: Plan = {
-        id: defaultGoalId,
-        goal_title: "General Planner Tasks",
-        main_deadline: selectedEventDate,
-        steps: [
-          {
-            id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + 1),
-            step_number: 1,
-            task: newStepTask,
-            scheduled_date: selectedEventDate,
-            completed: false
-          }
-        ],
-        reminders: []
-      };
-      setPlans(prev => [...prev, defaultPlan]);
-    } else {
-      setPlans(prev => prev.map(p => {
-        if (p.id !== targetPlanId) return p;
-        const newStep = {
-          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-          step_number: p.steps.length + 1,
-          task: newStepTask,
-          scheduled_date: selectedEventDate,
-          completed: false
-        };
-        return { ...p, steps: [...p.steps, newStep] };
-      }));
-    }
-
-    setNewStepTask('');
-    showNotification("Task added to " + selectedEventDate);
-  };
 
   const generatePlan = async () => {
     if (!goalPrompt || !email) return;
@@ -271,10 +158,10 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
               <div 
                 key={i} 
                 onClick={() => setSelectedEventDate(dateStr)}
-                className={`min-h-[100px] md:min-h-[120px] p-2 border rounded-xl flex flex-col transition-all cursor-pointer
-                  ${!isSameMonth(d, currentDate) && viewMode === 'month' ? 'bg-surface-container-low/30 border-outline-variant/30 text-on-surface-variant/50' : 'bg-surface border-outline-variant/70 text-on-surface'} 
+                className={`calendar-day min-h-[100px] md:min-h-[120px] p-2 flex flex-col transition-all cursor-pointer
+                  ${!isSameMonth(d, currentDate) && viewMode === 'month' ? 'text-on-surface-variant/50' : 'text-on-surface'} 
                   ${isSameDay(d, new Date()) ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
-                  hover:border-primary/50 hover:bg-primary/5 hover:shadow-sm
+                  hover:bg-primary/5
                 `}
               >
                 <div className={`text-right text-label-large font-bold mb-2 ${isSameDay(d, new Date()) ? 'text-primary' : ''}`}>
@@ -308,25 +195,8 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
 
   return (
     <div className="h-full flex flex-col bg-surface">
-      {/* Toast Notification */}
-      <AnimatePresence>
-        {toastMsg && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#13131c] text-white border border-emerald-500/30 px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3"
-          >
-            <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-              <MaterialIcon name="check" className="text-sm" />
-            </div>
-            <span className="text-sm font-semibold">{toastMsg}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-surface-container-lowest sticky top-0 z-20">
+      <div className="md:hidden flex items-center justify-between p-4 border-b-2 border-outline-variant bg-surface-container-lowest sticky top-0 z-20">
         <div className="flex items-center gap-3">
           {onToggleDrawer && (
             <button 
@@ -354,7 +224,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
       <div className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-6xl mx-auto space-y-8">
           
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
               <h1 className="text-headline-medium font-bold text-on-surface tracking-tight flex items-center gap-2">
                 <MaterialIcon name="event_note" className="text-primary" />
@@ -365,39 +235,13 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
               </p>
             </div>
             
-            <div className="flex flex-wrap items-center gap-2">
-              <button 
-                onClick={handleManualSave}
-                className="flex items-center gap-1.5 bg-[#13131c] hover:bg-[#1a1a28] text-gray-200 px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm border border-white/10 shadow-sm transition-all"
-                title="Save plans to local storage"
-              >
-                <MaterialIcon name="save" className="text-primary text-base" />
-                <span>Save Data</span>
-              </button>
-
-              <button 
-                onClick={handleExportJSON}
-                className="flex items-center gap-1.5 bg-[#13131c] hover:bg-[#1a1a28] text-gray-200 px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm border border-white/10 shadow-sm transition-all"
-                title="Download JSON backup"
-              >
-                <MaterialIcon name="download" className="text-primary text-base" />
-                <span>Export</span>
-              </button>
-
-              <label className="flex items-center gap-1.5 bg-[#13131c] hover:bg-[#1a1a28] text-gray-200 px-3.5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm border border-white/10 shadow-sm transition-all cursor-pointer">
-                <MaterialIcon name="upload" className="text-primary text-base" />
-                <span>Import</span>
-                <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
-              </label>
-
-              <button 
-                onClick={() => setIsAddingGoal(true)}
-                className="flex items-center justify-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm hover:opacity-90 transition-opacity shadow-sm whitespace-nowrap"
-              >
-                <MaterialIcon name="add" />
-                Plan New Goal
-              </button>
-            </div>
+            <button 
+              onClick={() => setIsAddingGoal(true)}
+              className="flex items-center justify-center gap-2 bg-primary text-on-primary px-5 py-3 rounded-xl font-bold text-title-small hover:opacity-90 transition-opacity shadow-sm whitespace-nowrap"
+            >
+              <MaterialIcon name="add" />
+              Plan New Goal
+            </button>
           </div>
 
           {/* Active Goals Overview */}
@@ -458,139 +302,69 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
               onClick={e => e.stopPropagation()}
               className="bg-surface-container-lowest w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-outline-variant p-6 md:p-8"
             >
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h2 className="text-headline-small font-bold text-on-surface">Plan New Goal</h2>
-                  <p className="text-body-medium text-on-surface-variant mt-1">Add a goal manually or break down a prompt using AI.</p>
+                  <h2 className="text-headline-small font-bold text-on-surface">Plan with AI</h2>
+                  <p className="text-body-medium text-on-surface-variant mt-1">Break down your prompt into structured goals and steps.</p>
                 </div>
                 <button onClick={() => !loading && setIsAddingGoal(false)} className="p-2 bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors">
                   <MaterialIcon name="close" />
                 </button>
               </div>
 
-              {/* Mode Toggle Tabs */}
-              <div className="flex gap-2 p-1.5 bg-surface-container-low rounded-2xl border border-outline-variant/30 mb-6">
-                <button 
-                  onClick={() => setAddMode('ai')}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${addMode === 'ai' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-                >
-                  <MaterialIcon name="auto_awesome" className="text-base" />
-                  AI Generator
-                </button>
-                <button 
-                  onClick={() => setAddMode('manual')}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${addMode === 'manual' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-                >
-                  <MaterialIcon name="edit" className="text-base" />
-                  Manual Entry
-                </button>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-title-small font-bold text-on-surface">What do you want to achieve?</label>
+                  <textarea 
+                    value={goalPrompt}
+                    onChange={e => setGoalPrompt(e.target.value)}
+                    placeholder="e.g., I want to run a marathon in 6 months, and I also need to finish my React course by next week."
+                    className="w-full bg-surface-container-low text-on-surface px-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all resize-none min-h-[120px] text-body-large"
+                  />
+                  <p className="text-body-small text-on-surface-variant">The AI will analyze your existing goals on the calendar to recommend the best timeline.</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="block text-title-small font-bold text-on-surface">Email for automated reminders</label>
+                  <div className="relative">
+                    <MaterialIcon name="mail" className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                    <input 
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="w-full bg-surface-container-low text-on-surface pl-12 pr-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all text-body-large"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <button 
+                    onClick={() => setIsAddingGoal(false)}
+                    disabled={loading}
+                    className="px-6 py-3 rounded-xl font-bold text-title-small text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={generatePlan}
+                    disabled={loading || !goalPrompt || !email}
+                    className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-title-small hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm min-w-[160px]"
+                  >
+                    {loading ? (
+                      <>
+                        <MaterialIcon name="autorenew" className="animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <MaterialIcon name="auto_awesome" />
+                        Generate Plan
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-
-              {addMode === 'ai' ? (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="block text-title-small font-bold text-on-surface">What do you want to achieve?</label>
-                    <textarea 
-                      value={goalPrompt}
-                      onChange={e => setGoalPrompt(e.target.value)}
-                      placeholder="e.g., I want to run a marathon in 6 months, and I also need to finish my React course by next week."
-                      className="w-full bg-surface-container-low text-on-surface px-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all resize-none min-h-[120px] text-body-large"
-                    />
-                    <p className="text-body-small text-on-surface-variant">The AI will analyze your existing goals on the calendar to recommend the best timeline.</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="block text-title-small font-bold text-on-surface">Email for automated reminders</label>
-                    <div className="relative">
-                      <MaterialIcon name="mail" className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                      <input 
-                        type="email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        placeholder="your@email.com"
-                        className="w-full bg-surface-container-low text-on-surface pl-12 pr-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all text-body-large"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 justify-end pt-4">
-                    <button 
-                      onClick={() => setIsAddingGoal(false)}
-                      disabled={loading}
-                      className="px-6 py-3 rounded-xl font-bold text-title-small text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={generatePlan}
-                      disabled={loading || !goalPrompt || !email}
-                      className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-title-small hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm min-w-[160px]"
-                    >
-                      {loading ? (
-                        <>
-                          <MaterialIcon name="autorenew" className="animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <MaterialIcon name="auto_awesome" />
-                          Generate Plan
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <label className="block text-title-small font-bold text-on-surface">Goal Title *</label>
-                    <input 
-                      type="text"
-                      value={manualTitle}
-                      onChange={e => setManualTitle(e.target.value)}
-                      placeholder="e.g., Build Portfolio Website"
-                      className="w-full bg-surface-container-low text-on-surface px-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all text-body-large"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-title-small font-bold text-on-surface">Target Deadline *</label>
-                    <input 
-                      type="date"
-                      value={manualDeadline}
-                      onChange={e => setManualDeadline(e.target.value)}
-                      className="w-full bg-surface-container-low text-on-surface px-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all text-body-large"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-title-small font-bold text-on-surface">Path of Least Resistance (Optional)</label>
-                    <textarea 
-                      value={manualPath}
-                      onChange={e => setManualPath(e.target.value)}
-                      placeholder="e.g., Focus on core features first, deploy early to Cloud Run, iterate on design later."
-                      className="w-full bg-surface-container-low text-on-surface px-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all resize-none min-h-[90px] text-body-large"
-                    />
-                  </div>
-
-                  <div className="flex gap-3 justify-end pt-4">
-                    <button 
-                      onClick={() => setIsAddingGoal(false)}
-                      className="px-6 py-3 rounded-xl font-bold text-title-small text-on-surface-variant hover:bg-surface-container transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={addManualGoal}
-                      disabled={!manualTitle || !manualDeadline}
-                      className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-title-small hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm min-w-[140px]"
-                    >
-                      <MaterialIcon name="save" />
-                      Save Goal
-                    </button>
-                  </div>
-                </div>
-              )}
             </motion.div>
           </motion.div>
         )}
@@ -694,48 +468,11 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                     })}
                     
                     {plans.flatMap(p => p.steps).filter(s => s.scheduled_date === selectedEventDate).length === 0 && (
-                      <div className="text-center py-6 px-4 bg-surface-container-low rounded-xl">
+                      <div className="text-center py-8 px-4 bg-surface-container-low rounded-xl">
                         <MaterialIcon name="event_available" className="text-headline-small text-on-surface-variant mb-2" />
                         <p className="text-body-medium text-on-surface-variant">No tasks scheduled for today.</p>
                       </div>
                     )}
-                  </div>
-                </div>
-
-                {/* Add Task to Selected Date */}
-                <div className="pt-4 border-t border-outline-variant/50 space-y-3">
-                  <h4 className="text-label-large font-bold text-on-surface-variant uppercase tracking-wider">Add Task for {selectedEventDate}</h4>
-                  
-                  {plans.length > 1 && (
-                    <select
-                      value={selectedPlanForStep}
-                      onChange={e => setSelectedPlanForStep(e.target.value)}
-                      className="w-full bg-surface-container-low text-on-surface px-3 py-2 rounded-xl border border-outline-variant text-body-medium outline-none focus:border-primary"
-                    >
-                      <option value="">Select Goal (Defaults to first goal)</option>
-                      {plans.map(p => (
-                        <option key={p.id} value={p.id}>{p.goal_title}</option>
-                      ))}
-                    </select>
-                  )}
-
-                  <div className="flex gap-2">
-                    <input 
-                      type="text"
-                      value={newStepTask}
-                      onChange={e => setNewStepTask(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && addStepToSelectedDate()}
-                      placeholder="e.g., Review module 3 notes..."
-                      className="flex-1 bg-surface-container-low text-on-surface px-3.5 py-2.5 rounded-xl border border-outline-variant text-body-medium outline-none focus:border-primary"
-                    />
-                    <button 
-                      onClick={addStepToSelectedDate}
-                      disabled={!newStepTask}
-                      className="bg-primary text-on-primary px-4 py-2.5 rounded-xl font-bold text-body-medium hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm flex items-center gap-1 shrink-0"
-                    >
-                      <MaterialIcon name="add" />
-                      Add
-                    </button>
                   </div>
                 </div>
               </div>

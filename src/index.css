@@ -286,3 +286,107 @@ body {
   color: var(--md-sys-color-on-surface);
   white-space: nowrap;
 }
+
+/* --- MD3 Redesign Overrides --- */
+:root {
+  --surface: #ffffff;
+  --surface-alt: #f7f7f5;
+  --primary: #2563eb;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --elevation-1: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.1);
+  --elevation-2: 0 2px 6px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.1);
+}
+.dark {
+  --surface: #1e1e1e;
+  --surface-alt: #121212;
+  --primary: #3b82f6;
+  --elevation-1: 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.3);
+  --elevation-2: 0 2px 6px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.card, .suggestion-btn, .calendar-day, .settings-card {
+  border: none !important;
+  border-radius: var(--radius-card) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--elevation-1) !important;
+  transition: box-shadow 0.2s ease, transform 0.1s ease !important;
+}
+.card:hover, .suggestion-btn:hover, .calendar-day:hover, .settings-card:hover {
+  box-shadow: var(--elevation-2) !important;
+}
+.card:active, .suggestion-btn:active, .calendar-day:active, .settings-card:active {
+  transform: scale(0.98) !important;
+}
+
+button {
+  border: none !important;
+  border-radius: var(--radius-pill) !important;
+  transition: box-shadow 0.2s ease, transform 0.1s ease !important;
+}
+button:active {
+  transform: scale(0.95) !important;
+}
+
+.pill-btn {
+  border: none !important;
+  border-radius: var(--radius-pill) !important;
+  box-shadow: var(--elevation-1) !important;
+  transition: box-shadow 0.2s ease, transform 0.1s ease !important;
+}
+.pill-btn:hover {
+  box-shadow: var(--elevation-2) !important;
+}
+.pill-btn:active {
+  transform: scale(0.95) !important;
+}
+
+.pill-btn-primary {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+.toggle-group {
+  background: var(--surface-alt) !important;
+  border-radius: var(--radius-pill) !important;
+  padding: 4px !important;
+  display: flex !important;
+  gap: 4px !important;
+  border: none !important;
+}
+.toggle-group .active {
+  background: var(--surface) !important;
+  box-shadow: var(--elevation-1) !important;
+  border-radius: var(--radius-pill) !important;
+  color: var(--primary) !important;
+}
+.toggle-group .inactive {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+hr, .divider { display: none !important; }
+.section { 
+  background: var(--surface-alt) !important; 
+  border-radius: var(--radius-card) !important; 
+  padding: 16px !important; 
+  border: none !important;
+}
+
+.bg-surface.rounded-xl, .bg-surface.rounded-2xl, .bg-surface-container.rounded-xl, .bg-surface-container.rounded-2xl, .bg-surface-container-low.rounded-xl, .bg-surface-container-low.rounded-2xl, .bg-surface-container-lowest.rounded-xl, .bg-surface-container-lowest.rounded-2xl {
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--elevation-1) !important;
+  transition: box-shadow 0.2s ease, transform 0.1s ease !important;
+}
+.bg-surface.rounded-xl:hover, .bg-surface.rounded-2xl:hover, .bg-surface-container.rounded-xl:hover, .bg-surface-container.rounded-2xl:hover, .bg-surface-container-low.rounded-xl:hover, .bg-surface-container-low.rounded-2xl:hover, .bg-surface-container-lowest.rounded-xl:hover, .bg-surface-container-lowest.rounded-2xl:hover {
+  box-shadow: var(--elevation-2) !important;
+}
+.no-borders, .no-borders * {
+  border: none !important;
+}
+
+/* Override existing borders globally for a cleaner MD3 look */
+.border-2, .border, .border-b-2, .border-t-2 {
+  border: none !important;
+}
