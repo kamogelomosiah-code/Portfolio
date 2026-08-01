@@ -124,6 +124,7 @@ export default function MobileApp({
   const isGenerating = messages.some(m => m.status === 'loading' || m.status === 'streaming');
 
   // Tap and hold voice recording state for mobile
+  const supportSpeechRecognition = typeof window !== 'undefined' && (!!(window as any).SpeechRecognition || !!(window as any).webkitSpeechRecognition || !!(navigator?.mediaDevices?.getUserMedia));
   const [isRecording, setIsRecording] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState("");
   const [interimSpeech, setInterimSpeech] = useState("");
@@ -503,108 +504,23 @@ export default function MobileApp({
           )}
         </AnimatePresence>
 
-        {/* Input box with smooth shadow radius */}
-        <div className="card w-full focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] transition-all flex flex-col p-4 pb-3.5 relative">
-          <div className="flex items-start justify-between gap-2.5 w-full min-h-[44px]">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onFocus={handleInputFocus}
-              placeholder="Ask me about math or coding!" 
-              className="flex-1 bg-transparent text-on-background py-2 px-3 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-title-small leading-relaxed border-0"
-              disabled={isLoading || isGenerating}
-              rows={1}
-            />
-          </div>
+        {/* Input box with minimalistic ChatGPT styling */}
+        <div className="w-full bg-surface-container-low rounded-3xl focus-within:ring-2 focus-within:ring-primary/50 transition-all flex items-end p-2 pb-2 relative border border-outline-variant/30 shadow-sm mx-4 mb-2">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onFocus={handleInputFocus}
+            placeholder="Message Kamo's AI..." 
+            className="flex-1 bg-transparent text-on-background py-2.5 px-4 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-body-large leading-relaxed border-0 max-h-[200px]"
+            disabled={isLoading || isGenerating}
+            rows={1}
+            style={{ minHeight: "44px" }}
+          />
 
-          {/* Bottom Row: Actions & Send */}
-          <div className="flex items-center justify-between mt-2.5 px-4 w-full gap-2 select-none">
-            {/* Thinking Mode & Engine Selection Toggle */}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(true)}
-                className="pill-btn flex items-center gap-1.5 px-4 py-2 text-label-small font-medium transition-all duration-200 cursor-pointer shrink-0 min-h-[44px]"
-                style={{
-                  backgroundColor: "var(--surface-alt)",
-                  color: "var(--text-muted)",
-                  opacity: isGenerating ? 0.5 : 1,
-                  pointerEvents: isGenerating ? 'none' : 'auto'
-                }}
-                disabled={isGenerating}
-                title="Settings"
-              >
-                <MaterialIcon name="settings" className="text-title-medium" />
-                <span>Settings</span>
-              </button>
-            </div>
-
-            {/* Settings Modal */}
-            {showSettingsModal && (
-              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
-                <div className="settings-card p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                  <h4 className="text-lg font-bold text-on-surface mb-4">Settings</h4>
-                  
-                  <div className="mb-6">
-                    <h5 className="text-sm font-semibold text-on-surface-variant mb-2">Thinking Mode</h5>
-                    
-                    {llmStatus && (
-                      <div className="mb-3 text-xs text-on-surface-variant flex flex-col gap-1">
-                        <div>Tiny model: {llmStatus.tiny_model}</div>
-                        <div>Large model: {llmStatus.large_model?.status}</div>
-                      </div>
-                    )}
-                    
-                    <button
-                      onClick={() => {
-                        if (setSelectedModel && isLargeReady !== false) {
-                          setSelectedModel(selectedModel === "large" ? "tiny" : "large");
-                        }
-                      }}
-                      disabled={isLargeReady === false}
-                      className={`w-full px-4 py-2 pill-btn text-sm font-medium flex items-center justify-between transition-colors ${selectedModel === "large" ? "pill-btn-primary" : "bg-surface-alt text-on-surface hover:bg-surface-container"} ${isLargeReady === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <span>Enable Thinking {isLargeReady === false ? "(not ready yet)" : ""}</span>
-                      {selectedModel === "large" && <MaterialIcon name="check" className="text-on-primary" />}
-                    </button>
-                    <p className="text-xs text-on-surface-variant mt-2 leading-relaxed">
-                      Uses a specialized reasoning model to plan and think step-by-step before answering.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h5 className="text-sm font-semibold text-on-surface-variant mb-2">AI Engine</h5>
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <button
-                        onClick={() => setAiEngine("cloud")}
-                        className={`px-3 py-2 pill-btn text-sm font-semibold transition-colors ${aiEngine === "cloud" ? "pill-btn-primary" : "bg-surface-alt text-on-surface hover:bg-surface-container"}`}
-                      >
-                        Cloud Core
-                      </button>
-                      <button
-                        onClick={() => setAiEngine("local")}
-                        className={`px-3 py-2 pill-btn text-sm font-semibold transition-colors ${aiEngine === "local" ? "pill-btn-primary" : "bg-surface-alt text-on-surface hover:bg-surface-container"}`}
-                      >
-                        Local WebAI
-                      </button>
-                    </div>
-                    <div className="text-xs text-on-surface-variant leading-relaxed space-y-1.5">
-                      <p><strong>Cloud Core:</strong> Fast, high-performance API hosted remotely.</p>
-                      <p><strong>Local WebAI:</strong> Runs locally in your browser. (Requires downloading models first)</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Right side: Mic, Character count and Send */}
-            <div className="flex items-center gap-2">
-              <span className="text-label-small text-on-surface-variant font-mono hidden sm:inline select-none pr-1">
-                {input.length}/1000
-              </span>
-
-              {/* Tap and Hold Microphone Button */}
+          {/* Right side: Mic and Send */}
+          <div className="flex gap-1.5 pb-1 pr-1 shrink-0">
+            {supportSpeechRecognition && (
               <button
                 type="button"
                 onMouseDown={startRecording}
@@ -612,37 +528,34 @@ export default function MobileApp({
                 onMouseLeave={stopRecording}
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
-                disabled={isGenerating}
-                className={`pill-btn w-11 h-11 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                disabled={isLoading || isGenerating}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border-0 cursor-pointer ${
                   isRecording
-                    ? "bg-rose-500 text-white animate-pulse shadow-md scale-105"
-                    : isGenerating
-                    ? "bg-surface-alt text-on-surface-variant cursor-not-allowed opacity-50"
-                    : "bg-surface-alt text-on-surface-variant hover:bg-surface-container"
+                    ? "bg-rose-500 text-white animate-pulse shadow-md"
+                    : "bg-surface-alt text-on-surface hover:bg-surface-container-highest"
                 }`}
-                style={{ minWidth: "44px", minHeight: "44px" }}
-                title="Tap and hold to speak"
+                title={isRecording ? "Stop Recording" : "Start Voice Input"}
               >
-                <MaterialIcon name="mic" className={`text-title-large ${isRecording ? "animate-bounce" : ""}`} />
+                <MaterialIcon
+                  name={isRecording ? "stop" : "mic"}
+                  className="text-body-large"
+                />
               </button>
+            )}
 
-              <button
-                onClick={() => handleSend(input)}
-                disabled={!input.trim() || isLoading || isGenerating}
-                className={`pill-btn w-11 h-11 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                  input.trim() && !isLoading && !isGenerating
-                    ? "pill-btn-primary hover:opacity-90 active:scale-95 shadow-sm"
-                    : "bg-surface-alt text-on-surface-variant cursor-not-allowed opacity-50"
-                }`}
-                style={{ minWidth: "44px", minHeight: "44px" }}
-                title="Send message"
-              >
-                <MaterialIcon name="send" className="text-title-large" />
-              </button>
-            </div>
+            <button
+              onClick={() => handleSend(input)}
+              disabled={!input.trim() || isLoading || isGenerating}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer border-0 ${
+                input.trim() && !isLoading && !isGenerating
+                  ? "bg-primary text-on-primary hover:opacity-90 shadow-sm"
+                  : "bg-surface-alt text-on-surface-variant opacity-50 cursor-not-allowed"
+              }`}
+            >
+              <MaterialIcon name={isLoading || isGenerating ? "more_horiz" : "arrow_upward"} className="text-title-medium" />
+            </button>
           </div>
         </div>
-
         {/* Footer info */}
         <div className="w-full flex items-center justify-between mt-1.5 px-4 select-none text-[10px]">
           <div className="flex items-center gap-1.5">
@@ -737,15 +650,23 @@ export default function MobileApp({
                   {/* Quick Selections pushed to the right */}
                   <div className="toggle-group items-center">
                     <button
+                      onClick={() => handleTabChange("planner")}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 inactive`}
+                    >
+                      <MaterialIcon name="event_note" className="text-body-medium text-primary" />
+                      <span className="text-primary font-bold">Planner</span>
+                    </button>
+                    <div className="w-px h-4 bg-outline-variant/50 mx-1"></div>
+                    <button
                       onClick={() => handleTabChange("cv")}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 ${activeTab === 'cv' ? 'active' : 'inactive'}`}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 inactive`}
                     >
                       <MaterialIcon name="description" className="text-body-medium" />
                       <span>CV</span>
                     </button>
                     <button
                       onClick={() => handleTabChange("projects")}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 ${activeTab === 'projects' ? 'active' : 'inactive'}`}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 inactive`}
                     >
                       <MaterialIcon name="code" className="text-body-medium" />
                       <span>Projects</span>
@@ -865,11 +786,7 @@ export default function MobileApp({
                             {isUser ? (
                               <div className="flex flex-col items-end max-w-[85%]">
                                 <div 
-                                  className="text-on-background px-4 py-3 rounded-2xl rounded-tr-sm border-2 shadow-sm"
-                                  style={{ 
-                                    backgroundColor: "var(--color-accent-light)", 
-                                    borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
-                                  }}
+                                  className="text-on-surface px-5 py-3 rounded-3xl rounded-tr-sm bg-surface-container-high max-w-xl shadow-sm"
                                 >
                                   <p className="text-body-medium whitespace-pre-wrap font-normal leading-relaxed break-words">
                                     {msg.text}

@@ -3,7 +3,6 @@ import cors from 'cors';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import OpenAI from 'openai';
-import Groq from 'groq-sdk';
 import multer from 'multer';
 import { InferenceClient } from "@huggingface/inference";
 import * as dotenv from 'dotenv';
@@ -11,16 +10,9 @@ import fs from 'fs';
 import { GoogleGenAI } from "@google/genai";
 import plannerRouter from './plannerRouter';
 import nodemailer from 'nodemailer';
+import { Pool } from 'pg';
 
 dotenv.config();
-
-let groqClient: Groq | null = null;
-function getGroqClient() {
-  if (!groqClient && process.env.GROQ_API_KEY) {
-    groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
-  }
-  return groqClient;
-}
 
 let meData = {};
 try {
@@ -343,6 +335,74 @@ async function processAutomationRequests(text: string): Promise<string> {
   return newText;
 }
 
+let pgPool: Pool | null = null;
+if (process.env.DATABASE_URL) {
+  pgPool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+  
+  // Initialize table
+  pgPool.query(`
+    CREATE TABLE IF NOT EXISTS goals (
+      id UUID PRIMARY KEY,
+      data JSONB NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT now()
+    );
+  `).then(() => {
+    console.log("Goals table ready in Postgres.");
+  }).catch((err) => {
+    console.error("Failed to create goals table:", err);
+  });
+} else {
+  console.log("DATABASE_URL is not set. Postgres persistence is disabled.");
+}
+
+app.get('/api/goals', async (req, res) => {
+  if (!pgPool) return res.json([]);
+  try {
+    const result = await pgPool.query('SELECT data FROM goals');
+    const goals = result.rows.map(row => row.data);
+    res.json(goals);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/goals', async (req, res) => {
+  if (!pgPool) return res.json([]);
+  try {
+    const goalData = req.body;
+    // Handle both single object and array of objects
+    const goalsToUpsert = Array.isArray(goalData) ? goalData : [goalData];
+    
+    for (const goal of goalsToUpsert) {
+      if (!goal.id) {
+        return res.status(400).json({ error: "Goal ID is required" });
+      }
+      await pgPool.query(`
+        INSERT INTO goals (id, data, updated_at)
+        VALUES ($1, $2, now())
+        ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
+      `, [goal.id, goal]);
+    }
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete('/api/goals/:id', async (req, res) => {
+  if (!pgPool) return res.json([]);
+  try {
+    const id = req.params.id;
+    await pgPool.query('DELETE FROM goals WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
@@ -359,7 +419,7 @@ app.post('/api/contact', async (req, res) => {
     });
   } catch (error: any) {
     console.error("Contact Form Server Error:", error.message || "Unknown error");
-    return res.status(500).json({ success: false, error: "Internal server payload delivery failure" });
+    return res.status(400).json({ success: false, error: "Internal server payload delivery failure" });
   }
 });
 
@@ -367,22 +427,6 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No audio file provided." });
-    }
-
-    const groq = getGroqClient();
-    if (groq) {
-      try {
-        const transcription = await groq.audio.transcriptions.create({
-          file: req.file.buffer as any,
-          model: 'whisper-large-v3',
-          response_format: 'json',
-        });
-        if (transcription?.text && transcription.text.trim()) {
-          return res.status(200).json({ text: transcription.text.trim() });
-        }
-      } catch (groqAudioErr: any) {
-        console.log("Groq Whisper audio transcription failed, falling back:", groqAudioErr?.message || groqAudioErr);
-      }
     }
 
     let outputText = "";
@@ -428,32 +472,6 @@ app.post('/api/chat', async (req, res) => {
       role: msg.role === 'user' ? 'user' : 'assistant',
       content: msg.text || msg.content || ""
   }));
-
-  const groq = getGroqClient();
-  if (groq) {
-    try {
-      const groqModel = model === 'fusion' ? 'llama-3.3-70b-versatile' : 'llama-3.1-8b-instant';
-      const messages = [
-        { role: 'system', content: SYSTEM_PROMPT },
-        ...formattedHistory,
-        ...(message ? [{ role: 'user', content: message }] : [])
-      ];
-
-      const completion = await groq.chat.completions.create({
-        model: groqModel,
-        messages: messages as any,
-        temperature: 0.7,
-        max_tokens: 1024,
-        top_p: 0.9,
-      });
-
-      let rawReply = completion.choices[0]?.message?.content || 'No response generated.';
-      const finalReply = await processAutomationRequests(rawReply);
-      return res.json({ text: finalReply, reply: finalReply });
-    } catch (groqErr: any) {
-      console.error('[Groq Chat Error, falling back to rotation/Gemini]:', groqErr?.message || groqErr);
-    }
-  }
 
   try {
     const isThinkMode = model === 'fusion'; // "Think Longer"
@@ -568,11 +586,6 @@ Synthesize the final, polished, and highly accurate answer. Incorporate the impr
 app.post('/api/ping-model', async (req, res) => {
   const { model } = req.body;
   try {
-    const groq = getGroqClient();
-    if (groq) {
-      return res.json({ success: true, provider: 'Groq' });
-    }
-
     let resolvedModel = model || 'swift';
     if (resolvedModel === 'swift') {
       resolvedModel = 'MiniMaxAI/MiniMax-M3:preferred';
@@ -610,11 +623,6 @@ app.post('/api/ping-model', async (req, res) => {
 
 app.get('/api/hf-health', async (req, res) => {
   try {
-    const groq = getGroqClient();
-    if (groq) {
-      return res.json({ connected: true, provider: 'Groq' });
-    }
-
     const connected = await withTokenRotation(async (token, openaiClient, hfClient) => {
       await openaiClient.chat.completions.create({
         model: "meta-llama/Llama-3.3-70B-Instruct",
