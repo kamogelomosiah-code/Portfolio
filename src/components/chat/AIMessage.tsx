@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MarkdownRenderer } from "../MarkdownRenderer";
 import { Message } from "../ChatInterface";
 import { AppIcon } from "../AppIcon";
+import { Copy, Check } from "lucide-react";
 
 export function AIMessage({
   msg,
@@ -16,12 +17,23 @@ export function AIMessage({
 }) {
   const hasAnimatedRef = useRef(false);
   const [displayedText, setDisplayedText] = useState(msg.status === "sent" ? msg.text : "");
+  const [copied, setCopied] = useState(false);
   const [localStatus, setLocalStatus] = useState<"loading" | "streaming" | "sent">(
     msg.status === "sending" || msg.status === "loading" ? "loading" : msg.status === "sent" ? "sent" : "streaming"
   );
   
   // Use a ref for the callback so it doesn't trigger re-renders
   const onCompleteRef = useRef(onStreamingComplete);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(msg.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy", err);
+    }
+  };
+
   useEffect(() => {
     onCompleteRef.current = onStreamingComplete;
   }, [onStreamingComplete]);
@@ -89,17 +101,29 @@ export function AIMessage({
               <div className="text-base sm:text-lg md:text-xl leading-relaxed">
                 <MarkdownRenderer content={displayedText} isStreaming={localStatus === "streaming"} />
               </div>
-              {localStatus === "sent" && (msg as any).meta && (
-                <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-mono text-on-surface-variant bg-surface-container-high/45 px-2.5 py-1 rounded-full select-none shadow-sm">
-                  <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                  <span className="font-semibold text-primary">{(msg as any).meta.engine}</span>
-                  <span className="opacity-40">•</span>
-                  <span>Model: <span className="text-on-surface font-semibold">{(msg as any).meta.model}</span></span>
-                  {(msg as any).meta.status && (
-                    <>
+              {localStatus === "sent" && (
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                  <button 
+                    onClick={handleCopy}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-mono text-on-surface-variant hover:text-primary bg-surface-container-high/45 px-2.5 py-1 rounded-full select-none shadow-sm transition-colors cursor-pointer border-0"
+                  >
+                    {copied ? <Check size={12} /> : <Copy size={12} />}
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                  
+                  {(msg as any).meta && (
+                    <div className="inline-flex items-center gap-1.5 text-[11px] font-mono text-on-surface-variant bg-surface-container-high/45 px-2.5 py-1 rounded-full select-none shadow-sm">
+                      <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                      <span className="font-semibold text-primary">{(msg as any).meta.engine}</span>
                       <span className="opacity-40">•</span>
-                      <span>Status: <span className="text-on-surface">{(msg as any).meta.status}</span></span>
-                    </>
+                      <span>Model: <span className="text-on-surface font-semibold">{(msg as any).meta.model}</span></span>
+                      {(msg as any).meta.status && (
+                        <>
+                          <span className="opacity-40">•</span>
+                          <span>Status: <span className="text-on-surface">{(msg as any).meta.status}</span></span>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
