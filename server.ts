@@ -465,6 +465,76 @@ function getOfflineFallbackResponse(message: string): string {
     return "The engine can not be reached.";
 }
 
+app.post('/api/support/search', async (req, res) => {
+  const { query } = req.body || {};
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Search the web for the latest Anthropic Claude documentation and status updates regarding this query: ${query}. Summarize the most relevant and up-to-date information in 1-2 concise paragraphs.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        temperature: 0.1
+      }
+    });
+    return res.json({ results: response.text });
+  } catch (error: any) {
+    console.error("Support Search Error:", error.message || error);
+    return res.json({ results: "Web lookup failed. Rely on your local knowledge base." });
+  }
+});
+
+app.post('/api/openrouter/chat', async (req, res) => {
+  const { messages, options } = req.body || {};
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "Missing OpenRouter API key" });
+  }
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://ai.studio/build", // Optional, for including your app on openrouter.ai rankings.
+        "X-Title": "AI Studio App" // Optional. Shows in rankings on openrouter.ai.
+      },
+      body: JSON.stringify({
+        model: options?.model || "anthropic/claude-3.5-sonnet",
+        messages,
+        temperature: options?.temperature ?? 0.7,
+        max_tokens: options?.maxTokens,
+        stream: options?.stream || false,
+        response_format: options?.responseFormat === "json_object" ? { type: "json_object" } : undefined
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return res.status(response.status).json({ error: errorText });
+    }
+
+    if (options?.stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      if (response.body) {
+         // @ts-ignore
+         response.body.pipe(res);
+         return;
+      }
+    }
+
+    const data = await response.json();
+    return res.json(data);
+  } catch (error: any) {
+    console.error("OpenRouter Error:", error);
+    return res.status(500).json({ error: "Failed to communicate with OpenRouter" });
+  }
+});
+
 app.post('/api/chat', async (req, res) => {
   const { history, message, model } = req.body || {};
   

@@ -27,7 +27,7 @@ import { useLocalLLM } from "./hooks/useLocalLLM";
 
 export default function App() {
   const { status: llmStatus, isLargeReady } = useLocalLLM();
-  const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "planner">("chat");
+  const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "planner" | "support">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedModel, setSelectedModel] = useState("tiny");
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -98,12 +98,8 @@ export default function App() {
       const currentHour = new Date().getHours();
       const root = document.documentElement;
 
-      // Dark mode between 6 PM (18) and 7 AM (7)
-      if (currentHour < 7 || currentHour >= 18) {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
+      // Always dark mode
+      root.classList.add('dark');
 
       // Remove existing themes
       root.classList.remove('theme-morning', 'theme-afternoon', 'theme-evening', 'theme-night');

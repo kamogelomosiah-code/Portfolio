@@ -13,6 +13,7 @@ const CvPage = lazy(() => import("./CvPage"));
 const ContactPage = lazy(() => import("./ContactPage"));
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const ActionPlanner = lazy(() => import("./ActionPlanner").then(module => ({ default: module.ActionPlanner })));
+const SupportAssistant = lazy(() => import("./SupportAssistant/SupportAssistant").then(module => ({ default: module.SupportAssistant })));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-background">
@@ -29,7 +30,7 @@ interface MobileAppProps {
   isLargeReady?: boolean;
 }
 
-const TABS = ["chat", "projects", "cv", "contact", "changelog", "planner"] as const;
+const TABS = ["chat", "projects", "cv", "contact", "changelog", "planner", "support"] as const;
 type TabType = typeof TABS[number];
 
 const PROMPT_SETS = [
@@ -79,6 +80,8 @@ function renderPromptIcon(iconName: string) {
       return <MaterialIcon name="chat" className="text-primary text-title-medium" />;
   }
 }
+
+import { SettingsModal } from './SettingsModal';
 
 export default function MobileApp({
   selectedModel,
@@ -648,28 +651,29 @@ export default function MobileApp({
                   </div>
 
                   {/* Quick Selections pushed to the right */}
-                  <div className="toggle-group items-center">
+                  <div className="toggle-group items-center flex gap-1">
                     <button
                       onClick={() => handleTabChange("planner")}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 inactive`}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 inactive hidden sm:inline-flex`}
                     >
                       <MaterialIcon name="event_note" className="text-body-medium text-primary" />
                       <span className="text-primary font-bold">Planner</span>
                     </button>
-                    <div className="w-px h-4 bg-outline-variant/50 mx-1"></div>
+                    <div className="w-px h-4 bg-outline-variant/50 mx-1 hidden sm:block"></div>
                     <button
                       onClick={() => handleTabChange("cv")}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 inactive`}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 inactive hidden sm:inline-flex`}
                     >
                       <MaterialIcon name="description" className="text-body-medium" />
                       <span>CV</span>
                     </button>
+                    
                     <button
-                      onClick={() => handleTabChange("projects")}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-xs transition-all cursor-pointer border-0 inactive`}
+                      onClick={() => setShowSettingsModal(true)}
+                      className="w-10 h-10 rounded-full bg-surface border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer shrink-0 ml-2"
+                      title="Settings"
                     >
-                      <MaterialIcon name="code" className="text-body-medium" />
-                      <span>Projects</span>
+                      <MaterialIcon name="settings" className="text-title-medium" />
                     </button>
                   </div>
                 </div>
@@ -928,6 +932,12 @@ export default function MobileApp({
               </Suspense>
             )}
 
+            {activeTab === "support" && (
+              <Suspense fallback={<FallbackLoader />}>
+                <SupportAssistant />
+              </Suspense>
+            )}
+
             {activeTab === "changelog" && (
               <Suspense fallback={<FallbackLoader />}>
                 <ChangelogPage 
@@ -945,6 +955,10 @@ export default function MobileApp({
         onTabChange={(tab) => handleTabChange(tab)}
         isOpen={drawerOpen}
         onToggle={() => setDrawerOpen(!drawerOpen)}
+      />
+      <SettingsModal 
+        isOpen={showSettingsModal} 
+        onClose={() => setShowSettingsModal(false)} 
       />
     </div>
   );

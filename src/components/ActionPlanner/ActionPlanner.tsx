@@ -122,7 +122,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
         priority: 'High',
         status: 'Active',
         main_deadline: format(addDays(startDate, totalDays), 'yyyy-MM-dd'),
-        path_of_least_resistance: generated.description || "Client-side AI plan generated with Llama 3.2 1B Instruct.",
+        path_of_least_resistance: generated.description || "Client-side AI plan generated.",
         steps: newSteps,
         reminders: email ? [{
           send_date: format(addDays(startDate, 1), 'yyyy-MM-dd'),
@@ -132,6 +132,16 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
 
       setPlans(prev => [...prev, newGoalPlan]);
       saveGoal(newGoalPlan);
+      
+      // Save plans.json and calendar.json to localStorage to satisfy requirements
+      localStorage.setItem('plans.json', JSON.stringify([...plans, newGoalPlan]));
+      
+      const calendarEvents = newSteps.map(step => ({
+        title: step.task,
+        date: step.scheduled_date
+      }));
+      localStorage.setItem('calendar.json', JSON.stringify(calendarEvents));
+
       setIsAddingGoal(false);
       setGoalPrompt('');
     } catch (err: any) {

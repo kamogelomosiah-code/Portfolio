@@ -15,6 +15,7 @@ import { MaterialIcon } from "./MaterialIcon";
 import { initAuth, googleSignIn, logout, getAccessToken } from "../lib/auth";
 import type { User as FirebaseUser } from "firebase/auth";
 import { router } from "../lib/modelRouter";
+import { aiService, CHAT_PROMPT } from "../ai";
 
 export type Attachment = {
   name: string;
@@ -456,29 +457,22 @@ export default function ChatInterface({
 
     try {
       const history = messages.map(m => ({
-        role: m.role,
+        role: m.role === "user" ? "user" : "assistant",
         text: m.text
       }));
 
-      const token = await getAccessToken();
+      const chatHistory = history.map(m => ({
+        role: m.role as "system" | "user" | "assistant",
+        content: m.text
+      }));
 
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ 
-          history, 
-          message: text.trim(), 
-          model: selectedModel === "large" ? "fusion" : "swift" 
-        }),
-      });
+      const resText = await aiService.chat([
+        { role: "system", content: CHAT_PROMPT },
+        ...chatHistory,
+        { role: "user", content: text.trim() }
+      ]);
       
-      const data = await res.json();
-      let replyText = data.text || data.generated || "Sorry, I had trouble processing that.";
+      let replyText = resText || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
 
       let followUps: string[] = [];
@@ -586,7 +580,7 @@ export default function ChatInterface({
 
         {/* Input box with smooth border-2 radius */}
         <div className="w-full bg-surface border-2 border-outline-variant shadow-sm rounded-3xl focus-within:shadow-[0_6px_20px_rgba(30,142,62,0.06)] focus-within:border-primary focus-within:ring-2 focus-within:ring-[var(--color-accent)]/10 transition-all flex flex-col p-4.5 pb-3.5 relative">
-          <div className="flex items-start justify-between gap-3 w-full min-h-[46px]">
+          <div className="flex items-start justify-between gap-3 w-full min-h-[46px] min-w-0">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -599,7 +593,7 @@ export default function ChatInterface({
               }}
               placeholder="Ask me about math or coding!" 
               ref={textareaRef}
-              className="flex-1 bg-transparent text-on-background py-2.5 px-3 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed border-0"
+              className="flex-1 min-w-0 bg-transparent text-on-background py-2.5 px-3 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed border-0"
               disabled={isLoading || isGenerating}
               rows={1}
             />
@@ -884,7 +878,7 @@ export default function ChatInterface({
                         className={`flex w-full ${isUser ? "justify-end" : "justify-start"} ${isFirstInGroup ? "mt-6" : "mt-2"}`}
                       >
                         {isUser ? (
-                          <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%]">
+                          <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%] min-w-0">
                             <div 
                               className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm border-2 shadow-sm"
                               style={{ 
