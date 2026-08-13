@@ -13,7 +13,7 @@ export function useLocalLLM() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "anthropic/claude-3.5-sonnet" }) });
+        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct" }) });
         if (!res.ok) {
           setStatus({
             tiny_model: "failed",

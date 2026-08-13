@@ -330,7 +330,18 @@ app.post('/api/openrouter/chat', async (req, res) => {
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       if (response.body) {
-         response.body.pipe(res);
+         const reader = response.body.getReader();
+         const push = async () => {
+           while (true) {
+             const { done, value } = await reader.read();
+             if (done) {
+               res.end();
+               break;
+             }
+             res.write(value);
+           }
+         };
+         push();
          return;
       }
     }

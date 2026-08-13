@@ -80,7 +80,7 @@ function renderPromptIcon(iconName: string) {
   }
 }
 
-import { SettingsModal } from './SettingsModal';
+
 
 export default function MobileApp({
   selectedModel,
@@ -106,7 +106,7 @@ export default function MobileApp({
   const [localStatus, setLocalStatus] = useState(() => router.getStatus());
   const [localInitialized, setLocalInitialized] = useState(router.initialized);
   const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
 
   useEffect(() => {
     let active = true;
@@ -264,7 +264,7 @@ export default function MobileApp({
   useEffect(() => {
     const checkHfHealth = async () => {
       try {
-        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "anthropic/claude-3.5-sonnet" }) });
+        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct" }) });
         const data = await res.json();
         setIsHfConnected(!!data.connected);
       } catch (err) {
@@ -398,7 +398,7 @@ export default function MobileApp({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           messages: apiMessages, 
-          options: { model: selectedModel === "large" ? "meta-llama/llama-3.3-70b-instruct" : "anthropic/claude-3.5-sonnet", temperature: 0.7 } 
+          options: { model: selectedModel === "large" ? "meta-llama/llama-3.3-70b-instruct" : "meta-llama/llama-3.3-70b-instruct", temperature: 0.7 } 
         }),
       });
       
@@ -667,13 +667,7 @@ export default function MobileApp({
                       <span>CV</span>
                     </button>
                     
-                    <button
-                      onClick={() => setShowSettingsModal(true)}
-                      className="w-10 h-10 rounded-full bg-surface border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-container transition-all cursor-pointer shrink-0 ml-2"
-                      title="Settings"
-                    >
-                      <MaterialIcon name="settings" className="text-title-medium" />
-                    </button>
+                    
                   </div>
                 </div>
 
@@ -949,10 +943,7 @@ export default function MobileApp({
         isOpen={drawerOpen}
         onToggle={() => setDrawerOpen(!drawerOpen)}
       />
-      <SettingsModal 
-        isOpen={showSettingsModal} 
-        onClose={() => setShowSettingsModal(false)} 
-      />
+      
     </div>
   );
 }

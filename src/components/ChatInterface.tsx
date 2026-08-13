@@ -15,7 +15,7 @@ import { MaterialIcon } from "./MaterialIcon";
 import { initAuth, googleSignIn, logout, getAccessToken } from "../lib/auth";
 import type { User as FirebaseUser } from "firebase/auth";
 import { router } from "../lib/modelRouter";
-import { aiService, CHAT_PROMPT } from "../ai";
+
 
 export type Attachment = {
   name: string;
@@ -122,7 +122,7 @@ export default function ChatInterface({
   const [localStatus, setLocalStatus] = useState(() => router.getStatus());
   const [localInitialized, setLocalInitialized] = useState(router.initialized);
   const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
 
   useEffect(() => {
     let active = true;
@@ -317,7 +317,7 @@ export default function ChatInterface({
   useEffect(() => {
     const checkHfHealth = async () => {
       try {
-        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "anthropic/claude-3.5-sonnet" }) });
+        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct" }) });
         const data = await res.json();
         setIsHfConnected(!!data.connected);
       } catch (err) {
@@ -466,11 +466,21 @@ export default function ChatInterface({
         content: m.text
       }));
 
-      const resText = await aiService.chat([
-        { role: "system", content: CHAT_PROMPT },
+      const apiMessages = [
         ...chatHistory,
         { role: "user", content: text.trim() }
-      ]);
+      ];
+      const res = await fetch("/api/openrouter/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: apiMessages,
+          options: { model: selectedModel === "large" ? "meta-llama/llama-3.3-70b-instruct" : "meta-llama/llama-3.3-70b-instruct", temperature: 0.7 }
+        })
+      });
+      if (!res.ok) throw new Error("AI request failed");
+      const data = await res.json();
+      const resText = data.choices?.[0]?.message?.content || "";
       
       let replyText = resText || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
@@ -599,406 +609,117 @@ export default function ChatInterface({
             />
           </div>
 
+          
           {/* Bottom Row: Actions & Send */}
-          <div className="flex items-center justify-between mt-2.5 px-4 w-full gap-2 select-none">
-            {/* Thinking Mode & Engine Selection Toggle */}
+          <div className="flex items-center justify-between mt-2.5 w-full gap-2 select-none">
+            <div className="flex gap-2"></div>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(true)}
-                className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-label-medium font-medium transition-all duration-200 border-2 cursor-pointer shrink-0 min-h-[44px]"
-                style={{
-                  backgroundColor: "transparent",
-                  borderColor: "var(--outline-variant)",
-                  color: "var(--text-muted)",
-                  opacity: isGenerating ? 0.5 : 1,
-                  pointerEvents: isGenerating ? 'none' : 'auto'
-                }}
-                disabled={isGenerating}
-                title="Settings"
-              >
-                <MaterialIcon name="settings" className="text-title-large" />
-                <span>Settings</span>
-              </button>
-            </div>
-
-            {/* Settings Modal */}
-            {showSettingsModal && (
-              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
-                <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                  <h4 className="text-lg font-bold text-on-surface mb-4">Settings</h4>
-                  
-                  <div className="mb-6">
-                    <h5 className="text-sm font-semibold text-on-surface-variant mb-2">Thinking Mode</h5>
-                    
-                    {llmStatus && (
-                      <div className="mb-3 text-xs text-on-surface-variant flex flex-col gap-1">
-                        <div>Tiny model: {llmStatus.tiny_model}</div>
-                        <div>Large model: {llmStatus.large_model?.status}</div>
-                      </div>
-                    )}
-                    
-                    <button
-                      onClick={() => {
-                        if (setSelectedModel && isLargeReady !== false) {
-                          setSelectedModel(selectedModel === "large" ? "tiny" : "large");
-                        }
-                      }}
-                      disabled={isLargeReady === false}
-                      className={`w-full px-4 py-2 rounded-lg text-sm font-medium border-2 flex items-center justify-between transition-colors ${selectedModel === "large" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"} ${isLargeReady === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <span>Enable Thinking {isLargeReady === false ? "(not ready yet)" : ""}</span>
-                      {selectedModel === "large" && <MaterialIcon name="check" className="text-on-primary" />}
-                    </button>
-                    <p className="text-xs text-on-surface-variant mt-2 leading-relaxed">
-                      Uses a specialized reasoning model to plan and think step-by-step before answering.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h5 className="text-sm font-semibold text-on-surface-variant mb-2">AI Engine</h5>
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <button
-                        onClick={() => setAiEngine("cloud")}
-                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${aiEngine === "cloud" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
-                      >
-                        Cloud Core
-                      </button>
-                      <button
-                        onClick={() => setAiEngine("local")}
-                        className={`px-3 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${aiEngine === "local" ? "bg-primary text-on-primary border-primary" : "bg-surface-container-low text-on-surface border-outline-variant hover:bg-surface-container"}`}
-                      >
-                        Local WebAI
-                      </button>
-                    </div>
-                    <div className="text-xs text-on-surface-variant leading-relaxed space-y-1.5">
-                      <p><strong>Cloud Core:</strong> Fast, high-performance API hosted remotely.</p>
-                      <p><strong>Local WebAI:</strong> Runs locally in your browser. (Requires downloading models first)</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Right side: Mic, Character count and Send */}
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col items-end mr-1 hidden sm:flex">
-                <span className="text-[10px] text-primary/80 font-mono select-none font-semibold">
-                  ~{Math.ceil(input.trim().length / 4)} tokens
-                </span>
-                <span className="text-[11.5px] text-on-surface-variant font-mono select-none">
-                  {input.length}/1000
-                </span>
-              </div>
-
-              {/* Tap and Hold Microphone Button */}
-              <button
-                type="button"
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-                onMouseLeave={stopRecording}
-                onTouchStart={startRecording}
-                onTouchEnd={stopRecording}
-                disabled={isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
-                  isRecording
-                    ? "bg-rose-500 text-white animate-pulse border-rose-600 shadow-md scale-105"
-                    : isGenerating
-                    ? "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
-                    : "border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
-                }`}
-                style={{ minWidth: "44px", minHeight: "44px" }}
-                title="Tap and hold to speak"
-              >
-                <MaterialIcon name="mic" className={`text-title-large ${isRecording ? "animate-bounce" : ""}`} />
-              </button>
-
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isLoading || isGenerating}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 shrink-0 ${
-                  input.trim() && !isLoading && !isGenerating
-                    ? "border-transparent bg-primary dark:bg-white text-on-primary dark:bg-white dark:text-primary hover:opacity-90 active:scale-95 shadow-sm"
-                    : "border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed opacity-50"
-                }`}
-                style={{ minWidth: "44px", minHeight: "44px" }}
-                title="Send message"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-on-primary shadow-sm hover:shadow-md hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <MaterialIcon name="send" className="text-title-large" />
+                <MaterialIcon name="send" className="text-body-medium ml-1" />
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Footer text */}
-        <div className="text-center mt-2 w-full flex flex-col sm:flex-row items-center justify-between px-4 gap-1.5 sm:gap-0 select-none">
-           <div className="flex items-center gap-1.5">
-             <span className="relative flex h-2 w-2">
-               {isHfConnected === null ? (
-                 <>
-                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                 </>
-               ) : isHfConnected ? (
-                 <>
-                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                 </>
-               ) : (
-                 <>
-                   <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                 </>
-               )}
-             </span>
-             <span className="text-label-small font-normal text-on-surface-variant font-mono">
-               {isHfConnected === null ? "Checking server..." : isHfConnected ? "HuggingFace: Active" : "Offline Mode: Active"}
-             </span>
-           </div>
-
-           <span className="text-[10.5px] text-on-surface-variant font-normal">
-              Assistant can make mistakes. Please check important details.
-           </span>
         </div>
       </div>
     );
   };
 
-  const isInitialState = messages.length === 0;
-
   return (
-    <div className="flex-1 flex h-full overflow-hidden relative bg-background w-full font-sans antialiased">
-      
-      {/* Main Conversation Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
+    <div className="flex flex-col h-full w-full relative bg-background">
+      {/* Header */}
+      <header className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-outline-variant bg-surface/80 backdrop-blur-md z-20">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onToggleDrawer}
+            className="md:hidden w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors border-0 bg-transparent cursor-pointer"
+          >
+            <MaterialIcon name="menu" className="text-title-large" />
+          </button>
+          <div className="w-10 h-10 shrink-0">
+            <AppIcon />
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-title-medium font-bold text-on-surface leading-tight">CodeMind AI</h1>
+            <div className="flex items-center gap-1.5 text-label-small text-on-surface-variant">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              Ready
+            </div>
+          </div>
+        </div>
+      </header>
 
-
-        {/* Scrollable chat body */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto w-full flex flex-col relative scroll-smooth pt-4"
-          onScroll={handleScroll}
-        >
-          <div ref={scrollContentRef} className="w-full max-w-[850px] mx-auto flex flex-col px-4 sm:px-6 pt-4 pb-6 min-h-full">
-              
-              {isInitialState && (
-                <div className="flex flex-col text-left w-full max-w-3xl mx-auto pt-6 min-h-[300px] justify-center">
-                  <AnimatePresence mode="wait">
-                    {introStage === "initial" ? (
-                      <motion.div 
-                        key="greeting"
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -15 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
-                        className="flex flex-col text-left w-full py-8"
-                      >
-                        <div className="mb-6">
-                          <h1 className="text-display-medium sm:text-[44px] font-bold tracking-tight text-on-background mb-1 leading-none font-display">
-                            Hi there, <span className="bg-gradient-to-r from-[var(--color-accent)] to-[#C084FC] bg-clip-text text-transparent font-display">I'm Kamo's AI</span>
-                          </h1>
-                          <h2 className="text-display-medium sm:text-[34px] font-bold tracking-tight text-[#4F46E5] mb-4 leading-tight font-display">
-                            Welcome to my Professional Portfolio
-                          </h2>
-                          <p className="text-on-surface-variant text-[15.5px] font-normal leading-relaxed mb-6">
-                            I am Kamo's custom GPT assistant. Explore Kamo's software engineering projects, technical skills, coursework, and career achievements. Use the quick links below to jump straight to his CV or live projects list, or ask me anything to get started!
-                          </p>
-                          <div className="flex flex-wrap gap-3 select-none">
-                            <button
-                              onClick={onViewCv}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-on-primary font-semibold text-body-medium hover:opacity-90 shadow-md border-0 transition-opacity cursor-pointer min-h-[44px]"
-                            >
-                              <FileText size={16} />
-                              <span>View Interactive CV</span>
-                            </button>
-                            <button
-                              onClick={onViewProjects}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-container-high border-2 border-outline-variant text-on-surface hover:bg-surface-container-highest font-semibold text-body-medium transition-all cursor-pointer min-h-[44px]"
-                            >
-                              <Code2 size={16} />
-                              <span>Explore Projects</span>
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ) : (
-                      <motion.div 
-                        key="options"
-                        initial={{ opacity: 0, scale: 0.97, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{ duration: 0.35, ease: "easeOut" }}
-                        className="flex flex-col text-left w-full"
-                      >
-                        <div className="mb-3.5">
-                          <p className="text-on-surface-variant text-label-medium font-normal uppercase tracking-wider">
-                            Quick Suggestions
-                          </p>
-                        </div>
-
-                        {/* Clean Quick Cards with smooth border-2 radius, pop-ins, clear font weights */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
-                          {PROMPT_SETS[promptSetIndex].slice(0, 3).map((prompt, idx) => (
-                            <motion.button
-                              key={idx}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.25, delay: idx * 0.05 }}
-                              onClick={() => handleSend(prompt.text)}
-                              className="flex items-center gap-3.5 p-3.5 bg-surface border-2 border-outline-variant hover:bg-surface-container-highest transition-all duration-200 active:scale-[0.98] cursor-pointer text-left min-h-[64px] rounded-2xl shadow-sm"
-                            >
-                              <div className="shrink-0 w-8 h-8 rounded-xl bg-primary-container flex items-center justify-center">
-                                {renderPromptIcon(prompt.icon)}
-                              </div>
-                              <span className="text-body-small text-on-background font-normal leading-tight line-clamp-2">
-                                {prompt.text}
-                              </span>
-                            </motion.button>
-                          ))}
-                        </div>
-
-                        <div className="mt-3.5 flex justify-start mb-8">
-                          <button
-                            onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                            className="flex items-center gap-1.5 text-[12.5px] text-on-surface-variant hover:text-on-background font-normal transition-colors bg-transparent border-0 cursor-pointer p-2.5 min-h-[44px]"
-                          >
-                            <MaterialIcon name="refresh" className="text-body-medium" />
-                            <span>Refresh Suggestions</span>
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto w-full relative" ref={scrollContainerRef}>
+        <div className="flex flex-col gap-5 p-4 sm:p-6 w-full max-w-3xl mx-auto">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="w-20 h-20 mb-6 relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-3xl rotate-6 animate-pulse"></div>
+                <div className="absolute inset-0 bg-secondary/20 rounded-3xl -rotate-6 animate-pulse delay-75"></div>
+                <div className="relative bg-surface border-2 border-outline-variant rounded-2xl w-full h-full flex items-center justify-center shadow-lg">
+                  <MaterialIcon name="smart_toy" className="text-4xl text-primary" />
                 </div>
-              )}
-              
-              {messages.length > 0 && (
-                <div className="flex flex-col w-full relative">
-                  {messages.map((msg, index) => {
-                    const isUser = msg.role === "user";
-                    const isFirstInGroup = index === 0 || messages[index - 1].role !== msg.role;
-
-                    return (
-                      <div 
-                        id={`message-${msg.id}`}
-                        key={msg.id} 
-                        className={`flex w-full ${isUser ? "justify-end" : "justify-start"} ${isFirstInGroup ? "mt-6" : "mt-2"}`}
-                      >
-                        {isUser ? (
-                          <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%] min-w-0">
-                            <div 
-                              className="text-on-background px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-2xl rounded-tr-sm border-2 shadow-sm max-w-full overflow-hidden"
-                              style={{ 
-                                backgroundColor: "var(--color-accent-light)", 
-                                borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)" 
-                              }}
-                            >
-                              <p className="text-[14.5px] sm:text-title-small whitespace-pre-wrap font-normal leading-relaxed break-words" style={{ wordBreak: "break-word" }}>
-                                {msg.text}
-                              </p>
-                              
-                              {msg.attachments && msg.attachments.length > 0 && (
-                                <div className="mt-3 flex flex-col gap-2 w-full max-w-xs">
-                                  {msg.attachments.map((attachment, attIdx) => {
-                                    const isImage = attachment.type.startsWith("image/");
-                                    return (
-                                      <div key={attIdx} className="w-full">
-                                        {isImage && attachment.dataUrl ? (
-                                          <img 
-                                            src={attachment.dataUrl} 
-                                            alt={attachment.name} 
-                                            className="max-w-full max-h-[160px] object-cover rounded-2xl border-2 border-black/10 shadow-sm" 
-                                            referrerPolicy="no-referrer"
-                                          />
-                                        ) : (
-                                          <div className="flex items-center gap-2.5 px-4 py-2 bg-surface/60 border-2 border-black/5 rounded-2xl select-none text-left">
-                                            <MaterialIcon name="description" className="text-title-medium text-primary shrink-0" />
-                                            <div className="flex flex-col min-w-0">
-                                              <span className="text-label-medium font-normal text-on-surface truncate max-w-[160px]">{attachment.name}</span>
-                                              <span className="text-[10px] text-on-surface-variant font-mono">{(attachment.size / 1024).toFixed(1)} KB</span>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                            {msg.status === "error" && (
-                              <button 
-                                onClick={() => handleSend(msg.text)} 
-                                className="mt-1.5 text-red-500 hover:text-red-600 flex items-center gap-1.5 text-label-medium font-normal bg-transparent border-0 cursor-pointer min-h-[44px]"
-                              >
-                                <MaterialIcon name="error" className="text-body-medium text-red-500 mr-1" />
-                                <span>Failed to send. Click to retry</span>
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          <AIMessage
-                            msg={msg}
-                            isFirstInGroup={isFirstInGroup}
-                            onStreamingComplete={(id) => {
-                              setMessages(prev => prev.map(m => m.id === id ? { ...m, status: "sent" } : m));
-                            }}
-                            renderUIBlock={(uiBlock) => (
-                              <>
-                                {uiBlock === "projects" && <ProjectCards />}
-                                {uiBlock === "skills" && <SkillChips />}
-                                {uiBlock === "cv" && <DownloadCV onViewCv={onViewCv} />}
-                              </>
-                            )}
-                          />
+              </div>
+              <h2 className="text-headline-medium font-bold text-on-surface mb-3 tracking-tight">How can I help you?</h2>
+              <p className="text-body-large text-on-surface-variant max-w-md mx-auto mb-8 font-normal leading-relaxed">
+                I'm Kamo's dedicated AI assistant. I can explain his projects, detail his technical skills, or help you solve coding and math problems.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {messages.map((msg, index) => {
+                const isUser = msg.role === "user";
+                const isFirstInGroup = index === 0 || messages[index - 1].role !== msg.role;
+                return (
+                  <div key={msg.id} className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+                    {isUser ? (
+                      <div className="flex flex-col items-end max-w-[85%]">
+                        <div className="text-on-surface px-5 py-3 rounded-3xl rounded-tr-sm bg-surface-container-high max-w-xl shadow-sm">
+                          <p className="text-body-medium whitespace-pre-wrap font-normal leading-relaxed break-words">
+                            {msg.text}
+                          </p>
+                        </div>
+                        {msg.status === "error" && (
+                          <button
+                            onClick={() => handleSend(msg.text)}
+                            className="mt-1 text-red-500 flex items-center gap-1 text-label-small font-normal bg-transparent border-0 cursor-pointer min-h-[44px]"
+                          >
+                            <MaterialIcon name="error" className="text-body-medium text-red-500 mr-1" /> Retry
+                          </button>
                         )}
                       </div>
-                    );
-                  })}
-                  <div ref={endOfMessagesRef} className="h-4" />
-                </div>
-              )}
+                    ) : (
+                      <AIMessage
+                        msg={msg}
+                        isFirstInGroup={isFirstInGroup}
+                        onStreamingComplete={(id) => {
+                          setMessages(prev => prev.map(m => m.id === id ? { ...m, status: "sent" } : m));
+                        }}
+                        renderUIBlock={(uiBlock) => (
+                          <>
+                            {uiBlock === "projects" && <ProjectCards />}
+                            {uiBlock === "skills" && <SkillChips />}
+                            {uiBlock === "cv" && <DownloadCV onViewCv={onViewCv} />}
+                          </>
+                        )}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+              <div ref={endOfMessagesRef} className="h-4" />
             </div>
+          )}
         </div>
+      </div>
 
-        {/* Custom Composer fixed at bottom */}
-        <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-background border-t-2 border-outline-variant relative">
-          {/* Floating Scroll Controls */}
-          <div className="absolute top-0 left-0 right-0 -translate-y-full flex justify-center pointer-events-none z-20 pb-3 gap-3">
-            {(!isAtBottom || messages.some(m => m.status === 'streaming')) && (
-              <div className="pointer-events-auto flex gap-2">
-                {messages.length > 0 && messages[messages.length - 1].role === 'agent' && (
-                  <button
-                    onClick={() => {
-                      const streamingMsg = [...messages].reverse().find(m => m.role === 'agent');
-                      if (streamingMsg) {
-                        const el = document.getElementById(`msg-${streamingMsg.id}`);
-                        if (el && scrollContainerRef.current) {
-                          scrollContainerRef.current.scrollTo({
-                            top: el.offsetTop - 16,
-                            behavior: 'smooth'
-                          });
-                        }
-                      }
-                    }}
-                    className="flex items-center gap-1 bg-surface border-2 border-outline-variant rounded-full px-4 py-1.5 shadow-md text-primary hover:bg-surface-container-high transition-all text-label-medium font-normal"
-                  >
-                    <MaterialIcon name="arrow_upward" className="text-body-small" />
-                    Response Start
-                  </button>
-                )}
-                {!isAtBottom && (
-                  <button
-                    onClick={() => scrollToBottom('smooth')}
-                    className="flex items-center justify-center w-8 h-8 bg-surface border-2 border-outline-variant rounded-full shadow-md text-primary hover:bg-surface-container-high transition-all"
-                  >
-                    <MaterialIcon name="arrow_downward" className="text-body-small" />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {renderComposer(true)}
-        </div>
-
+      {/* Custom Composer fixed at bottom */}
+      <div className="w-full shrink-0 pt-4 pb-3 sm:pb-4 px-4 sm:px-6 flex justify-center z-10 bg-background border-t-2 border-outline-variant relative">
+        {renderComposer(true)}
       </div>
     </div>
   );

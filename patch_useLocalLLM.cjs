@@ -3,7 +3,7 @@ const content = fs.readFileSync('src/hooks/useLocalLLM.ts', 'utf8');
 
 let newContent = content.replace(
   'const res = await fetch("/api/hf-health");',
-  'const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "anthropic/claude-3.5-sonnet" }) });'
+  'const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "google/gemini-2.5-flash" }) });'
 );
 
 newContent = newContent.replace(
