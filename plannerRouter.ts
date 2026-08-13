@@ -182,12 +182,14 @@ Return a strict JSON object with EXACTLY this structure:
           { role: "user", content: prompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.1
+        temperature: 0.1,
+        max_tokens: 150
       })
     });
 
     if (!response.ok) {
-      throw new Error("OpenRouter API error");
+      const errText = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} ${errText}`);
     }
 
     const data = await response.json();
@@ -221,7 +223,7 @@ Return a strict JSON object with EXACTLY this structure:
     }
 
     const newNote = {
-      id: require('crypto').randomUUID(),
+      id: uuidv4(),
       text: result.task,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

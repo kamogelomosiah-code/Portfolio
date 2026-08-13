@@ -358,7 +358,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                     ${isSelected
                       ? 'bg-primary/15 border-primary shadow-sm text-primary font-semibold'
                       : isCurrentMonthDay
-                        ? 'bg-surface-container-low hover:bg-surface-container border-outline-variant/40 text-on-surface'
+                        ? `bg-surface-container-low hover:bg-surface-container ${dayNotes.length > 0 ? 'border-primary/60 shadow-sm' : 'border-outline-variant/40'} text-on-surface`
                         : 'bg-surface/30 border-transparent text-on-surface-variant/40 opacity-50 hover:opacity-80'
                     }
                   `}
@@ -366,26 +366,21 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                   <div className="flex items-center justify-between w-full">
                     <span
                       className={`
-                        text-label-medium sm:text-body-medium rounded-full w-6 h-6 flex items-center justify-center font-mono
+                        text-label-medium sm:text-body-medium w-6 h-6 flex items-center justify-center font-mono rounded-full
                         ${isTodayDay ? 'bg-primary text-on-primary font-bold shadow-sm' : ''}
+                        ${!isTodayDay && dayNotes.length > 0 ? 'border border-primary text-primary font-medium' : ''}
                       `}
                     >
                       {format(day, 'd')}
                     </span>
-                    {dayNotes.length > 0 && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-medium">
-                        {dayNotes.length}
-                      </span>
-                    )}
                   </div>
-
                   {/* Note preview badge/snippet */}
                   {dayNotes.length > 0 && (
                     <div className="mt-1 flex flex-col gap-0.5 overflow-hidden">
                       {dayNotes.slice(0, 2).map((n, i) => (
                         <div
                           key={i}
-                          className="text-[10.5px] leading-tight line-clamp-1 px-1 py-0.5 rounded bg-surface-container-high/60 text-on-surface-variant"
+                          className="text-[10.5px] leading-tight line-clamp-1 px-1 py-0.5 rounded border border-outline-variant/60 text-on-surface-variant"
                         >
                           {n.text}
                         </div>
