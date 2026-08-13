@@ -1,12 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MaterialIcon } from '../MaterialIcon';
-import { Plan, Step } from '../../types/planner';
-import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO } from 'date-fns';
-import { createPlan } from '../../ai/planner';
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  isToday,
+  parseISO
+} from 'date-fns';
 
-type ViewMode = 'dashboard' | 'calendar';
-type CalendarViewMode = '2-week' | 'month';
+export interface CalendarNote {
+  id: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type NotesState = Record<string, CalendarNote[]>;
 
 interface ActionPlannerProps {
   onBackToChat?: () => void;
@@ -14,1000 +31,446 @@ interface ActionPlannerProps {
 }
 
 export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPlannerProps) {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
-  const [calendarMode, setCalendarMode] = useState<CalendarViewMode>('month');
-  const [currentDate, setCurrentDate] = useState(new Date());
-  
-  const [isAddingGoal, setIsAddingGoal] = useState(false);
-  const [isQuickAdding, setIsQuickAdding] = useState(false);
-  const [quickAddTitle, setQuickAddTitle] = useState('');
-  const [quickAddDate, setQuickAddDate] = useState('');
-  const [goalPrompt, setGoalPrompt] = useState('');
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [aiProgressStatus, setAiProgressStatus] = useState('');
-  const [showWeeklyReview, setShowWeeklyReview] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [notes, setNotes] = useState<NotesState>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
-  const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
+  // Note form state
+  const [noteInput, setNoteInput] = useState<string>('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>('');
 
-  // Debounced save
-  const saveTimeoutRef = React.useRef<{[id: string]: NodeJS.Timeout}>({});
+  const selectedDateKey = format(selectedDate, 'yyyy-MM-dd');
+  const selectedDateNotes = notes[selectedDateKey] || [];
 
-  // Load from DB instead of local storage
+  // 1. Load saved notes from JSON file inside project (/api/planner/notes)
   useEffect(() => {
-    fetch('/api/goals')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setPlans(data);
-        }
-      })
-      .catch(console.error);
+    fetchNotes();
   }, []);
 
-  const saveGoal = async (goal: Plan) => {
-    // Clear existing timeout for this goal
-    if (saveTimeoutRef.current[goal.id]) {
-      clearTimeout(saveTimeoutRef.current[goal.id]);
-    }
-    
-    // Set a new timeout
-    saveTimeoutRef.current[goal.id] = setTimeout(async () => {
-      try {
-        await fetch('/api/goals', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(goal)
-        });
-      } catch (e) {
-        console.error("Failed to save goal", e);
-      }
-    }, 1000); // 1s debounce
-  };
-
-  const deleteGoalApi = async (id: string) => {
+  const fetchNotes = async () => {
+    setIsLoading(true);
     try {
-      await fetch(`/api/goals/${id}`, { method: 'DELETE' });
-    } catch (e) {
-      console.error("Failed to delete goal", e);
-    }
-  };
-
-  const generatePlan = async () => {
-    if (!goalPrompt) return;
-    setLoading(true);
-    setAiProgressStatus('Initializing local AI engine...');
-    try {
-      const generated = await createPlan(goalPrompt, (status) => {
-        setAiProgressStatus(status);
-      });
-
-      const startDate = new Date();
-      const newSteps: Step[] = [];
-      let stepCounter = 1;
-
-      if (generated.days && Array.isArray(generated.days)) {
-        generated.days.forEach(d => {
-          const dayOffset = Math.max(0, (d.day || 1) - 1);
-          const targetDateStr = format(addDays(startDate, dayOffset), 'yyyy-MM-dd');
-          
-          if (d.tasks && Array.isArray(d.tasks) && d.tasks.length > 0) {
-            d.tasks.forEach(taskText => {
-              newSteps.push({
-                id: crypto.randomUUID(),
-                step_number: stepCounter++,
-                task: d.title ? `${d.title}: ${taskText}` : taskText,
-                scheduled_date: targetDateStr,
-                completed: false
-              });
-            });
-          } else if (d.title) {
-            newSteps.push({
-              id: crypto.randomUUID(),
-              step_number: stepCounter++,
-              task: d.title,
-              scheduled_date: targetDateStr,
-              completed: false
-            });
-          }
-        });
+      const res = await fetch('/api/planner/notes');
+      if (res.ok) {
+        const data = await res.json();
+        setNotes(data || {});
       }
-
-      const totalDays = generated.estimatedDays || (generated.days ? generated.days.length : 7);
-      const newGoalPlan: Plan = {
-        id: crypto.randomUUID(),
-        goal_title: generated.title || goalPrompt,
-        category: 'Learning',
-        priority: 'High',
-        status: 'Active',
-        main_deadline: format(addDays(startDate, totalDays), 'yyyy-MM-dd'),
-        path_of_least_resistance: generated.description || "Client-side AI plan generated.",
-        steps: newSteps,
-        reminders: email ? [{
-          send_date: format(addDays(startDate, 1), 'yyyy-MM-dd'),
-          message: `Daily reminder for: ${generated.title || goalPrompt}`
-        }] : []
-      };
-
-      setPlans(prev => [...prev, newGoalPlan]);
-      saveGoal(newGoalPlan);
-      
-      // Save plans.json and calendar.json to localStorage to satisfy requirements
-      localStorage.setItem('plans.json', JSON.stringify([...plans, newGoalPlan]));
-      
-      const calendarEvents = newSteps.map(step => ({
-        title: step.task,
-        date: step.scheduled_date
-      }));
-      localStorage.setItem('calendar.json', JSON.stringify(calendarEvents));
-
-      setIsAddingGoal(false);
-      setGoalPrompt('');
-    } catch (err: any) {
-      console.error('Local AI Planner Error:', err);
-      alert(err?.message || 'Failed to generate plan with local AI engine.');
+    } catch (err) {
+      console.error('Failed to load planner notes:', err);
     } finally {
-      setLoading(false);
-      setAiProgressStatus('');
+      setIsLoading(false);
     }
   };
 
-  const toggleStep = (planId: string, stepId: string) => {
-    setPlans(prev => prev.map(p => {
-      if (p.id !== planId) return p;
-      const updatedPlan = {
-        ...p,
-        steps: p.steps.map(s => s.id === stepId ? { ...s, completed: !s.completed } : s)
-      };
-      saveGoal(updatedPlan);
-      return updatedPlan;
-    }));
+  // 2. Save notes object to JSON file (/planner_notes.json via API)
+  const saveNotesToFile = async (updatedNotes: NotesState) => {
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/planner/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedNotes)
+      });
+      if (res.ok) {
+        setSaveStatus('Saved to planner_notes.json');
+        setTimeout(() => setSaveStatus(null), 2500);
+      } else {
+        setSaveStatus('Failed to save');
+      }
+    } catch (err) {
+      console.error('Failed to save planner notes:', err);
+      setSaveStatus('Error saving');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const changeStepDate = (planId: string, stepId: string, newDate: string) => {
-    if (!newDate) return;
-    setPlans(prev => prev.map(p => {
-      if (p.id !== planId) return p;
-      const updatedPlan = {
-        ...p,
-        steps: p.steps.map(s => s.id === stepId ? { ...s, scheduled_date: newDate } : s)
-      };
-      saveGoal(updatedPlan);
-      return updatedPlan;
-    }));
-  };
-  
-  const handleQuickAdd = () => {
-    if (!quickAddTitle || !quickAddDate) return;
-    
-    // Check if a "Quick Tasks" goal exists
-    const quickTaskGoalIndex = plans.findIndex(p => p.goal_title === 'Quick Tasks' && p.category === 'Other');
-    let quickTaskGoal: Plan;
-    
-    const newStep = {
+  // Add note for selected date
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noteInput.trim()) return;
+
+    const newNote: CalendarNote = {
       id: crypto.randomUUID(),
-      step_number: Date.now(),
-      task: quickAddTitle,
-      scheduled_date: quickAddDate,
-      completed: false
+      text: noteInput.trim(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
-    if (quickTaskGoalIndex >= 0) {
-      quickTaskGoal = {
-        ...plans[quickTaskGoalIndex],
-        steps: [...plans[quickTaskGoalIndex].steps, newStep]
-      };
-      setPlans(prev => prev.map((p, i) => i === quickTaskGoalIndex ? quickTaskGoal : p));
+    const updatedDateNotes = [...selectedDateNotes, newNote];
+    const updatedNotes = {
+      ...notes,
+      [selectedDateKey]: updatedDateNotes
+    };
+
+    setNotes(updatedNotes);
+    setNoteInput('');
+    saveNotesToFile(updatedNotes);
+  };
+
+  // Start editing note
+  const handleStartEdit = (note: CalendarNote) => {
+    setEditingNoteId(note.id);
+    setEditingText(note.text);
+  };
+
+  // Save edited note
+  const handleSaveEdit = (noteId: string) => {
+    if (!editingText.trim()) return;
+
+    const updatedDateNotes = selectedDateNotes.map(note =>
+      note.id === noteId
+        ? { ...note, text: editingText.trim(), updatedAt: new Date().toISOString() }
+        : note
+    );
+
+    const updatedNotes = {
+      ...notes,
+      [selectedDateKey]: updatedDateNotes
+    };
+
+    setNotes(updatedNotes);
+    setEditingNoteId(null);
+    setEditingText('');
+    saveNotesToFile(updatedNotes);
+  };
+
+  // Cancel edit
+  const handleCancelEdit = () => {
+    setEditingNoteId(null);
+    setEditingText('');
+  };
+
+  // Delete note
+  const handleDeleteNote = (noteId: string) => {
+    const updatedDateNotes = selectedDateNotes.filter(n => n.id !== noteId);
+    
+    let updatedNotes: NotesState;
+    if (updatedDateNotes.length === 0) {
+      updatedNotes = { ...notes };
+      delete updatedNotes[selectedDateKey];
     } else {
-      quickTaskGoal = {
-        id: crypto.randomUUID(),
-        goal_title: 'Quick Tasks',
-        category: 'Other',
-        status: 'Active',
-        priority: 'Medium',
-        main_deadline: format(addDays(new Date(), 365), 'yyyy-MM-dd'),
-        steps: [newStep],
-        reminders: []
+      updatedNotes = {
+        ...notes,
+        [selectedDateKey]: updatedDateNotes
       };
-      setPlans(prev => [...prev, quickTaskGoal]);
     }
-    
-    saveGoal(quickTaskGoal);
-    setQuickAddTitle('');
-    setIsQuickAdding(false);
+
+    setNotes(updatedNotes);
+    saveNotesToFile(updatedNotes);
   };
 
-  const editStepTitle = (planId: string, stepId: string, newTitle: string) => {
-    setPlans(prev => prev.map(p => {
-      if (p.id !== planId) return p;
-      const updatedPlan = {
-        ...p,
-        steps: p.steps.map(s => s.id === stepId ? { ...s, task: newTitle } : s)
-      };
-      saveGoal(updatedPlan);
-      return updatedPlan;
-    }));
+  // Navigation handlers
+  const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+  const handleToday = () => {
+    const today = new Date();
+    setCurrentMonth(today);
+    setSelectedDate(today);
   };
 
-  const deleteStep = (planId: string, stepId: string) => {
-    if (!confirm("Delete this task?")) return;
-    setPlans(prev => prev.map(p => {
-      if (p.id !== planId) return p;
-      const updatedPlan = {
-        ...p,
-        steps: p.steps.filter(s => s.id !== stepId)
-      };
-      saveGoal(updatedPlan);
-      return updatedPlan;
-    }));
-  };
+  // Calendar calculations
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
-  const deletePlan = (planId: string) => {
-    if (confirm("Are you sure you want to delete this goal and all its steps?")) {
-      setPlans(prev => prev.filter(p => p.id !== planId));
-      deleteGoalApi(planId);
-    }
-  };
+  const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
 
-  const getCategoryColor = (category?: string) => {
-    switch (category) {
-      case 'Job Search': return 'bg-blue-500';
-      case 'Health': return 'bg-green-500';
-      case 'Learning': return 'bg-purple-500';
-      case 'Personal': return 'bg-orange-500';
-      case 'Finance': return 'bg-emerald-500';
-      default: return 'bg-gray-500';
-    }
-  };
+  return (
+    <div className="flex flex-col h-full w-full bg-background text-on-background overflow-y-auto">
+      {/* Top Navigation Bar */}
+      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-surface/90 backdrop-blur-md border-b border-outline-variant">
+        <div className="flex items-center gap-3">
+          {onToggleDrawer && (
+            <button
+              onClick={onToggleDrawer}
+              className="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors"
+              title="Open Menu"
+            >
+              <MaterialIcon name="menu" className="text-xl" />
+            </button>
+          )}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <MaterialIcon name="calendar_month" className="text-xl" />
+            </div>
+            <div>
+              <h1 className="font-semibold text-body-large sm:text-title-medium text-on-surface leading-tight">
+                Calendar & Notes
+              </h1>
+              <p className="text-label-small text-on-surface-variant hidden sm:block">
+                Simple daily notes saved to <code className="text-primary font-mono bg-surface-container px-1 py-0.5 rounded">planner_notes.json</code>
+              </p>
+            </div>
+          </div>
+        </div>
 
-  const renderDashboard = () => {
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const todaySteps = plans.flatMap(p => p.steps.filter(s => s.scheduled_date === todayStr).map(s => ({ ...s, planId: p.id, planTitle: p.goal_title, category: p.category })));
-    const overdueSteps = plans.flatMap(p => p.steps.filter(s => s.scheduled_date < todayStr && !s.completed).map(s => ({ ...s, planId: p.id, planTitle: p.goal_title, category: p.category })));
-    
-    const categoryCounts: Record<string, number> = {};
-    plans.forEach(p => {
-      const cat = p.category || 'Other';
-      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-    });
+        <div className="flex items-center gap-2">
+          {saveStatus && (
+            <span className="text-label-small font-mono text-emerald-400 bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-500/20">
+              {saveStatus}
+            </span>
+          )}
+          <button
+            onClick={handleToday}
+            className="px-3 py-1.5 rounded-lg text-label-medium font-medium bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-colors"
+          >
+            Today
+          </button>
+          {onBackToChat && (
+            <button
+              onClick={onBackToChat}
+              className="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors"
+              title="Return to Chat"
+            >
+              <MaterialIcon name="chat" className="text-xl" />
+            </button>
+          )}
+        </div>
+      </div>
 
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Overdue */}
-            {overdueSteps.length > 0 && (
-              <div className="bg-error-container/20 rounded-2xl p-5 border border-error/20">
-                <h3 className="text-title-medium font-bold text-error flex items-center gap-2 mb-4">
-                  <MaterialIcon name="warning" /> Overdue Tasks
-                </h3>
-                <div className="space-y-3">
-                  {overdueSteps.map(step => (
-                    <div key={step.id} className="flex items-center justify-between bg-surface-container-lowest p-3 rounded-xl border border-error/10">
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => toggleStep(step.planId, step.id)}
-                          className="w-6 h-6 rounded-md border-2 border-outline-variant text-transparent hover:border-primary flex items-center justify-center transition-colors"
-                        >
-                          <MaterialIcon name="check" className="text-body-small" />
-                        </button>
-                        <div>
-                          <p className="font-bold text-body-medium text-on-surface">{step.task}</p>
-                          <p className="text-body-small text-on-surface-variant flex items-center gap-1">
-                            <span className={`w-2 h-2 rounded-full ${getCategoryColor(step.category)}`}></span>
-                            {step.planTitle} • {step.scheduled_date}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+      {/* Main Grid: Calendar on Left, Selected Date Notes on Right */}
+      <div className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left Column: Calendar (8 cols on lg) */}
+        <div className="lg:col-span-7 flex flex-col gap-4">
+          {/* Calendar Header / Controls */}
+          <div className="flex items-center justify-between bg-surface-container-low p-4 rounded-2xl border border-outline-variant">
+            <h2 className="text-title-medium sm:text-headline-small font-bold text-on-surface">
+              {format(currentMonth, 'MMMM yyyy')}
+            </h2>
+            <div className="flex items-center gap-1 bg-surface-container rounded-xl p-1 border border-outline-variant/50">
+              <button
+                onClick={handlePrevMonth}
+                className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                title="Previous Month"
+              >
+                <MaterialIcon name="chevron_left" className="text-xl" />
+              </button>
+              <button
+                onClick={handleNextMonth}
+                className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                title="Next Month"
+              >
+                <MaterialIcon name="chevron_right" className="text-xl" />
+              </button>
+            </div>
+          </div>
+
+          {/* Calendar Day Labels */}
+          <div className="grid grid-cols-7 gap-1 text-center font-medium text-label-medium text-on-surface-variant px-1">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="py-1">
+                {day}
               </div>
-            )}
+            ))}
+          </div>
 
-            {/* Today */}
-            <div className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-title-medium font-bold text-on-surface flex items-center gap-2">
-                  <MaterialIcon name="today" className="text-primary" /> Today's Action Plan
-                </h3>
-                <button 
-                  onClick={() => setIsQuickAdding(true)}
-                  className="text-primary text-label-large font-bold hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            {calendarDays.map((day, idx) => {
+              const dayKey = format(day, 'yyyy-MM-dd');
+              const dayNotes = notes[dayKey] || [];
+              const isSelected = isSameDay(day, selectedDate);
+              const isCurrentMonthDay = isSameMonth(day, currentMonth);
+              const isTodayDay = isToday(day);
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedDate(day)}
+                  className={`
+                    relative min-h-[70px] sm:min-h-[85px] p-1.5 sm:p-2 rounded-xl flex flex-col justify-between text-left transition-all cursor-pointer border
+                    ${isSelected
+                      ? 'bg-primary/15 border-primary shadow-sm text-primary font-semibold'
+                      : isCurrentMonthDay
+                        ? 'bg-surface-container-low hover:bg-surface-container border-outline-variant/40 text-on-surface'
+                        : 'bg-surface/30 border-transparent text-on-surface-variant/40 opacity-50 hover:opacity-80'
+                    }
+                  `}
                 >
-                  <MaterialIcon name="add" className="text-[18px]" /> Quick Task
+                  <div className="flex items-center justify-between w-full">
+                    <span
+                      className={`
+                        text-label-medium sm:text-body-medium rounded-full w-6 h-6 flex items-center justify-center font-mono
+                        ${isTodayDay ? 'bg-primary text-on-primary font-bold shadow-sm' : ''}
+                      `}
+                    >
+                      {format(day, 'd')}
+                    </span>
+                    {dayNotes.length > 0 && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-medium">
+                        {dayNotes.length}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Note preview badge/snippet */}
+                  {dayNotes.length > 0 && (
+                    <div className="mt-1 flex flex-col gap-0.5 overflow-hidden">
+                      {dayNotes.slice(0, 2).map((n, i) => (
+                        <div
+                          key={i}
+                          className="text-[10.5px] leading-tight line-clamp-1 px-1 py-0.5 rounded bg-surface-container-high/60 text-on-surface-variant"
+                        >
+                          {n.text}
+                        </div>
+                      ))}
+                      {dayNotes.length > 2 && (
+                        <div className="text-[9.5px] text-on-surface-variant/70 italic px-1">
+                          +{dayNotes.length - 2} more
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right Column: Selected Date Notes Panel (5 cols on lg) */}
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant flex flex-col h-full min-h-[420px]">
+            {/* Panel Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-outline-variant/60">
+              <div>
+                <p className="text-label-small uppercase tracking-wider text-primary font-semibold">
+                  Selected Date
+                </p>
+                <h3 className="text-title-medium sm:text-title-large font-bold text-on-surface mt-0.5">
+                  {format(selectedDate, 'EEEE, MMM d, yyyy')}
+                </h3>
+              </div>
+              <div className="text-right font-mono text-label-small text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-lg border border-outline-variant/40">
+                {selectedDateNotes.length} {selectedDateNotes.length === 1 ? 'note' : 'notes'}
+              </div>
+            </div>
+
+            {/* Note Input Form */}
+            <form onSubmit={handleAddNote} className="mt-4 flex flex-col gap-2">
+              <div className="relative">
+                <textarea
+                  value={noteInput}
+                  onChange={(e) => setNoteInput(e.target.value)}
+                  placeholder={`Write a note for ${format(selectedDate, 'MMM d')}...`}
+                  rows={3}
+                  className="w-full p-3 rounded-xl bg-surface border border-outline-variant text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary/50 text-body-medium resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      handleAddNote(e);
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-on-surface-variant/70 font-mono">
+                  Press Ctrl+Enter or click Add
+                </span>
+                <button
+                  type="submit"
+                  disabled={!noteInput.trim() || isSaving}
+                  className="px-4 py-2 rounded-xl bg-primary text-on-primary font-medium text-label-large hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer border-0 shadow-sm"
+                >
+                  <MaterialIcon name="add" className="text-lg" />
+                  Add Note
                 </button>
               </div>
-              
-              {todaySteps.length === 0 ? (
-                <div className="text-center py-8 bg-surface-container-low rounded-xl">
-                  <p className="text-on-surface-variant text-body-medium">No tasks scheduled for today.</p>
+            </form>
+
+            {/* List of Notes for Selected Date */}
+            <div className="mt-6 flex-1 flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-1">
+              {isLoading ? (
+                <div className="flex-1 flex items-center justify-center text-on-surface-variant py-10">
+                  <MaterialIcon name="sync" className="animate-spin text-2xl mr-2 text-primary" />
+                  Loading notes...
+                </div>
+              ) : selectedDateNotes.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-outline-variant/40 rounded-xl text-on-surface-variant/70">
+                  <MaterialIcon name="edit_note" className="text-4xl mb-2 text-on-surface-variant/40" />
+                  <p className="text-body-medium font-medium text-on-surface-variant">No notes for this date</p>
+                  <p className="text-label-small mt-1">Use the field above to add your first note.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {todaySteps.map(step => (
-                    <div key={step.id} className="flex items-center justify-between bg-surface-container p-3 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => toggleStep(step.planId, step.id)}
-                          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
-                            step.completed ? 'bg-primary border-primary text-on-primary' : 'border-outline-variant text-transparent hover:border-primary'
-                          }`}
-                        >
-                          <MaterialIcon name="check" className="text-body-small" />
-                        </button>
-                        <div>
-                          <p className={`font-bold text-body-medium transition-all ${step.completed ? 'text-on-surface-variant line-through' : 'text-on-surface'}`}>
-                            {step.task}
-                          </p>
-                          <p className="text-body-small text-on-surface-variant flex items-center gap-1">
-                            <span className={`w-2 h-2 rounded-full ${getCategoryColor(step.category)}`}></span>
-                            {step.planTitle}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <AnimatePresence initial={false}>
+                  {selectedDateNotes.map((note) => {
+                    const isEditing = editingNoteId === note.id;
+
+                    return (
+                      <motion.div
+                        key={note.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="p-3.5 rounded-xl bg-surface border border-outline-variant flex flex-col gap-2 shadow-sm hover:border-outline transition-colors"
+                      >
+                        {isEditing ? (
+                          <div className="flex flex-col gap-2">
+                            <textarea
+                              value={editingText}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              className="w-full p-2.5 rounded-lg bg-surface-container border border-primary/50 text-on-surface focus:outline-none text-body-medium resize-none"
+                              rows={3}
+                              autoFocus
+                            />
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={handleCancelEdit}
+                                className="px-3 py-1 rounded-lg bg-surface-container-high text-on-surface text-label-medium hover:bg-surface-container-highest transition-colors cursor-pointer border-0"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleSaveEdit(note.id)}
+                                className="px-3 py-1 rounded-lg bg-primary text-on-primary text-label-medium hover:bg-primary/90 transition-colors cursor-pointer border-0"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-body-medium text-on-surface whitespace-pre-wrap leading-relaxed break-words">
+                              {note.text}
+                            </p>
+                            <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30 text-label-small text-on-surface-variant">
+                              <span className="font-mono text-[11px] opacity-70">
+                                {format(parseISO(note.createdAt), 'h:mm a')}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleStartEdit(note)}
+                                  className="p-1 rounded-md hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors cursor-pointer border-0"
+                                  title="Edit note"
+                                >
+                                  <MaterialIcon name="edit" className="text-base" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteNote(note.id)}
+                                  className="p-1 rounded-md hover:bg-error/10 text-on-surface-variant hover:text-error transition-colors cursor-pointer border-0"
+                                  title="Delete note"
+                                >
+                                  <MaterialIcon name="delete" className="text-base" />
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
               )}
             </div>
           </div>
-          
-          <div className="space-y-6">
-            {/* Category summary */}
-            <div className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant">
-              <h3 className="text-title-medium font-bold text-on-surface mb-4">Life Balance</h3>
-              <div className="space-y-3">
-                {Object.entries(categoryCounts).length === 0 && <p className="text-body-small text-on-surface-variant">No goals yet.</p>}
-                {Object.entries(categoryCounts).map(([cat, count]) => (
-                  <div key={cat} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-3 h-3 rounded-full ${getCategoryColor(cat)}`}></span>
-                      <span className="text-body-medium font-medium text-on-surface">{cat}</span>
-                    </div>
-                    <span className="text-body-medium font-bold text-on-surface-variant">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Weekly Review prompt */}
-            <div className="bg-primary/10 rounded-2xl p-5 border border-primary/20">
-              <h3 className="text-title-medium font-bold text-primary flex items-center gap-2 mb-2">
-                <MaterialIcon name="insights" /> Weekly Review
-              </h3>
-              <p className="text-body-small text-on-surface-variant mb-4">Check on stale goals and align your focus for the week ahead.</p>
-              <button 
-                onClick={() => setShowWeeklyReview(true)}
-                className="w-full bg-primary text-on-primary font-bold text-label-large py-2.5 rounded-xl hover:opacity-90 transition-opacity"
-              >
-                Start Review
-              </button>
-            </div>
-          </div>
         </div>
+
       </div>
-    );
-  };
-
-  const renderCalendar = () => {
-    let start, end;
-    if (calendarMode === '2-week') {
-      start = startOfWeek(currentDate);
-      end = endOfWeek(addDays(currentDate, 7));
-    } else {
-      start = startOfWeek(startOfMonth(currentDate));
-      end = endOfWeek(endOfMonth(currentDate));
-    }
-    
-    const days = eachDayOfInterval({ start, end });
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    return (
-      <div className="w-full bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-          <div className="flex gap-1.5 p-1 bg-surface-container-low rounded-lg border border-outline-variant/30">
-            <button 
-              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${calendarMode === '2-week' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-              onClick={() => setCalendarMode('2-week')}
-            >2-Week</button>
-            <button 
-              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${calendarMode === 'month' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-              onClick={() => setCalendarMode('month')}
-            >Month</button>
-          </div>
-          <h3 className="font-bold text-title-large text-on-surface">
-            {format(currentDate, 'MMMM yyyy')}
-          </h3>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setCurrentDate(addDays(currentDate, calendarMode === '2-week' ? -14 : -30))}
-              className="p-2 rounded-full border border-outline-variant hover:bg-surface-container transition-colors text-on-surface"
-            >
-              <MaterialIcon name="chevron_left" />
-            </button>
-            <button 
-              onClick={() => setCurrentDate(addDays(currentDate, calendarMode === '2-week' ? 14 : 30))}
-              className="p-2 rounded-full border border-outline-variant hover:bg-surface-container transition-colors text-on-surface"
-            >
-              <MaterialIcon name="chevron_right" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-7 gap-1 md:gap-2">
-          {weekDays.map(d => (
-            <div key={d} className="text-center text-label-large font-bold text-on-surface-variant py-2 uppercase tracking-wider">
-              {d}
-            </div>
-          ))}
-          {days.map((d, i) => {
-            const dateStr = format(d, 'yyyy-MM-dd');
-            
-            // Gather items for this day across all plans
-            const dayDeadlines = plans.filter(p => p.main_deadline === dateStr);
-            const daySteps = plans.flatMap(p => p.steps.filter(s => s.scheduled_date === dateStr).map(s => ({ ...s, planTitle: p.goal_title, category: p.category })));
-            
-            // Group dots by category
-            const categories = Array.from(new Set(daySteps.map(s => s.category)));
-
-            return (
-              <div 
-                key={i} 
-                onClick={() => setSelectedEventDate(dateStr)}
-                className={`calendar-day min-h-[100px] md:min-h-[120px] p-2 flex flex-col transition-all cursor-pointer
-                  ${!isSameMonth(d, currentDate) && calendarMode === 'month' ? 'text-on-surface-variant/50' : 'text-on-surface'} 
-                  ${isSameDay(d, new Date()) ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
-                  hover:bg-primary/5
-                `}
-              >
-                <div className={`text-right text-label-large font-bold mb-2 ${isSameDay(d, new Date()) ? 'text-primary' : ''}`}>
-                  {format(d, 'd')}
-                </div>
-                
-                <div className="flex flex-col gap-1 overflow-y-auto">
-                  {dayDeadlines.map(p => (
-                    <div key={`deadline-${p.id}`} className="bg-primary text-on-primary text-[10px] md:text-xs p-1.5 px-2 rounded-md font-bold truncate flex items-center gap-1 shadow-sm" title={`Deadline: ${p.goal_title}`}>
-                      <MaterialIcon name="flag" className="text-[12px] md:text-[14px]" />
-                      {p.goal_title}
-                    </div>
-                  ))}
-                  
-                  {/* Category dots */}
-                  {categories.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1 px-1">
-                      {categories.map((cat, idx) => (
-                        <div 
-                          key={idx} 
-                          className={`w-2 h-2 rounded-full ${getCategoryColor(cat)}`} 
-                          title={cat || 'Task'}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="h-full flex flex-col bg-surface">
-      {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b-2 border-outline-variant bg-surface-container-lowest sticky top-0 z-20">
-        <div className="flex items-center gap-3">
-          {onToggleDrawer && (
-            <button 
-              onClick={onToggleDrawer}
-              className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors"
-            >
-              <MaterialIcon name="menu" className="text-title-medium" />
-            </button>
-          )}
-          <h2 className="text-title-medium font-bold text-on-surface flex items-center gap-2">
-            <MaterialIcon name="event_note" className="text-primary" />
-            Action Calendar
-          </h2>
-        </div>
-        {onBackToChat && (
-          <button 
-            onClick={onBackToChat}
-            className="text-body-medium font-semibold text-primary hover:text-primary/80 transition-colors"
-          >
-            Done
-          </button>
-        )}
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="max-w-6xl mx-auto space-y-8">
-          
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-              <h1 className="text-headline-medium font-bold text-on-surface tracking-tight flex items-center gap-2">
-                <MaterialIcon name="event_note" className="text-primary" />
-                AI Action Calendar
-              </h1>
-              <p className="text-title-medium text-on-surface-variant mt-1">
-                Your goals and daily actionable steps mapped out.
-              </p>
-            </div>
-            
-            <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-              {/* View Toggle */}
-              <div className="flex gap-1.5 p-1 bg-surface-container-low rounded-lg border border-outline-variant/30 mr-2">
-                <button 
-                  className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${viewMode === 'dashboard' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-                  onClick={() => setViewMode('dashboard')}
-                >
-                  <div className="flex items-center gap-1.5"><MaterialIcon name="dashboard" className="text-body-large" /> Dashboard</div>
-                </button>
-                <button 
-                  className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${viewMode === 'calendar' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
-                  onClick={() => setViewMode('calendar')}
-                >
-                  <div className="flex items-center gap-1.5"><MaterialIcon name="calendar_month" className="text-body-large" /> Calendar</div>
-                </button>
-              </div>
-
-              <button
-                onClick={() => {
-                  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(plans, null, 2));
-                  const downloadAnchorNode = document.createElement('a');
-                  downloadAnchorNode.setAttribute("href", dataStr);
-                  downloadAnchorNode.setAttribute("download", "goals_backup.json");
-                  document.body.appendChild(downloadAnchorNode);
-                  downloadAnchorNode.click();
-                  downloadAnchorNode.remove();
-                }}
-                className="flex items-center justify-center gap-1 bg-surface-container-high text-on-surface px-4 py-3 rounded-xl font-bold text-title-small hover:bg-surface-container-highest transition-colors shadow-sm border-0"
-              >
-                <MaterialIcon name="download" />
-                Export
-              </button>
-              <label className="flex items-center justify-center gap-1 bg-surface-container-high text-on-surface px-4 py-3 rounded-xl font-bold text-title-small hover:bg-surface-container-highest transition-colors shadow-sm cursor-pointer border-0">
-                <MaterialIcon name="upload" />
-                Import
-                <input 
-                  type="file" 
-                  accept=".json" 
-                  className="hidden" 
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = async (event) => {
-                      try {
-                        const importedPlans = JSON.parse(event.target?.result as string);
-                        if (Array.isArray(importedPlans)) {
-                          setPlans(importedPlans);
-                          await fetch('/api/goals', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(importedPlans)
-                          });
-                        }
-                      } catch (err) {
-                        alert("Invalid JSON file");
-                      }
-                    };
-                    reader.readAsText(file);
-                    e.target.value = '';
-                  }} 
-                />
-              </label>
-              <button 
-                onClick={() => setShowWeeklyReview(true)}
-                className="flex items-center justify-center gap-2 bg-secondary text-on-secondary px-5 py-3 rounded-xl font-bold text-title-small hover:opacity-90 transition-opacity shadow-sm whitespace-nowrap border-0"
-              >
-                <MaterialIcon name="insights" />
-                Weekly Review
-              </button>
-              <button 
-                onClick={() => setIsAddingGoal(true)}
-                className="flex items-center justify-center gap-2 bg-primary text-on-primary px-5 py-3 rounded-xl font-bold text-title-small hover:opacity-90 transition-opacity shadow-sm whitespace-nowrap border-0"
-              >
-                <MaterialIcon name="add" />
-                Plan New Goal
-              </button>
-            </div>
-          </div>
-
-          {/* Active Goals Overview */}
-          {plans.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {plans.map(p => (
-                <div key={p.id} className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant shadow-sm relative group">
-                  <button 
-                    onClick={() => deletePlan(p.id)}
-                    className="absolute top-4 right-4 p-1.5 rounded-md text-on-surface-variant hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Delete Goal"
-                  >
-                    <MaterialIcon name="delete" className="text-body-large" />
-                  </button>
-                  <h3 className="font-bold text-title-medium text-on-surface pr-8">{p.goal_title}</h3>
-                  <div className="flex items-center gap-2 mt-2 text-body-small text-on-surface-variant">
-                    <MaterialIcon name="flag" className="text-body-medium text-primary" />
-                    Target: <span className="font-semibold">{p.main_deadline}</span>
-                  </div>
-                  {p.path_of_least_resistance && (
-                    <div className="mt-3 p-3 bg-secondary-container/30 rounded-xl border border-secondary-container text-body-small text-on-surface">
-                      <strong className="block text-secondary mb-1">Path of Least Resistance:</strong>
-                      {p.path_of_least_resistance}
-                    </div>
-                  )}
-                  <div className="mt-4 flex items-center justify-between text-body-small font-medium text-on-surface-variant">
-                    <span>{p.steps.filter(s => s.completed).length} / {p.steps.length} Steps Completed</span>
-                    <div className="w-1/2 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary" 
-                        style={{ width: `${(p.steps.filter(s => s.completed).length / Math.max(p.steps.length, 1)) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {viewMode === 'calendar' ? renderCalendar() : renderDashboard()}
-        </div>
-      </div>
-
-      {/* Quick Add Modal */}
-      <AnimatePresence>
-        {isQuickAdding && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-            onClick={() => setIsQuickAdding(false)}
-          >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-surface-container-lowest w-full max-w-md rounded-[28px] overflow-hidden shadow-2xl border border-outline-variant p-6"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-title-large font-bold text-on-surface">Quick Task</h3>
-                <button onClick={() => setIsQuickAdding(false)} className="p-2 bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors">
-                  <MaterialIcon name="close" />
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-label-large font-bold text-on-surface mb-2">Task</label>
-                  <input 
-                    type="text"
-                    value={quickAddTitle}
-                    onChange={e => setQuickAddTitle(e.target.value)}
-                    placeholder="e.g. Call UNISA on Tuesday"
-                    className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary"
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="block text-label-large font-bold text-on-surface mb-2">Date</label>
-                  <input 
-                    type="date"
-                    value={quickAddDate}
-                    onChange={e => setQuickAddDate(e.target.value)}
-                    className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary"
-                  />
-                </div>
-                <button 
-                  onClick={handleQuickAdd}
-                  disabled={!quickAddTitle || !quickAddDate}
-                  className="w-full bg-primary text-on-primary py-3 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  Add Task
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Weekly Review Modal */}
-      <AnimatePresence>
-        {showWeeklyReview && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowWeeklyReview(false)}
-          >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-surface-container-lowest w-full max-w-2xl rounded-[28px] overflow-hidden shadow-2xl border border-outline-variant max-h-[80vh] flex flex-col"
-            >
-              <div className="p-6 border-b border-outline-variant flex justify-between items-center shrink-0">
-                <h3 className="text-headline-small font-bold text-on-surface flex items-center gap-2">
-                  <MaterialIcon name="insights" className="text-primary" /> Weekly Review
-                </h3>
-                <button onClick={() => setShowWeeklyReview(false)} className="p-2 bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors">
-                  <MaterialIcon name="close" />
-                </button>
-              </div>
-              <div className="p-6 overflow-y-auto space-y-6 flex-1">
-                {plans.length === 0 ? (
-                  <p className="text-on-surface-variant text-center py-8">No active goals to review.</p>
-                ) : (
-                  <div className="space-y-6">
-                    {plans.map(p => {
-                      const completed = p.steps.filter(s => s.completed).length;
-                      const total = p.steps.length;
-                      const percent = total === 0 ? 0 : (completed / total) * 100;
-                      
-                      return (
-                        <div key={`review-${p.id}`} className="bg-surface-container p-4 rounded-xl">
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-bold text-title-medium text-on-surface">{p.goal_title}</h4>
-                            <span className="text-label-small font-bold px-2 py-1 bg-surface-container-high rounded-md">{Math.round(percent)}%</span>
-                          </div>
-                          
-                          <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden mb-4">
-                            <div className="h-full bg-primary" style={{ width: `${percent}%` }} />
-                          </div>
-                          
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => {
-                                const updated = {...p, status: 'Active' as const};
-                                setPlans(prev => prev.map(pl => pl.id === p.id ? updated : pl));
-                                saveGoal(updated);
-                              }}
-                              className={`flex-1 py-1.5 rounded-lg text-label-small font-bold transition-colors ${p.status === 'Active' ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-highest/80'}`}
-                            >
-                              Active
-                            </button>
-                            <button 
-                              onClick={() => {
-                                const updated = {...p, status: 'Paused' as const};
-                                setPlans(prev => prev.map(pl => pl.id === p.id ? updated : pl));
-                                saveGoal(updated);
-                              }}
-                              className={`flex-1 py-1.5 rounded-lg text-label-small font-bold transition-colors ${p.status === 'Paused' ? 'bg-secondary text-on-secondary' : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-highest/80'}`}
-                            >
-                              Pause
-                            </button>
-                            <button 
-                              onClick={() => deletePlan(p.id)}
-                              className="flex-1 py-1.5 rounded-lg text-label-small font-bold bg-error-container text-on-error-container hover:bg-error-container/80 transition-colors"
-                            >
-                              Abandon
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Add Goal Modal */}
-      <AnimatePresence>
-        {isAddingGoal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-            onClick={() => !loading && setIsAddingGoal(false)}
-          >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-surface-container-lowest w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-outline-variant p-6 md:p-8"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-headline-small font-bold text-on-surface">Plan with AI</h2>
-                  <p className="text-body-medium text-on-surface-variant mt-1">Break down your prompt into structured goals and steps.</p>
-                </div>
-                <button onClick={() => !loading && setIsAddingGoal(false)} className="p-2 bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors">
-                  <MaterialIcon name="close" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="block text-title-small font-bold text-on-surface">What do you want to achieve?</label>
-                  <textarea 
-                    value={goalPrompt}
-                    onChange={e => setGoalPrompt(e.target.value)}
-                    placeholder="e.g., I want to run a marathon in 6 months, and I also need to finish my React course by next week."
-                    className="w-full bg-surface-container-low text-on-surface px-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all resize-none min-h-[120px] text-body-large"
-                  />
-                  <p className="text-body-small text-on-surface-variant">Powered by client-side WebLLM (Llama 3.2 1B). No API key needed.</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="block text-title-small font-bold text-on-surface">Email for automated reminders (optional)</label>
-                  <div className="relative">
-                    <MaterialIcon name="mail" className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-                    <input 
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="w-full bg-surface-container-low text-on-surface pl-12 pr-4 py-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-0 outline-none transition-all text-body-large"
-                    />
-                  </div>
-                </div>
-
-                {loading && aiProgressStatus && (
-                  <div className="p-3 bg-primary-container text-on-primary-container rounded-xl text-body-small flex items-center gap-2">
-                    <MaterialIcon name="sync" className="animate-spin text-primary" />
-                    <span className="font-medium">{aiProgressStatus}</span>
-                  </div>
-                )}
-
-                <div className="flex gap-3 justify-end pt-4">
-                  <button 
-                    onClick={() => setIsAddingGoal(false)}
-                    disabled={loading}
-                    className="px-6 py-3 rounded-xl font-bold text-title-small text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={generatePlan}
-                    disabled={loading || !goalPrompt}
-                    className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-title-small hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm min-w-[160px]"
-                  >
-                    {loading ? (
-                      <>
-                        <MaterialIcon name="autorenew" className="animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <MaterialIcon name="auto_awesome" />
-                        Generate Plan
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Day View Modal */}
-      <AnimatePresence>
-        {selectedEventDate && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-            onClick={() => setSelectedEventDate(null)}
-          >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-surface-container-lowest w-full max-w-lg rounded-[28px] overflow-hidden shadow-2xl border border-outline-variant flex flex-col max-h-[85vh]"
-            >
-              <div className="p-6 border-b border-outline-variant flex justify-between items-center shrink-0">
-                <h3 className="text-headline-small font-bold text-on-surface">
-                  {format(parseISO(selectedEventDate), 'MMMM d, yyyy')}
-                </h3>
-                <button onClick={() => setSelectedEventDate(null)} className="p-2.5 bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors shrink-0">
-                  <MaterialIcon name="close" />
-                </button>
-              </div>
-              
-              <div className="p-6 overflow-y-auto space-y-6">
-                {/* Deadlines */}
-                {plans.filter(p => p.main_deadline === selectedEventDate).length > 0 && (
-                  <div>
-                    <h4 className="text-label-large font-bold text-on-surface-variant uppercase tracking-wider mb-3">Deadlines Today</h4>
-                    <div className="space-y-3">
-                      {plans.filter(p => p.main_deadline === selectedEventDate).map(p => (
-                        <div key={`dl-${p.id}`} className="flex items-center gap-4 p-4 bg-primary text-on-primary rounded-xl shadow-sm">
-                          <div className="p-2 bg-white/20 rounded-full shrink-0">
-                            <MaterialIcon name="emoji_events" className="text-title-medium" />
-                          </div>
-                          <p className="font-bold text-title-medium">{p.goal_title}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Steps */}
-                <div>
-                  <h4 className="text-label-large font-bold text-on-surface-variant uppercase tracking-wider mb-3">Action Steps</h4>
-                  <div className="space-y-3">
-                    {plans.map(p => {
-                      const stepsForDay = p.steps.filter(s => s.scheduled_date === selectedEventDate);
-                      if (stepsForDay.length === 0) return null;
-                      
-                      return (
-                        <div key={`plan-steps-${p.id}`} className="space-y-2">
-                          <p className="text-body-small font-semibold text-primary px-1">{p.goal_title}</p>
-                          {stepsForDay.map(step => (
-                            <div 
-                              key={step.id} 
-                              className={`flex flex-col gap-2 p-4 border-2 rounded-xl transition-all ${
-                                step.completed 
-                                  ? 'border-outline-variant bg-surface-container-low/50' 
-                                  : 'border-outline-variant bg-surface-container-lowest shadow-sm'
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div 
-                                  onClick={() => toggleStep(p.id, step.id)}
-                                  className={`mt-0.5 shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors cursor-pointer ${
-                                  step.completed 
-                                    ? 'bg-primary border-primary text-on-primary' 
-                                    : 'border-outline-variant text-transparent hover:border-primary'
-                                }`}>
-                                  <MaterialIcon name="check" className="text-body-small" />
-                                </div>
-                                <div className="flex-1 flex gap-2">
-                                  <input 
-                                    type="text"
-                                    value={step.task}
-                                    onChange={(e) => editStepTitle(p.id, step.id, e.target.value)}
-                                    className={`flex-1 font-bold text-body-large bg-transparent outline-none border-b border-transparent focus:border-primary transition-all ${
-                                      step.completed ? 'text-on-surface-variant line-through' : 'text-on-surface'
-                                    }`}
-                                  />
-                                  <button onClick={() => deleteStep(p.id, step.id)} className="text-on-surface-variant hover:text-error transition-colors p-1">
-                                    <MaterialIcon name="delete" className="text-[18px]" />
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="pl-9 flex items-center gap-2">
-                                <span className="text-body-small text-on-surface-variant font-medium">Reschedule:</span>
-                                <input 
-                                  type="date" 
-                                  value={step.scheduled_date}
-                                  onChange={e => changeStepDate(p.id, step.id, e.target.value)}
-                                  className="text-body-small bg-surface-container-low border border-outline-variant rounded-md px-2 py-1 text-on-surface outline-none focus:border-primary"
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                    
-                    {plans.flatMap(p => p.steps).filter(s => s.scheduled_date === selectedEventDate).length === 0 && (
-                      <div className="text-center py-8 px-4 bg-surface-container-low rounded-xl">
-                        <MaterialIcon name="event_available" className="text-headline-small text-on-surface-variant mb-2" />
-                        <p className="text-body-medium text-on-surface-variant">No tasks scheduled for today.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

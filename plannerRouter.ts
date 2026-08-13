@@ -2,8 +2,39 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import nodemailer from 'nodemailer';
 import cron from 'node-cron';
+import fs from 'fs';
+import path from 'path';
 
 const router = express.Router();
+const NOTES_FILE_PATH = path.join(process.cwd(), 'planner_notes.json');
+
+// Get all saved notes from JSON file
+router.get('/notes', (req, res) => {
+  try {
+    if (!fs.existsSync(NOTES_FILE_PATH)) {
+      fs.writeFileSync(NOTES_FILE_PATH, JSON.stringify({}, null, 2));
+      return res.json({});
+    }
+    const data = fs.readFileSync(NOTES_FILE_PATH, 'utf-8');
+    const notes = JSON.parse(data || '{}');
+    return res.json(notes);
+  } catch (error: any) {
+    console.error('Error reading planner_notes.json:', error);
+    return res.status(500).json({ error: 'Failed to read notes file' });
+  }
+});
+
+// Save/Update notes to JSON file
+router.post('/notes', (req, res) => {
+  try {
+    const notes = req.body || {};
+    fs.writeFileSync(NOTES_FILE_PATH, JSON.stringify(notes, null, 2));
+    return res.json({ success: true, notes });
+  } catch (error: any) {
+    console.error('Error writing to planner_notes.json:', error);
+    return res.status(500).json({ error: 'Failed to save notes file' });
+  }
+});
 
 // In-memory database for preview purposes
 interface Reminder {

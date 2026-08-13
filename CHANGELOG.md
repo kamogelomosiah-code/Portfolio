@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.0] - 2026-08-13
+
+### Changed & Simplified
+- Redesigned and simplified the Planner into a clean **Calendar with Notes**:
+  - Implemented monthly calendar grid with month navigation and date selection.
+  - Added full note CRUD functionality (add, edit, delete) for any selected date.
+  - Created `/planner_notes.json` at the project root for local file persistence.
+  - Added backend API endpoints (`GET /api/planner/notes` and `POST /api/planner/notes`) to read and write directly to `planner_notes.json`.
+  - Notes automatically persist across page refreshes and application restarts.
+
 ## [1.6.0] - 2026-08-13
 
 ### Removed
