@@ -317,7 +317,7 @@ export default function ChatInterface({
   useEffect(() => {
     const checkHfHealth = async () => {
       try {
-        const res = await fetch("/api/hf-health");
+        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "anthropic/claude-3.5-sonnet" }) });
         const data = await res.json();
         setIsHfConnected(!!data.connected);
       } catch (err) {

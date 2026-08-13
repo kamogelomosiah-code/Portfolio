@@ -264,7 +264,7 @@ export default function MobileApp({
   useEffect(() => {
     const checkHfHealth = async () => {
       try {
-        const res = await fetch("/api/hf-health");
+        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "anthropic/claude-3.5-sonnet" }) });
         const data = await res.json();
         setIsHfConnected(!!data.connected);
       } catch (err) {
@@ -392,18 +392,18 @@ export default function MobileApp({
         text: m.text
       }));
 
-      const res = await fetch("/api/chat", {
+      const apiMessages = [...history.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text })), { role: "user", content: text.trim() }];
+      const res = await fetch("/api/openrouter/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          history, 
-          message: text.trim(), 
-          model: selectedModel === "large" ? "fusion" : "swift" 
+          messages: apiMessages, 
+          options: { model: selectedModel === "large" ? "meta-llama/llama-3.3-70b-instruct" : "anthropic/claude-3.5-sonnet", temperature: 0.7 } 
         }),
       });
       
       const data = await res.json();
-      let replyText = data.text || data.generated || "Sorry, I had trouble processing that.";
+      let replyText = data.choices?.[0]?.message?.content || data.text || data.generated || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
 
       let followUps: string[] = [];

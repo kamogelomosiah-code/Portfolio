@@ -1,4 +1,6 @@
-import express from 'express';
+const fs = require('fs');
+
+const cleanedServer = `import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
@@ -26,7 +28,7 @@ app.use(express.json());
 app.use('/api/planner', plannerRouter);
 const PORT = 3000;
 
-const SYSTEM_PROMPT = `You are Kamo's GPT, a specialized AI assistant focusing on Mathematics and Software Engineering/Coding (especially front-end development). You speak on behalf of Kamogelo (Kamo) Mosiah and know his background, but your primary expertise is helping users solve complex mathematical equations, explain computer science concepts, and build interactive front-end applications.
+const SYSTEM_PROMPT = \`You are Kamo's GPT, a specialized AI assistant focusing on Mathematics and Software Engineering/Coding (especially front-end development). You speak on behalf of Kamogelo (Kamo) Mosiah and know his background, but your primary expertise is helping users solve complex mathematical equations, explain computer science concepts, and build interactive front-end applications.
 
 Additionally, you are the "Goal Achievement Coach" — a premium feature inside my portfolio app.
 
@@ -67,7 +69,7 @@ MATH AND CODING OUTPUT INSTRUCTIONS:
 1. MATHEMATICS FORMATTING:
    - You must format all mathematical equations, symbols, and formulas using standard LaTeX delimiters so they are rendered beautifully by KaTeX in the chat UI:
      - Use "$$ <equation> $$" (on separate lines) for block/display math.
-     - Use "$ <symbol or equation> $" or "\\( <symbol or equation> \\)" for inline math.
+     - Use "$ <symbol or equation> $" or "\\\\( <symbol or equation> \\\\)" for inline math.
 
 2. FRONT-END CODE PREVIEWS:
    - When asked to write, design, or show any front-end component, UI, web page, widget, or layout, you MUST output the complete, self-contained code inside a triple-backtick html code block.
@@ -80,10 +82,10 @@ RESPONSE CONSTRAINTS:
   - For projects or work: "[UI:PROJECTS]"
   - For skills or expertise: "[UI:SKILLS]"
   - For CV/resume/contact: "[UI:CV]"
-  - If none fits, append "[UI:CV]" as a default.`;
+  - If none fits, append "[UI:CV]" as a default.\`;
 
 async function processAutomationRequests(text) {
-  const automateRegex = /\[AUTOMATE_GOAL:\s*({[\s\S]*?})\s*\]/;
+  const automateRegex = /\\[AUTOMATE_GOAL:\\s*({[\\s\\S]*?})\\s*\\]/;
   const match = text.match(automateRegex);
   
   if (!match) return text;
@@ -125,7 +127,7 @@ async function processAutomationRequests(text) {
         isEthereal = true;
       }
 
-      const emailHtml = `
+      const emailHtml = \`
       <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 2px solid #e2e8f0; border-radius: 24px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
         <div style="border-bottom: 2px solid #4F46E5; padding-bottom: 16px; margin-bottom: 24px;">
           <h2 style="color: #4F46E5; font-weight: 700; margin: 0; font-size: 24px;">🎯 Chat AI Strategic Goal Roadmap</h2>
@@ -138,27 +140,27 @@ async function processAutomationRequests(text) {
         
         <div style="background-color: #f8fafc; border-radius: 18px; padding: 24px; border: 1px solid #f1f5f9; margin: 24px 0;">
           <h3 style="color: #0f172a; margin-top: 0; font-size: 18px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px;">
-            Goal: "${goal}"
+            Goal: "\${goal}"
           </h3>
           <ul style="padding-left: 0; list-style-type: none; margin: 0;">
-            ${steps.map((step, idx) => {
+            \${steps.map((step, idx) => {
               let timeframeLabel = "";
               if (step.frequency === 'daily') timeframeLabel = "Daily action / habit";
-              else if (step.frequency === 'weekly') timeframeLabel = `Week ${idx + 1} - Milestone`;
-              else if (step.frequency === 'monthly') timeframeLabel = `Month ${idx + 1} - Benchmark`;
+              else if (step.frequency === 'weekly') timeframeLabel = \`Week \${idx + 1} - Milestone\`;
+              else if (step.frequency === 'monthly') timeframeLabel = \`Month \${idx + 1} - Benchmark\`;
               else timeframeLabel = "Key milestone";
 
-              return `
+              return \`
                 <li style="margin-bottom: 20px; padding-left: 32px; position: relative; list-style: none;">
                   <span style="position: absolute; left: 0; top: 2px; display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 50%; background-color: #e0e7ff; color: #4F46E5; font-size: 11px; font-weight: bold;">
-                    ${idx + 1}
+                    \${idx + 1}
                   </span>
-                  <strong style="color: #0f172a; display: block; font-size: 15px; margin-bottom: 3px;">${step.action}</strong>
+                  <strong style="color: #0f172a; display: block; font-size: 15px; margin-bottom: 3px;">\${step.action}</strong>
                   <span style="font-size: 12.5px; color: #64748b; display: block;">
-                    ⏱️ Target Session: ${step.duration_minutes || 30}m | 📅 Time Frame: ${timeframeLabel}
+                    ⏱️ Target Session: \${step.duration_minutes || 30}m | 📅 Time Frame: \${timeframeLabel}
                   </span>
                 </li>
-              `;
+              \`;
             }).join('')}
           </ul>
         </div>
@@ -172,21 +174,21 @@ async function processAutomationRequests(text) {
           This roadmap was automatically sent by Kamo's AI Portfolio Assistant. &reg;
         </p>
       </div>
-      `;
+      \`;
 
       const mailOptions = {
         from: process.env.SMTP_FROM || '"CodeMind Assistant" <assistant@kamocodes.com>',
         to: emailAddress,
-        subject: `🎯 Chat AI Strategic Roadmap: "${goal.slice(0, 50)}"`,
+        subject: \`🎯 Chat AI Strategic Roadmap: "\${goal.slice(0, 50)}"\`,
         html: emailHtml,
       };
 
       const info = await transporter.sendMail(mailOptions);
       if (isEthereal) {
         const previewUrl = nodemailer.getTestMessageUrl(info);
-        newText += `\n\n*(Ethereal Sandbox Preview: [View Sent Email](${previewUrl}))*`;
+        newText += \`\\n\\n*(Ethereal Sandbox Preview: [View Sent Email](\${previewUrl}))*\`;
       }
-      console.log(`[CHAT PLANNER] Successfully sent automated roadmap email to ${emailAddress}`);
+      console.log(\`[CHAT PLANNER] Successfully sent automated roadmap email to \${emailAddress}\`);
     }
   } catch (error) {
     console.error("Failed to execute local chat roadmap automation:", error);
@@ -203,13 +205,13 @@ if (process.env.DATABASE_URL) {
   });
   
   // Initialize table
-  pgPool.query(`
+  pgPool.query(\`
     CREATE TABLE IF NOT EXISTS goals (
       id UUID PRIMARY KEY,
       data JSONB NOT NULL,
       updated_at TIMESTAMPTZ DEFAULT now()
     );
-  `).then(() => {
+  \`).then(() => {
     console.log("Goals table ready in Postgres.");
   }).catch((err) => {
     console.error("Failed to create goals table:", err);
@@ -240,11 +242,11 @@ app.post('/api/goals', async (req, res) => {
       if (!goal.id) {
         return res.status(400).json({ error: "Goal ID is required" });
       }
-      await pgPool.query(`
+      await pgPool.query(\`
         INSERT INTO goals (id, data, updated_at)
         VALUES ($1, $2, now())
         ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
-      `, [goal.id, goal]);
+      \`, [goal.id, goal]);
     }
     res.json({ success: true });
   } catch (error) {
@@ -268,9 +270,9 @@ app.post('/api/contact', async (req, res) => {
     const { name, email, subject, message } = req.body;
     
     // Log the contact to stdout for live container audit
-    console.log(`[CONTACT INCOMING] Name: ${name} | Email: ${email} | Subject: ${subject || "N/A"}`);
-    console.log(`Message: ${message}`);
-    console.log(`[CONTACT ROUTING] Successfully processed and dispatched route to kamogelomosiah@gmail.com`);
+    console.log(\`[CONTACT INCOMING] Name: \${name} | Email: \${email} | Subject: \${subject || "N/A"}\`);
+    console.log(\`Message: \${message}\`);
+    console.log(\`[CONTACT ROUTING] Successfully processed and dispatched route to kamogelomosiah@gmail.com\`);
     
     return res.status(200).json({ 
       success: true, 
@@ -305,7 +307,7 @@ app.post('/api/openrouter/chat', async (req, res) => {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": \`Bearer \${apiKey}\`,
         "Content-Type": "application/json",
         "HTTP-Referer": process.env.APP_URL || "https://ai.studio/build",
         "X-Title": "AI Studio App"
@@ -362,7 +364,7 @@ app.post('/api/ping-model', async (req, res) => {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": \`Bearer \${apiKey}\`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -393,8 +395,12 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(\`Server running on http://localhost:\${PORT}\`);
   });
 }
 
 startServer();
+`;
+
+fs.writeFileSync('server.ts', cleanedServer);
+console.log("Replaced server.ts");

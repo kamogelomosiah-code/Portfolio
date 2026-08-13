@@ -13,7 +13,7 @@ export function useLocalLLM() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const res = await fetch("/api/hf-health");
+        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "anthropic/claude-3.5-sonnet" }) });
         if (!res.ok) {
           setStatus({
             tiny_model: "failed",
@@ -23,7 +23,7 @@ export function useLocalLLM() {
           return;
         }
         const data = await res.json();
-        if (data.connected) {
+        if (data.success || data.connected) {
           setStatus({
             tiny_model: "ready",
             large_model: { status: "ready" },
@@ -50,13 +50,14 @@ export function useLocalLLM() {
     return () => clearInterval(interval);
   }, []);
 
-  const generate = useCallback(async (text: string, { model = "tiny" } = {}) => {
-    const res = await fetch("/api/chat", {
+  const generate = useCallback(async (text: string, { model = "tiny", history = [] }: { model?: string, history?: any[] } = {}) => {
+    const messages = [...(history || []).map((m: any) => ({ role: m.role === "user" ? "user" : "assistant", content: m.text || m.content })), { role: "user", content: text }];
+    const res = await fetch("/api/openrouter/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
-        message: text, 
-        model: model === "large" ? "fusion" : "swift" 
+        messages,
+        options: { model: model === "large" ? "meta-llama/llama-3.3-70b-instruct" : "meta-llama/llama-3.3-70b-instruct" }
       }),
     });
 
@@ -66,7 +67,7 @@ export function useLocalLLM() {
     }
 
     const data = await res.json();
-    return { generated: data.text };
+    return { generated: data.choices?.[0]?.message?.content || "" };
   }, []);
 
   return { status, generate, isLargeReady };

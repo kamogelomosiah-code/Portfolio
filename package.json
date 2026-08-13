@@ -12,8 +12,6 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^2.9.0",
-    "@huggingface/inference": "^4.13.18",
     "@mlc-ai/web-llm": "^0.2.84",
     "@tailwindcss/vite": "^4.1.14",
     "@types/react-syntax-highlighter": "^15.5.13",
@@ -31,7 +29,6 @@
     "multer": "^2.1.1",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.3",
-    "openai": "^6.39.1",
     "pg": "^8.22.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
