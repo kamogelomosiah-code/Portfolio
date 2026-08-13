@@ -27,7 +27,7 @@ import { useLocalLLM } from "./hooks/useLocalLLM";
 
 export default function App() {
   const { status: llmStatus, isLargeReady } = useLocalLLM();
-  const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "planner" | "support">("chat");
+  const [currentTab, setCurrentTab] = useState<"chat" | "projects" | "cv" | "contact" | "changelog" | "planner">("chat");
   const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedModel, setSelectedModel] = useState("tiny");
   const [messages, setMessages] = useState<Message[]>(() => {

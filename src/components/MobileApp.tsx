@@ -13,7 +13,6 @@ const CvPage = lazy(() => import("./CvPage"));
 const ContactPage = lazy(() => import("./ContactPage"));
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
 const ActionPlanner = lazy(() => import("./ActionPlanner").then(module => ({ default: module.ActionPlanner })));
-const SupportAssistant = lazy(() => import("./SupportAssistant/SupportAssistant").then(module => ({ default: module.SupportAssistant })));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-background">
@@ -30,7 +29,7 @@ interface MobileAppProps {
   isLargeReady?: boolean;
 }
 
-const TABS = ["chat", "projects", "cv", "contact", "changelog", "planner", "support"] as const;
+const TABS = ["chat", "projects", "cv", "contact", "changelog", "planner"] as const;
 type TabType = typeof TABS[number];
 
 const PROMPT_SETS = [
@@ -929,12 +928,6 @@ export default function MobileApp({
                   onBackToChat={() => handleTabChange("chat")} 
                   onToggleDrawer={() => setDrawerOpen(true)}
                 />
-              </Suspense>
-            )}
-
-            {activeTab === "support" && (
-              <Suspense fallback={<FallbackLoader />}>
-                <SupportAssistant />
               </Suspense>
             )}
 

@@ -465,25 +465,6 @@ function getOfflineFallbackResponse(message: string): string {
     return "The engine can not be reached.";
 }
 
-app.post('/api/support/search', async (req, res) => {
-  const { query } = req.body || {};
-  try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Search the web for the latest Anthropic Claude documentation and status updates regarding this query: ${query}. Summarize the most relevant and up-to-date information in 1-2 concise paragraphs.`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        temperature: 0.1
-      }
-    });
-    return res.json({ results: response.text });
-  } catch (error: any) {
-    console.error("Support Search Error:", error.message || error);
-    return res.json({ results: "Web lookup failed. Rely on your local knowledge base." });
-  }
-});
-
 app.post('/api/openrouter/chat', async (req, res) => {
   const { messages, options } = req.body || {};
   const apiKey = process.env.OPENROUTER_API_KEY;

@@ -3,8 +3,8 @@ import { MaterialIcon } from "./MaterialIcon";
 import { AppIcon } from "./AppIcon";
 
 interface SidebarProps {
-  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner" | "support";
-  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner" | "support") => void;
+  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner";
+  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner") => void;
 }
 
 const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps) {
@@ -49,21 +49,6 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
                <MaterialIcon name="track_changes" className="text-headline-medium" />
             </div>
             <span className="text-label-small font-sans text-center leading-none mt-1">Planner</span>
-          </button>
-
-          <button 
-            onClick={() => onTabChange("support")}
-            className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
-              currentTab === "support" 
-                ? "text-primary font-semibold" 
-                : "bg-transparent text-on-surface-variant hover:text-on-background font-normal"
-            }`}
-            title="Claude Support"
-          >
-            <div className={`flex items-center justify-center transition-all ${currentTab === "support" ? "text-primary" : "text-inherit"}`}>
-               <MaterialIcon name="support_agent" className="text-headline-medium" />
-            </div>
-            <span className="text-label-small font-sans text-center leading-none mt-1">Support</span>
           </button>
 
           <button 

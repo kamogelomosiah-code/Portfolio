@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.0] - 2026-08-13
+
+### Removed
+- Removed the Support Assistant section, `/api/support/search` API endpoint, and support tab navigation options across desktop Sidebar and mobile Menu Drawer.
+
+### Fixed & Improved
+- Fixed chat user message bubble overflow and text wrapping (`word-break`) behavior in `ChatInterface.tsx`.
+- Added dynamic real-time token estimator (`~N tokens`) alongside character counter in the chat input toolbar.
+- Enforced system dark mode and updated navigation drawer and sidebar state types.
+
 ## [1.5.1] - 2026-07-20
 
 ### Fixed
