@@ -319,7 +319,7 @@ body {
   transform: scale(0.98) !important;
 }
 
-button {
+button:not(.calendar-day) {
   border: none !important;
   border-radius: var(--radius-pill) !important;
   transition: box-shadow 0.2s ease, transform 0.1s ease !important;

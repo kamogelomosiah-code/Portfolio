@@ -353,7 +353,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                 <button
                   key={idx}
                   onClick={() => setSelectedDate(day)}
-                  className={`
+                  className={`calendar-day
                     relative min-h-[70px] sm:min-h-[85px] p-1.5 sm:p-2 rounded-xl flex flex-col justify-between text-left transition-all cursor-pointer border
                     ${isSelected
                       ? 'bg-primary/15 border-primary shadow-sm text-primary font-semibold'
@@ -366,9 +366,9 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                   <div className="flex items-center justify-between w-full">
                     <span
                       className={`
-                        text-label-medium sm:text-body-medium w-6 h-6 flex items-center justify-center font-mono rounded-full
+                        text-label-medium sm:text-body-medium w-6 h-6 flex items-center justify-center font-mono rounded-md
                         ${isTodayDay ? 'bg-primary text-on-primary font-bold shadow-sm' : ''}
-                        ${!isTodayDay && dayNotes.length > 0 ? 'border border-primary text-primary font-medium' : ''}
+                        ${!isTodayDay && dayNotes.length > 0 ? 'text-primary font-medium' : ''}
                       `}
                     >
                       {format(day, 'd')}

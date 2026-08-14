@@ -1,0 +1,540 @@
+     1	import React, { useState, useEffect } from 'react';
+     2	import { motion, AnimatePresence } from 'motion/react';
+     3	import { MaterialIcon } from '../MaterialIcon';
+     4	import {
+     5	  format,
+     6	  addMonths,
+     7	  subMonths,
+     8	  startOfMonth,
+     9	  endOfMonth,
+    10	  startOfWeek,
+    11	  endOfWeek,
+    12	  eachDayOfInterval,
+    13	  isSameMonth,
+    14	  isSameDay,
+    15	  isToday,
+    16	  parseISO
+    17	} from 'date-fns';
+    18	
+    19	export interface CalendarNote {
+    20	  id: string;
+    21	  text: string;
+    22	  createdAt: string;
+    23	  updatedAt: string;
+    24	}
+    25	
+    26	export type NotesState = Record<string, CalendarNote[]>;
+    27	
+    28	interface ActionPlannerProps {
+    29	  onBackToChat?: () => void;
+    30	  onToggleDrawer?: () => void;
+    31	}
+    32	
+    33	export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPlannerProps) {
+    34	  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+    35	  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    36	  const [notes, setNotes] = useState<NotesState>({});
+    37	  const [isLoading, setIsLoading] = useState<boolean>(true);
+    38	  const [isSaving, setIsSaving] = useState<boolean>(false);
+    39	  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+    40	
+    41	  // Note form state
+    42	  const [noteInput, setNoteInput] = useState<string>('');
+    43	  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+    44	  const [editingText, setEditingText] = useState<string>('');
+    45	  const [smartAddInput, setSmartAddInput] = useState<string>('');
+    46	  const [isSmartAdding, setIsSmartAdding] = useState<boolean>(false);
+    47	
+    48	  const selectedDateKey = format(selectedDate, 'yyyy-MM-dd');
+    49	  const selectedDateNotes = notes[selectedDateKey] || [];
+    50	
+    51	  // 1. Load saved notes from JSON file inside project (/api/planner/notes)
+    52	  useEffect(() => {
+    53	    fetchNotes();
+    54	  }, []);
+    55	
+    56	  const fetchNotes = async () => {
+    57	    setIsLoading(true);
+    58	    try {
+    59	      const res = await fetch('/api/planner/notes');
+    60	      if (res.ok) {
+    61	        const data = await res.json();
+    62	        setNotes(data || {});
+    63	      }
+    64	    } catch (err) {
+    65	      console.error('Failed to load planner notes:', err);
+    66	    } finally {
+    67	      setIsLoading(false);
+    68	    }
+    69	  };
+    70	
+    71	  // 2. Save notes object to JSON file (/planner_notes.json via API)
+    72	  const saveNotesToFile = async (updatedNotes: NotesState) => {
+    73	    setIsSaving(true);
+    74	    try {
+    75	      const res = await fetch('/api/planner/notes', {
+    76	        method: 'POST',
+    77	        headers: { 'Content-Type': 'application/json' },
+    78	        body: JSON.stringify(updatedNotes)
+    79	      });
+    80	      if (res.ok) {
+    81	        setSaveStatus('Saved to planner_notes.json');
+    82	        setTimeout(() => setSaveStatus(null), 2500);
+    83	      } else {
+    84	        setSaveStatus('Failed to save');
+    85	      }
+    86	    } catch (err) {
+    87	      console.error('Failed to save planner notes:', err);
+    88	      setSaveStatus('Error saving');
+    89	    } finally {
+    90	      setIsSaving(false);
+    91	    }
+    92	  };
+    93	
+    94	  
+    95	  const handleSmartAdd = async (e: React.FormEvent) => {
+    96	    e.preventDefault();
+    97	    if (!smartAddInput.trim()) return;
+    98	    
+    99	    setIsSmartAdding(true);
+   100	    try {
+   101	      const res = await fetch('/api/planner/smart-add', {
+   102	        method: 'POST',
+   103	        headers: { 'Content-Type': 'application/json' },
+   104	        body: JSON.stringify({ prompt: smartAddInput.trim() })
+   105	      });
+   106	      if (res.ok) {
+   107	        const data = await res.json();
+   108	        setNotes(data.notes || {});
+   109	        setSmartAddInput('');
+   110	        setSaveStatus('Smart task added!');
+   111	        setTimeout(() => setSaveStatus(null), 2500);
+   112	        
+   113	        if (data.date) {
+   114	            const parsedDate = parseISO(data.date);
+   115	            setSelectedDate(parsedDate);
+   116	            setCurrentMonth(parsedDate);
+   117	        }
+   118	      } else {
+   119	        setSaveStatus('Failed to smart add');
+   120	        setTimeout(() => setSaveStatus(null), 2500);
+   121	      }
+   122	    } catch (err) {
+   123	      console.error(err);
+   124	      setSaveStatus('Error in smart add');
+   125	      setTimeout(() => setSaveStatus(null), 2500);
+   126	    } finally {
+   127	      setIsSmartAdding(false);
+   128	    }
+   129	  };
+   130	
+   131	  // Add note for selected date
+   132	  const handleAddNote = (e: React.FormEvent) => {
+   133	    e.preventDefault();
+   134	    if (!noteInput.trim()) return;
+   135	
+   136	    const newNote: CalendarNote = {
+   137	      id: crypto.randomUUID(),
+   138	      text: noteInput.trim(),
+   139	      createdAt: new Date().toISOString(),
+   140	      updatedAt: new Date().toISOString()
+   141	    };
+   142	
+   143	    const updatedDateNotes = [...selectedDateNotes, newNote];
+   144	    const updatedNotes = {
+   145	      ...notes,
+   146	      [selectedDateKey]: updatedDateNotes
+   147	    };
+   148	
+   149	    setNotes(updatedNotes);
+   150	    setNoteInput('');
+   151	    saveNotesToFile(updatedNotes);
+   152	  };
+   153	
+   154	  // Start editing note
+   155	  const handleStartEdit = (note: CalendarNote) => {
+   156	    setEditingNoteId(note.id);
+   157	    setEditingText(note.text);
+   158	  };
+   159	
+   160	  // Save edited note
+   161	  const handleSaveEdit = (noteId: string) => {
+   162	    if (!editingText.trim()) return;
+   163	
+   164	    const updatedDateNotes = selectedDateNotes.map(note =>
+   165	      note.id === noteId
+   166	        ? { ...note, text: editingText.trim(), updatedAt: new Date().toISOString() }
+   167	        : note
+   168	    );
+   169	
+   170	    const updatedNotes = {
+   171	      ...notes,
+   172	      [selectedDateKey]: updatedDateNotes
+   173	    };
+   174	
+   175	    setNotes(updatedNotes);
+   176	    setEditingNoteId(null);
+   177	    setEditingText('');
+   178	    saveNotesToFile(updatedNotes);
+   179	  };
+   180	
+   181	  // Cancel edit
+   182	  const handleCancelEdit = () => {
+   183	    setEditingNoteId(null);
+   184	    setEditingText('');
+   185	  };
+   186	
+   187	  // Delete note
+   188	  const handleDeleteNote = (noteId: string) => {
+   189	    const updatedDateNotes = selectedDateNotes.filter(n => n.id !== noteId);
+   190	    
+   191	    let updatedNotes: NotesState;
+   192	    if (updatedDateNotes.length === 0) {
+   193	      updatedNotes = { ...notes };
+   194	      delete updatedNotes[selectedDateKey];
+   195	    } else {
+   196	      updatedNotes = {
+   197	        ...notes,
+   198	        [selectedDateKey]: updatedDateNotes
+   199	      };
+   200	    }
+   201	
+   202	    setNotes(updatedNotes);
+   203	    saveNotesToFile(updatedNotes);
+   204	  };
+   205	
+   206	  // Navigation handlers
+   207	  const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+   208	  const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+   209	  const handleToday = () => {
+   210	    const today = new Date();
+   211	    setCurrentMonth(today);
+   212	    setSelectedDate(today);
+   213	  };
+   214	
+   215	  // Calendar calculations
+   216	  const monthStart = startOfMonth(currentMonth);
+   217	  const monthEnd = endOfMonth(monthStart);
+   218	  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
+   219	  const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
+   220	
+   221	  const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
+   222	
+   223	  return (
+   224	    <div className="flex flex-col h-full w-full bg-background text-on-background overflow-y-auto">
+   225	      {/* Top Navigation Bar */}
+   226	      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-surface/90 backdrop-blur-md border-b border-outline-variant">
+   227	        <div className="flex items-center gap-3">
+   228	          {onToggleDrawer && (
+   229	            <button
+   230	              onClick={onToggleDrawer}
+   231	              className="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors"
+   232	              title="Open Menu"
+   233	            >
+   234	              <MaterialIcon name="menu" className="text-xl" />
+   235	            </div>
+   236	          )}
+   237	          <div className="flex items-center gap-2">
+   238	            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+   239	              <MaterialIcon name="calendar_month" className="text-xl" />
+   240	            </div>
+   241	            <div>
+   242	              <h1 className="font-semibold text-body-large sm:text-title-medium text-on-surface leading-tight">
+   243	                Calendar & Notes
+   244	              </h1>
+   245	              <p className="text-label-small text-on-surface-variant hidden sm:block">
+   246	                Simple daily notes saved to <code className="text-primary font-mono bg-surface-container px-1 py-0.5 rounded">planner_notes.json</code>
+   247	              </p>
+   248	            </div>
+   249	          </div>
+   250	        </div>
+   251	
+   252	        <div className="flex items-center gap-2">
+   253	          {saveStatus && (
+   254	            <span className="text-label-small font-mono text-emerald-400 bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-500/20">
+   255	              {saveStatus}
+   256	            </span>
+   257	          )}
+   258	          <button
+   259	            onClick={handleToday}
+   260	            className="px-3 py-1.5 rounded-lg text-label-medium font-medium bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-colors"
+   261	          >
+   262	            Today
+   263	          </div>
+   264	          {onBackToChat && (
+   265	            <button
+   266	              onClick={onBackToChat}
+   267	              className="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors"
+   268	              title="Return to Chat"
+   269	            >
+   270	              <MaterialIcon name="chat" className="text-xl" />
+   271	            </button>
+   272	          )}
+   273	        </div>
+   274	      </div>
+   275	
+   276	      {/* Main Grid: Calendar on Left, Selected Date Notes on Right */}
+   277	      <div className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+   278	        
+   279	        {/* Left Column: Calendar (8 cols on lg) */}
+   280	        <div className="lg:col-span-7 flex flex-col gap-4">
+   281	          
+   282	          {/* Smart Add Bar */}
+   283	          <div className="bg-gradient-to-r from-primary-container/40 to-secondary-container/40 p-4 rounded-2xl border border-primary/20 shadow-sm flex flex-col gap-3">
+   284	            <div className="flex items-center gap-2">
+   285	              <MaterialIcon name="auto_awesome" className="text-primary text-xl" />
+   286	              <h3 className="text-label-large font-bold text-on-surface">AI Smart Add</h3>
+   287	            </div>
+   288	            <form onSubmit={handleSmartAdd} className="flex gap-2 w-full">
+   289	              <input
+   290	                type="text"
+   291	                value={smartAddInput}
+   292	                onChange={e => setSmartAddInput(e.target.value)}
+   293	                placeholder="e.g., 'Remind me to call John next Tuesday'"
+   294	                disabled={isSmartAdding}
+   295	                className="flex-1 bg-surface border border-outline-variant rounded-xl px-4 py-2.5 text-body-medium focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50"
+   296	              />
+   297	              <button
+   298	                type="submit"
+   299	                disabled={isSmartAdding || !smartAddInput.trim()}
+   300	                className="bg-primary text-on-primary px-4 py-2.5 rounded-xl text-label-large font-medium hover:bg-primary/90 transition-all shadow-sm disabled:opacity-50 flex items-center justify-center min-w-[80px]"
+   301	              >
+   302	                {isSmartAdding ? (
+   303	                  <div className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin"></div>
+   304	                ) : (
+   305	                  "Add"
+   306	                )}
+   307	              </button>
+   308	            </form>
+   309	          </div>
+   310	
+   311	          {/* Calendar Header / Controls */}
+   312	          <div className="flex items-center justify-between bg-surface-container-low p-4 rounded-2xl border border-outline-variant">
+   313	            <h2 className="text-title-medium sm:text-headline-small font-bold text-on-surface">
+   314	              {format(currentMonth, 'MMMM yyyy')}
+   315	            </h2>
+   316	            <div className="flex items-center gap-1 bg-surface-container rounded-xl p-1 border border-outline-variant/50">
+   317	              <button
+   318	                onClick={handlePrevMonth}
+   319	                className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+   320	                title="Previous Month"
+   321	              >
+   322	                <MaterialIcon name="chevron_left" className="text-xl" />
+   323	              </div>
+   324	              <button
+   325	                onClick={handleNextMonth}
+   326	                className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+   327	                title="Next Month"
+   328	              >
+   329	                <MaterialIcon name="chevron_right" className="text-xl" />
+   330	              </div>
+   331	            </div>
+   332	          </div>
+   333	
+   334	          {/* Calendar Day Labels */}
+   335	          <div className="grid grid-cols-7 gap-1 text-center font-medium text-label-medium text-on-surface-variant px-1">
+   336	            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+   337	              <div key={day} className="py-1">
+   338	                {day}
+   339	              </div>
+   340	            ))}
+   341	          </div>
+   342	
+   343	          {/* Calendar Grid */}
+   344	          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+   345	            {calendarDays.map((day, idx) => {
+   346	              const dayKey = format(day, 'yyyy-MM-dd');
+   347	              const dayNotes = notes[dayKey] || [];
+   348	              const isSelected = isSameDay(day, selectedDate);
+   349	              const isCurrentMonthDay = isSameMonth(day, currentMonth);
+   350	              const isTodayDay = isToday(day);
+   351	
+   352	              return (
+   353	                <button
+   354	                  key={idx}
+   355	                  onClick={() => setSelectedDate(day)}
+   356	                  className={`
+   357	                    relative min-h-[70px] sm:min-h-[85px] p-1.5 sm:p-2 rounded-xl flex flex-col justify-between text-left transition-all cursor-pointer border
+   358	                    ${isSelected
+   359	                      ? 'bg-primary/15 border-primary shadow-sm text-primary font-semibold'
+   360	                      : isCurrentMonthDay
+   361	                        ? `bg-surface-container-low hover:bg-surface-container ${dayNotes.length > 0 ? 'border-primary/60 shadow-sm' : 'border-outline-variant/40'} text-on-surface`
+   362	                        : 'bg-surface/30 border-transparent text-on-surface-variant/40 opacity-50 hover:opacity-80'
+   363	                    }
+   364	                  `}
+   365	                >
+   366	                  <div className="flex items-center justify-between w-full">
+   367	                    <span
+   368	                      className={`
+   369	                        text-label-medium sm:text-body-medium w-6 h-6 flex items-center justify-center font-mono rounded-full
+   370	                        ${isTodayDay ? 'bg-primary text-on-primary font-bold shadow-sm' : ''}
+   371	                        ${!isTodayDay && dayNotes.length > 0 ? 'border border-primary text-primary font-medium' : ''}
+   372	                      `}
+   373	                    >
+   374	                      {format(day, 'd')}
+   375	                    </span>
+   376	                  </div>
+   377	                  {/* Note preview badge/snippet */}
+   378	                  {dayNotes.length > 0 && (
+   379	                    <div className="mt-1 flex flex-col gap-0.5 overflow-hidden">
+   380	                      {dayNotes.slice(0, 2).map((n, i) => (
+   381	                        <div
+   382	                          key={i}
+   383	                          className="text-[10.5px] leading-tight line-clamp-1 px-1 py-0.5 rounded border border-outline-variant/60 text-on-surface-variant"
+   384	                        >
+   385	                          {n.text}
+   386	                        </div>
+   387	                      ))}
+   388	                      {dayNotes.length > 2 && (
+   389	                        <div className="text-[9.5px] text-on-surface-variant/70 italic px-1">
+   390	                          +{dayNotes.length - 2} more
+   391	                        </div>
+   392	                      )}
+   393	                    </div>
+   394	                  )}
+   395	                </button>
+   396	              );
+   397	            })}
+   398	          </div>
+   399	        </div>
+   400	
+   401	        {/* Right Column: Selected Date Notes Panel (5 cols on lg) */}
+   402	        <div className="lg:col-span-5 flex flex-col gap-4">
+   403	          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant flex flex-col h-full min-h-[420px]">
+   404	            {/* Panel Header */}
+   405	            <div className="flex items-center justify-between pb-4 border-b border-outline-variant/60">
+   406	              <div>
+   407	                <p className="text-label-small uppercase tracking-wider text-primary font-semibold">
+   408	                  Selected Date
+   409	                </p>
+   410	                <h3 className="text-title-medium sm:text-title-large font-bold text-on-surface mt-0.5">
+   411	                  {format(selectedDate, 'EEEE, MMM d, yyyy')}
+   412	                </h3>
+   413	              </div>
+   414	              <div className="text-right font-mono text-label-small text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-lg border border-outline-variant/40">
+   415	                {selectedDateNotes.length} {selectedDateNotes.length === 1 ? 'note' : 'notes'}
+   416	              </div>
+   417	            </div>
+   418	
+   419	            {/* Note Input Form */}
+   420	            <form onSubmit={handleAddNote} className="mt-4 flex flex-col gap-2">
+   421	              <div className="relative">
+   422	                <textarea
+   423	                  value={noteInput}
+   424	                  onChange={(e) => setNoteInput(e.target.value)}
+   425	                  placeholder={`Write a note for ${format(selectedDate, 'MMM d')}...`}
+   426	                  rows={3}
+   427	                  className="w-full p-3 rounded-xl bg-surface border border-outline-variant text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary/50 text-body-medium resize-none"
+   428	                  onKeyDown={(e) => {
+   429	                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+   430	                      handleAddNote(e);
+   431	                    }
+   432	                  }}
+   433	                />
+   434	              </div>
+   435	              <div className="flex items-center justify-between">
+   436	                <span className="text-[11px] text-on-surface-variant/70 font-mono">
+   437	                  Press Ctrl+Enter or click Add
+   438	                </span>
+   439	                <button
+   440	                  type="submit"
+   441	                  disabled={!noteInput.trim() || isSaving}
+   442	                  className="px-4 py-2 rounded-xl bg-primary text-on-primary font-medium text-label-large hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer border-0 shadow-sm"
+   443	                >
+   444	                  <MaterialIcon name="add" className="text-lg" />
+   445	                  Add Note
+   446	                </div>
+   447	              </div>
+   448	            </form>
+   449	
+   450	            {/* List of Notes for Selected Date */}
+   451	            <div className="mt-6 flex-1 flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-1">
+   452	              {isLoading ? (
+   453	                <div className="flex-1 flex items-center justify-center text-on-surface-variant py-10">
+   454	                  <MaterialIcon name="sync" className="animate-spin text-2xl mr-2 text-primary" />
+   455	                  Loading notes...
+   456	                </div>
+   457	              ) : selectedDateNotes.length === 0 ? (
+   458	                <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-outline-variant/40 rounded-xl text-on-surface-variant/70">
+   459	                  <MaterialIcon name="edit_note" className="text-4xl mb-2 text-on-surface-variant/40" />
+   460	                  <p className="text-body-medium font-medium text-on-surface-variant">No notes for this date</p>
+   461	                  <p className="text-label-small mt-1">Use the field above to add your first note.</p>
+   462	                </div>
+   463	              ) : (
+   464	                <AnimatePresence initial={false}>
+   465	                  {selectedDateNotes.map((note) => {
+   466	                    const isEditing = editingNoteId === note.id;
+   467	
+   468	                    return (
+   469	                      <motion.div
+   470	                        key={note.id}
+   471	                        initial={{ opacity: 0, y: 8 }}
+   472	                        animate={{ opacity: 1, y: 0 }}
+   473	                        exit={{ opacity: 0, scale: 0.95 }}
+   474	                        className="p-3.5 rounded-xl bg-surface border border-outline-variant flex flex-col gap-2 shadow-sm hover:border-outline transition-colors"
+   475	                      >
+   476	                        {isEditing ? (
+   477	                          <div className="flex flex-col gap-2">
+   478	                            <textarea
+   479	                              value={editingText}
+   480	                              onChange={(e) => setEditingText(e.target.value)}
+   481	                              className="w-full p-2.5 rounded-lg bg-surface-container border border-primary/50 text-on-surface focus:outline-none text-body-medium resize-none"
+   482	                              rows={3}
+   483	                              autoFocus
+   484	                            />
+   485	                            <div className="flex items-center justify-end gap-2">
+   486	                              <button
+   487	                                onClick={handleCancelEdit}
+   488	                                className="px-3 py-1 rounded-lg bg-surface-container-high text-on-surface text-label-medium hover:bg-surface-container-highest transition-colors cursor-pointer border-0"
+   489	                              >
+   490	                                Cancel
+   491	                              </div>
+   492	                              <button
+   493	                                onClick={() => handleSaveEdit(note.id)}
+   494	                                className="px-3 py-1 rounded-lg bg-primary text-on-primary text-label-medium hover:bg-primary/90 transition-colors cursor-pointer border-0"
+   495	                              >
+   496	                                Save
+   497	                              </button>
+   498	                            </div>
+   499	                          </div>
+   500	                        ) : (
+   501	                          <>
+   502	                            <p className="text-body-medium text-on-surface whitespace-pre-wrap leading-relaxed break-words">
+   503	                              {note.text}
+   504	                            </p>
+   505	                            <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30 text-label-small text-on-surface-variant">
+   506	                              <span className="font-mono text-[11px] opacity-70">
+   507	                                {format(parseISO(note.createdAt), 'h:mm a')}
+   508	                              </span>
+   509	                              <div className="flex items-center gap-1">
+   510	                                <button
+   511	                                  onClick={() => handleStartEdit(note)}
+   512	                                  className="p-1 rounded-md hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors cursor-pointer border-0"
+   513	                                  title="Edit note"
+   514	                                >
+   515	                                  <MaterialIcon name="edit" className="text-base" />
+   516	                                </div>
+   517	                                <button
+   518	                                  onClick={() => handleDeleteNote(note.id)}
+   519	                                  className="p-1 rounded-md hover:bg-error/10 text-on-surface-variant hover:text-error transition-colors cursor-pointer border-0"
+   520	                                  title="Delete note"
+   521	                                >
+   522	                                  <MaterialIcon name="delete" className="text-base" />
+   523	                                </div>
+   524	                              </div>
+   525	                            </div>
+   526	                          </>
+   527	                        )}
+   528	                      </motion.div>
+   529	                    );
+   530	                  })}
+   531	                </AnimatePresence>
+   532	              )}
+   533	            </div>
+   534	          </div>
+   535	        </div>
+   536	
+   537	      </div>
+   538	    </div>
+   539	  );
+   540	}
