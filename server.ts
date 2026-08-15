@@ -314,7 +314,7 @@ app.post('/api/openrouter/chat', async (req, res) => {
         model: options?.model || process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",
         messages: apiMessages,
         temperature: options?.temperature ?? 0.7,
-        max_tokens: options?.maxTokens,
+        max_tokens: options?.maxTokens || 400,
         stream: options?.stream || false,
         response_format: options?.responseFormat === "json_object" ? { type: "json_object" } : undefined
       })
