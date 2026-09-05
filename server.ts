@@ -8,6 +8,7 @@ import fsModule from 'fs';
 import plannerRouter from './plannerRouter';
 import nodemailer from 'nodemailer';
 import { Pool } from 'pg';
+import { GoogleGenAI } from "@google/genai";
 
 dotenv.config();
 
@@ -283,106 +284,145 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
-  return res.status(200).json({ text: "Can you explain how this application works and what your technical stack is?" });
+app.post('/api/gemini/transcribe', upload.single('audio'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No audio file provided" });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      // Fallback to static text if no Gemini key is provided
+      return res.status(200).json({ text: "Can you explain how this application works and what your technical stack is?" });
+    }
+    const ai = new GoogleGenAI({ apiKey });
+    const audioPart = {
+      inlineData: {
+        mimeType: req.file.mimetype,
+        data: req.file.buffer.toString("base64"),
+      },
+    };
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: { parts: [audioPart, { text: "Transcribe this audio. Return ONLY the transcribed text, without any additional comments or formatting." }] },
+    });
+    return res.status(200).json({ text: response.text });
+  } catch (error: any) {
+    console.error("Transcription error:", error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 
-app.post('/api/openrouter/chat', async (req, res) => {
+app.post('/api/gemini/chat', async (req, res) => {
   const { messages, options } = req.body || {};
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
 
-  if (!apiKey) {
-    return res.status(500).json({ error: "Missing OpenRouter API key in environment" });
+  if (!geminiKey && !openRouterKey) {
+    return res.status(500).json({ error: "Missing GEMINI_API_KEY or OPENROUTER_API_KEY in environment" });
   }
   
-  // Inject the system prompt into the messages array if it's not already there
-  let apiMessages = Array.isArray(messages) ? [...messages] : [];
-  if (apiMessages.length === 0 || apiMessages[0].role !== 'system') {
-     apiMessages.unshift({ role: 'system', content: SYSTEM_PROMPT });
-  }
-
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.APP_URL || "https://ai.studio/build",
-        "X-Title": "AI Studio App"
-      },
-      body: JSON.stringify({
-        model: options?.model || process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",
-        messages: apiMessages,
-        temperature: options?.temperature ?? 0.7,
-        max_tokens: options?.maxTokens || 400,
-        stream: options?.stream || false,
-        response_format: options?.responseFormat === "json_object" ? { type: "json_object" } : undefined
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(response.status).json({ error: errorText });
+    let systemInstruction = SYSTEM_PROMPT;
+    const apiMessages = Array.isArray(messages) ? messages : [];
+    if (apiMessages.length === 0 || apiMessages[0].role !== 'system') {
+       apiMessages.unshift({ role: 'system', content: SYSTEM_PROMPT });
     }
 
-    if (options?.stream) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      if (response.body) {
-         const reader = response.body.getReader();
-         const push = async () => {
-           while (true) {
-             const { done, value } = await reader.read();
-             if (done) {
-               res.end();
-               break;
-             }
-             res.write(value);
-           }
-         };
-         push();
-         return;
+    let finalResponse = "";
+
+    if (geminiKey) {
+      const ai = new GoogleGenAI({ apiKey: geminiKey, httpOptions: { headers: { 'User-Agent': 'aistudio-build' } } });
+      const contents: any[] = [];
+      
+      for (const msg of apiMessages) {
+        if (msg.role === 'system') {
+          systemInstruction = msg.content;
+        } else {
+          contents.push({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }]
+          });
+        }
       }
+
+      const response = await ai.models.generateContent({
+        model: "gemini-1.5-pro",
+        contents: contents,
+        config: {
+          systemInstruction,
+          temperature: 0.7,
+          maxOutputTokens: 2000
+        }
+      });
+      finalResponse = response.text || "";
+    } else {
+      // Fallback to OpenRouter
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openRouterKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": process.env.APP_URL || "https://ai.studio/build",
+          "X-Title": "AI Studio App"
+        },
+        body: JSON.stringify({
+          model: options?.model || process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",
+          messages: apiMessages,
+          temperature: options?.temperature ?? 0.7,
+          max_tokens: options?.maxTokens || 400
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return res.status(response.status).json({ error: errorText });
+      }
+
+      const data = await response.json();
+      finalResponse = data.choices?.[0]?.message?.content || "";
     }
 
-    const data = await response.json();
-    
-    // Attempt process automation on final reply
     try {
-       if (data.choices && data.choices[0] && data.choices[0].message) {
-           const finalResponse = await processAutomationRequests(data.choices[0].message.content);
-           data.choices[0].message.content = finalResponse;
-       }
+       finalResponse = await processAutomationRequests(finalResponse);
     } catch(e) { }
 
-    return res.json(data);
-  } catch (error) {
-    console.error("OpenRouter Error:", error);
-    return res.status(500).json({ error: "Failed to communicate with OpenRouter" });
+    return res.json({ text: finalResponse });
+  } catch (error: any) {
+    console.error("AI Chat Error:", error);
+    return res.status(500).json({ error: "Failed to communicate with AI provider", details: error.message });
   }
 });
 
-app.post('/api/ping-model', async (req, res) => {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
+app.post('/api/gemini/ping', async (req, res) => {
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  
+  if (!geminiKey && !openRouterKey) {
     return res.json({ success: false });
   }
   
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: req.body.model || "meta-llama/llama-3.3-70b-instruct",
-        messages: [{ role: "user", content: "ping" }],
-        max_tokens: 1
-      })
-    });
-    res.json({ success: response.ok, connected: response.ok });
+    if (geminiKey) {
+      const ai = new GoogleGenAI({ apiKey: geminiKey });
+      await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: "ping",
+        config: { maxOutputTokens: 5 }
+      });
+    } else {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openRouterKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.3-70b-instruct",
+          messages: [{ role: "user", content: "ping" }],
+          max_tokens: 1
+        })
+      });
+      if (!response.ok) throw new Error("Ping failed");
+    }
+    res.json({ success: true, connected: true });
   } catch (error) {
     res.json({ success: false, connected: false });
   }

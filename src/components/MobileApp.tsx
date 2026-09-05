@@ -211,7 +211,7 @@ export default function MobileApp({
           const formData = new FormData();
           formData.append('audio', audioBlob, 'speech.webm');
 
-          const res = await fetch('/api/transcribe', {
+          const res = await fetch('/api/gemini/transcribe', {
             method: 'POST',
             body: formData,
           });
@@ -264,7 +264,7 @@ export default function MobileApp({
   useEffect(() => {
     const checkHfHealth = async () => {
       try {
-        const res = await fetch("/api/ping-model", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct" }) });
+        const res = await fetch("/api/gemini/ping", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct" }) });
         const data = await res.json();
         setIsHfConnected(!!data.connected);
       } catch (err) {
@@ -393,17 +393,21 @@ export default function MobileApp({
       }));
 
       const apiMessages = [...history.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text })), { role: "user", content: text.trim() }];
-      const res = await fetch("/api/openrouter/chat", {
+      const res = await fetch("/api/gemini/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          messages: apiMessages, 
-          options: { model: selectedModel === "large" ? "meta-llama/llama-3.3-70b-instruct" : "meta-llama/llama-3.3-70b-instruct", temperature: 0.7 } 
+          messages: apiMessages
         }),
       });
       
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "AI request failed");
+      }
+      
       const data = await res.json();
-      let replyText = data.choices?.[0]?.message?.content || data.text || data.generated || "Sorry, I had trouble processing that.";
+      let replyText = data.text || "Sorry, I had trouble processing that.";
       let uiBlock: Message["uiBlock"] = null;
 
       let followUps: string[] = [];
@@ -434,11 +438,11 @@ export default function MobileApp({
         setActiveClarifications(followUps);
       }
       setIsLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
       setMessages(prev => prev.map(m => {
         if (m.id === userMsg.id) return { ...m, status: "error" as const };
-        if (m.id === agentMsgId) return { ...m, status: "error" as const, text: "An error occurred." };
+        if (m.id === agentMsgId) return { ...m, status: "error" as const, text: error?.message || "An error occurred." };
         return m;
       }));
       setIsLoading(false);

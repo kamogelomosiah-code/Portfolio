@@ -12,6 +12,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^2.21.0",
     "@mlc-ai/web-llm": "^0.2.84",
     "@tailwindcss/vite": "^4.1.14",
     "@types/react-syntax-highlighter": "^15.5.13",

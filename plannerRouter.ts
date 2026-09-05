@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import cron from 'node-cron';
 import fs from 'fs';
 import path from 'path';
+import { GoogleGenAI, Type } from "@google/genai";
 
 const router = express.Router();
 const NOTES_FILE_PATH = path.join(process.cwd(), 'planner_notes.json');
@@ -153,9 +154,11 @@ router.post('/generate', async (req, res) => {
 router.post('/smart-add', async (req, res) => {
   try {
     const { prompt } = req.body;
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "Missing OpenRouter API key" });
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    
+    if (!geminiKey && !openRouterKey) {
+      return res.status(500).json({ error: "Missing GEMINI_API_KEY or OPENROUTER_API_KEY" });
     }
 
     const today = new Date().toISOString().split('T')[0];
@@ -169,37 +172,50 @@ Return a strict JSON object with EXACTLY this structure:
   "task": "Cleaned up task description"
 }`;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.1,
-        max_tokens: 150
-      })
-    });
+    let responseText = "";
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`OpenRouter API error: ${response.status} ${errText}`);
+    if (geminiKey) {
+      const ai = new GoogleGenAI({ apiKey: geminiKey });
+      const response = await ai.models.generateContent({
+        model: "gemini-1.5-pro",
+        contents: prompt,
+        config: {
+          systemInstruction: systemPrompt,
+          responseMimeType: "application/json",
+          temperature: 0.1,
+          maxOutputTokens: 150
+        }
+      });
+      responseText = response.text || "";
+    } else {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openRouterKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.3-70b-instruct",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.1,
+          max_tokens: 150
+        })
+      });
+      if (!response.ok) throw new Error("OpenRouter smart-add failed");
+      const data = await response.json();
+      responseText = data.choices?.[0]?.message?.content || "";
     }
-
-    const data = await response.json();
     let result;
     try {
-      result = JSON.parse(data.choices[0].message.content);
+      result = JSON.parse(responseText);
     } catch(e) {
       // fallback regex if model ignores json_object
-      const dateMatch = data.choices[0].message.content.match(/"date":\s*"(\d{4}-\d{2}-\d{2})"/);
-      const taskMatch = data.choices[0].message.content.match(/"task":\s*"([^"]+)"/);
+      const dateMatch = responseText.match(/"date":\s*"(\d{4}-\d{2}-\d{2})"/);
+      const taskMatch = responseText.match(/"task":\s*"([^"]+)"/);
       if (dateMatch && taskMatch) {
          result = { date: dateMatch[1], task: taskMatch[1] };
       } else {
