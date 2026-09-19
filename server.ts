@@ -388,78 +388,70 @@ app.post('/api/chat', async (req, res) => {
 
   let finalReply = "";
 
-  // Strategy 1: Attempt upstream Render backend if configured
-  const renderUrl = (process.env.RENDER_BACKEND_URL || "https://kamo-portfolio-ai.onrender.com").replace(/\/$/, "");
-  try {
-    const renderController = new AbortController();
-    const timeout = setTimeout(() => renderController.abort(), 7000);
-    const renderRes = await fetch(`${renderUrl}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userMessage.trim() }),
-      signal: renderController.signal,
-    });
-    clearTimeout(timeout);
+  // Strategy 1: Attempt Gemini API with multi-model fallback (primary AI engine)
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    const candidateModels = [
+      process.env.GEMINI_MODEL,
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "gemini-3.6-flash"
+    ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
 
-    if (renderRes.ok) {
-      const renderData = await renderRes.json();
-      if (typeof renderData?.reply === 'string' && renderData.reply.trim()) {
-        finalReply = renderData.reply;
+    const ai = new GoogleGenAI({
+      apiKey: geminiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
+
+    const geminiPrompt = `${SYSTEM_PROMPT}\n\nPORTFOLIO CONTEXT:\n${JSON.stringify(meData, null, 2)}`;
+
+    for (const model of candidateModels) {
+      try {
+        const result = await ai.models.generateContent({
+          model: model,
+          contents: userMessage,
+          config: {
+            systemInstruction: geminiPrompt,
+            temperature: 0.7,
+            maxOutputTokens: 2000,
+          },
+        });
+        if (result.text) {
+          finalReply = result.text;
+          break;
+        }
+      } catch (geminiErr: any) {
+        // Silently try next model on high demand or failure
       }
-    } else {
-      console.warn(`[CHAT] Upstream Render returned ${renderRes.status}. Falling back to server intelligence.`);
     }
-  } catch (err: any) {
-    console.warn(`[CHAT] Upstream Render call failed: ${err?.message || err}. Falling back to server intelligence.`);
   }
 
-  // Strategy 2: If Render didn't succeed, attempt Gemini API with multi-model fallback
-  if (!finalReply) {
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (geminiKey) {
-      const candidateModels = [
-        process.env.GEMINI_MODEL,
-        "gemini-3.8-flash",
-        "gemini-3.7-flash",
-        "gemini-3.6-flash"
-      ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
-
-      const ai = new GoogleGenAI({
-        apiKey: geminiKey,
-        httpOptions: {
-          headers: {
-            'User-Agent': 'aistudio-build',
-          },
-        },
+  // Strategy 2: Upstream Render backend if explicitly enabled and configured
+  if (!finalReply && process.env.RENDER_BACKEND_URL) {
+    const renderUrl = process.env.RENDER_BACKEND_URL.replace(/\/$/, "");
+    try {
+      const renderController = new AbortController();
+      const timeout = setTimeout(() => renderController.abort(), 3500);
+      const renderRes = await fetch(`${renderUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage.trim() }),
+        signal: renderController.signal,
       });
+      clearTimeout(timeout);
 
-      const geminiPrompt = `${SYSTEM_PROMPT}\n\nPORTFOLIO CONTEXT:\n${JSON.stringify(meData, null, 2)}`;
-
-      for (const model of candidateModels) {
-        try {
-          const result = await ai.models.generateContent({
-            model: model,
-            contents: userMessage,
-            config: {
-              systemInstruction: geminiPrompt,
-              temperature: 0.7,
-              maxOutputTokens: 2000,
-            },
-          });
-          if (result.text) {
-            finalReply = result.text;
-            break;
-          }
-        } catch (geminiErr: any) {
-          const status = geminiErr?.status || geminiErr?.error?.code || geminiErr?.statusCode;
-          const isHighDemandOrQuota = status === 503 || status === 429 || status === "UNAVAILABLE" || status === "RESOURCE_EXHAUSTED";
-          if (isHighDemandOrQuota) {
-            console.warn(`[CHAT] Model ${model} is experiencing temporary high demand/load (${status}). Trying alternative...`);
-          } else {
-            console.warn(`[CHAT] Gemini call on ${model} failed (${status || 'error'}). Trying alternative...`);
-          }
+      if (renderRes.ok) {
+        const renderData = await renderRes.json();
+        if (typeof renderData?.reply === 'string' && renderData.reply.trim()) {
+          finalReply = renderData.reply;
         }
       }
+    } catch {
+      // Gracefully continue to fallback without emitting noisy console errors
     }
   }
 
@@ -493,13 +485,13 @@ app.post('/api/chat', async (req, res) => {
             finalReply = orText;
           }
         }
-      } catch (orErr: any) {
-        console.warn("[CHAT] OpenRouter fallback failed:", orErr?.message || orErr);
+      } catch {
+        // Fall through to local intelligence
       }
     }
   }
 
-  // Strategy 3: Local intelligent knowledge base and assistant response
+  // Strategy 4: Local intelligent knowledge base and assistant response
   if (!finalReply) {
     finalReply = generateLocalAssistantReply(userMessage);
   }
