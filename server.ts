@@ -284,6 +284,186 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
+app.get('/HEALTH', (req, res) => {
+  res.json({ status: 'ok', service: 'CodeMind Assistant', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', service: 'CodeMind Assistant', timestamp: new Date().toISOString() });
+});
+
+// Helper for local knowledge assistant when upstream LLM/RAG is offline
+function generateLocalAssistantReply(userPrompt: string): string {
+  const promptLower = userPrompt.toLowerCase().trim();
+
+  // 1. Math solving heuristics
+  if (promptLower.includes('solve') || promptLower.includes('derivative') || promptLower.includes('integral') || promptLower.includes('equation') || promptLower.includes('latex') || /[\d\+\-\*\/\^\=]/.test(promptLower) && promptLower.length < 50) {
+    if (promptLower.includes('2x + 5 = 15') || promptLower.includes('2x+5=15')) {
+      return `To solve the linear equation $$2x + 5 = 15$$:
+
+1. Subtract $5$ from both sides:
+$$2x = 15 - 5$$
+$$2x = 10$$
+
+2. Divide both sides by $2$:
+$$x = \\frac{10}{2} = 5$$
+
+The solution is $$x = 5$$. [UI:CV]`;
+    }
+  }
+
+  // 2. Goal coaching request
+  const goalRegex = /(?:i want to|my goal is to|help me|plan for|roadmap for)\s+([^.?!]+)/i;
+  const goalMatch = userPrompt.match(goalRegex);
+  if (goalMatch) {
+    const goalTitle = goalMatch[1].trim();
+    return `Here is a structured strategic milestone roadmap to achieve **${goalTitle}**:
+
+1. **Phase 1: Foundation & Planning (Day 1 - Week 1)**
+   - Audit requirements, assemble toolchains, and define success metrics.
+2. **Phase 2: Core Execution & Iteration (Week 2 - Week 3)**
+   - Build MVP components, test incrementally, and refine based on feedback.
+3. **Phase 3: Final Delivery & Review (Week 4)**
+   - Complete quality assurance, deploy, and conduct a retrospective.
+
+What is your email address so I can send this complete roadmap directly to your inbox? [UI:CV]`;
+  }
+
+  // 3. Questions about Kamo / Background / Education / Degree
+  if (promptLower.includes('who are you') || promptLower.includes('about kamo') || promptLower.includes('background') || promptLower.includes('introduce') || promptLower.includes('hello') || promptLower.includes('hi')) {
+    return `Hello! I am **Kamo's GPT**, an AI assistant and Goal Achievement Coach speaking on behalf of **Kamogelo (Kamo) Mosia**. 
+
+Kamo is an **IT Internship Candidate** and final-year **BSc IT** student at the University of Johannesburg (UJ), double majoring in **Computer Science and Informatics** (theoretical coursework completed, degree conferral pending).
+
+Feel free to ask about his projects, technical skills, CV, or request help with mathematics and software development! [UI:CV]`;
+  }
+
+  // 4. Projects
+  if (promptLower.includes('project') || promptLower.includes('calltrax') || promptLower.includes('library') || promptLower.includes('work') || promptLower.includes('portfolio')) {
+    return `Here are key projects built and engineered by Kamogelo:
+
+- **CallTrax** (\`call-trax.co.za\`): A client tracking and billing platform for corporate service providers built with PHP, Laravel, React.js, and MySQL.
+- **kamocodes API** (\`api.kamocodes.xyz\`): Central REST API gateway managing distributed sandbox requests (Laravel, PostgreSQL).
+- **kamocodes Library** (\`library.kamocodes.xyz\`): Cataloging and library management system with borrowing analytics (TypeScript, React, Laravel, MySQL).
+- **Personal AI Portfolio App**: Full-stack resume and assistant platform with voice transcription and dynamic sandboxes.
+
+[UI:PROJECTS]`;
+  }
+
+  // 5. Skills
+  if (promptLower.includes('skill') || promptLower.includes('stack') || promptLower.includes('tech') || promptLower.includes('language') || promptLower.includes('react') || promptLower.includes('typescript') || promptLower.includes('laravel')) {
+    return `Kamogelo's core technical proficiencies include:
+
+- **Languages**: JavaScript, TypeScript, PHP, Python, SQL (MySQL, PostgreSQL), HTML5, CSS3.
+- **Frameworks & Libraries**: React.js, Node.js, Express, Laravel, Tailwind CSS, Vite.
+- **Systems & IT Support**: Hardware diagnostics, desktop & peripheral setup, Windows 10/11 & Linux, network configuration (TCP/IP, DNS, DHCP, VPN).
+- **Tools**: Git, GitHub, Postman, VS Code, Chrome DevTools (Certified), Docker.
+
+[UI:SKILLS]`;
+  }
+
+  // 6. Contact / Hire / Resume / CV
+  if (promptLower.includes('contact') || promptLower.includes('email') || promptLower.includes('hire') || promptLower.includes('cv') || promptLower.includes('resume')) {
+    return `You can connect with Kamogelo Mosia directly:
+- **Email**: \`kamogelomosiah@gmail.com\`
+- **Profession**: Software & IT Solutions Engineer / BSc IT Candidate
+- **Location**: Johannesburg, South Africa
+
+You can download his official CV using the link below or send a message directly through the contact drawer. [UI:CV]`;
+  }
+
+  // General fallback response
+  return `Thank you for your message. As Kamo's AI assistant, I can help you explore his software engineering projects, review technical skills, provide strategic goal roadmaps, or assist with computer science and mathematics queries. How can I help you today? [UI:CV]`;
+}
+
+app.post('/api/chat', async (req, res) => {
+  const { message, prompt, messages } = req.body || {};
+  const userMessage = (typeof message === 'string' ? message : '') || 
+                     (typeof prompt === 'string' ? prompt : '') || 
+                     (Array.isArray(messages) ? messages[messages.length - 1]?.content : '') || '';
+
+  if (!userMessage.trim()) {
+    return res.status(400).json({ error: "Message is required" });
+  }
+
+  let finalReply = "";
+
+  // Strategy 1: Attempt upstream Render backend if configured
+  const renderUrl = (process.env.RENDER_BACKEND_URL || "https://kamo-portfolio-ai.onrender.com").replace(/\/$/, "");
+  try {
+    const renderController = new AbortController();
+    const timeout = setTimeout(() => renderController.abort(), 7000);
+    const renderRes = await fetch(`${renderUrl}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage.trim() }),
+      signal: renderController.signal,
+    });
+    clearTimeout(timeout);
+
+    if (renderRes.ok) {
+      const renderData = await renderRes.json();
+      if (typeof renderData?.reply === 'string' && renderData.reply.trim()) {
+        finalReply = renderData.reply;
+      }
+    } else {
+      console.warn(`[CHAT] Upstream Render returned ${renderRes.status}. Falling back to server intelligence.`);
+    }
+  } catch (err: any) {
+    console.warn(`[CHAT] Upstream Render call failed: ${err?.message || err}. Falling back to server intelligence.`);
+  }
+
+  // Strategy 2: If Render didn't succeed, attempt Gemini API with system prompt & portfolio context
+  if (!finalReply) {
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (geminiKey) {
+      try {
+        const ai = new GoogleGenAI({
+          apiKey: geminiKey,
+          httpOptions: {
+            headers: {
+              'User-Agent': 'aistudio-build',
+            },
+          },
+        });
+        const geminiPrompt = `${SYSTEM_PROMPT}\n\nPORTFOLIO CONTEXT:\n${JSON.stringify(meData, null, 2)}`;
+        const result = await ai.models.generateContent({
+          model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
+          contents: userMessage,
+          config: {
+            systemInstruction: geminiPrompt,
+            temperature: 0.7,
+            maxOutputTokens: 2000,
+          },
+        });
+        if (result.text) {
+          finalReply = result.text;
+        }
+      } catch (geminiErr: any) {
+        console.warn(`[CHAT] Gemini fallback failed: ${geminiErr?.message || geminiErr}`);
+      }
+    }
+  }
+
+  // Strategy 3: Local intelligent knowledge base and assistant response
+  if (!finalReply) {
+    finalReply = generateLocalAssistantReply(userMessage);
+  }
+
+  // Process any automated email roadmaps
+  try {
+    finalReply = await processAutomationRequests(finalReply);
+  } catch (automationErr) {
+    console.warn("[CHAT] Automation processing error:", automationErr);
+  }
+
+  return res.json({
+    reply: finalReply,
+    text: finalReply,
+    success: true,
+  });
+});
+
 app.post('/api/gemini/transcribe', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No audio file provided" });
@@ -292,7 +472,14 @@ app.post('/api/gemini/transcribe', upload.single('audio'), async (req, res) => {
       // Fallback to static text if no Gemini key is provided
       return res.status(200).json({ text: "Can you explain how this application works and what your technical stack is?" });
     }
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
     const audioPart = {
       inlineData: {
         mimeType: req.file.mimetype,
@@ -300,7 +487,7 @@ app.post('/api/gemini/transcribe', upload.single('audio'), async (req, res) => {
       },
     };
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-transcribe",
       contents: { parts: [audioPart, { text: "Transcribe this audio. Return ONLY the transcribed text, without any additional comments or formatting." }] },
     });
     return res.status(200).json({ text: response.text });

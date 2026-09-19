@@ -4,12 +4,11 @@
  */
 
 export const API_BASE_URL: string =
-  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ||
-  "https://kamo-portfolio-ai.onrender.com";
+  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") || "";
 
 export const API_ROUTES = {
-  chat: `${API_BASE_URL}/api/chat`,
-  health: `${API_BASE_URL}/HEALTH`,
+  chat: API_BASE_URL ? `${API_BASE_URL}/api/chat` : "/api/chat",
+  health: API_BASE_URL ? `${API_BASE_URL}/HEALTH` : "/HEALTH",
 } as const;
 
 /**

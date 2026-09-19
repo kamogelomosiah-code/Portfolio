@@ -21,12 +21,27 @@ export async function askAI(message: string, opts: AskAIOptions = {}): Promise<s
     : controller.signal;
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/chat`, {
+    const chatUrl = API_BASE_URL ? `${API_BASE_URL}/api/chat` : "/api/chat";
+    let res = await fetch(chatUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
       signal,
     });
+
+    if (!res.ok && API_BASE_URL) {
+      // Fallback to local full-stack server endpoint if external URL fails
+      try {
+        res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+          signal,
+        });
+      } catch {
+        // preserve original response
+      }
+    }
 
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
@@ -34,10 +49,11 @@ export async function askAI(message: string, opts: AskAIOptions = {}): Promise<s
     }
 
     const data = await res.json();
-    if (typeof data?.reply !== "string") {
+    const reply = data?.reply || data?.text;
+    if (typeof reply !== "string") {
       throw new Error("Malformed AI response: missing 'reply' string");
     }
-    return data.reply;
+    return reply;
   } finally {
     clearTimeout(timeoutId);
   }

@@ -324,12 +324,25 @@ export default function ChatInterface({
     const timeoutId = setTimeout(() => controller.abort(), COLD_START_TIMEOUT_MS);
 
     try {
-      const res = await fetch(API_ROUTES.chat, {
+      let res = await fetch(API_ROUTES.chat, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text.trim() }),
         signal: controller.signal,
       });
+
+      if (!res.ok && API_ROUTES.chat !== "/api/chat") {
+        try {
+          res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text.trim() }),
+            signal: controller.signal,
+          });
+        } catch {
+          // ignore and proceed
+        }
+      }
 
       clearTimeout(timeoutId);
 
@@ -342,7 +355,7 @@ export default function ChatInterface({
 
       const data = await res.json();
       let replyText: string =
-        typeof data?.reply === "string" ? data.reply : "";
+        typeof data?.reply === "string" ? data.reply : (typeof data?.text === "string" ? data.text : "");
 
       if (!replyText) {
         throw new Error("Empty reply from backend");
