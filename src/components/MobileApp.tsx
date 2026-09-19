@@ -6,7 +6,7 @@ import { AppIcon } from "./AppIcon";
 import { Message, Attachment } from "./ChatInterface";
 import { AIMessage } from "./chat/AIMessage";
 import MenuDrawer from "./MenuDrawer";
-import { router } from "../lib/modelRouter";
+import { API_ROUTES, COLD_START_TIMEOUT_MS } from "../config/api";
 
 const ProjectsPage = lazy(() => import("./ProjectsPage"));
 const CvPage = lazy(() => import("./CvPage"));
@@ -25,8 +25,6 @@ interface MobileAppProps {
   setSelectedModel: (model: string) => void;
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  llmStatus?: any;
-  isLargeReady?: boolean;
 }
 
 const TABS = ["chat", "projects", "cv", "contact", "changelog", "planner"] as const;
@@ -86,9 +84,7 @@ export default function MobileApp({
   selectedModel,
   setSelectedModel,
   messages,
-  setMessages,
-  llmStatus,
-  isLargeReady
+  setMessages
 }: MobileAppProps) {
   const [activeTab, setActiveTab] = useState<TabType>("chat");
   const [direction, setDirection] = useState<number>(0);
@@ -101,27 +97,7 @@ export default function MobileApp({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
-
-  const [aiEngine, setAiEngine] = useState<"cloud" | "local">("cloud");
-  const [localStatus, setLocalStatus] = useState(() => router.getStatus());
-  const [localInitialized, setLocalInitialized] = useState(router.initialized);
-  const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
-  
-
-  useEffect(() => {
-    let active = true;
-    const tick = () => {
-      if (!active) return;
-      setLocalStatus(router.getStatus());
-      setLocalInitialized(router.initialized);
-      setLocalLoading(router.loadingInProcess);
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-    return () => {
-      active = false;
-    };
-  }, []);
+  const pendingStopRef = useRef(false);
 
   const isGenerating = messages.some(m => m.status === 'loading' || m.status === 'streaming');
 
@@ -234,6 +210,11 @@ export default function MobileApp({
       };
 
       mediaRecorder.start();
+      if (pendingStopRef.current) {
+        pendingStopRef.current = false;
+        mediaRecorder.stop();
+        return;
+      }
       setIsRecording(true);
       setRecordingStatus("Listening... Release to transcribe");
     } catch (err) {
@@ -244,6 +225,10 @@ export default function MobileApp({
   };
 
   const stopRecording = () => {
+    if (!isRecording && mediaRecorderRef.current === null && !recognitionRef.current) {
+      pendingStopRef.current = true;
+      return;
+    }
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -264,10 +249,13 @@ export default function MobileApp({
   useEffect(() => {
     const checkHfHealth = async () => {
       try {
-        const res = await fetch("/api/gemini/ping", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct" }) });
-        const data = await res.json();
-        setIsHfConnected(!!data.connected);
-      } catch (err) {
+        const res = await fetch(API_ROUTES.health, {
+          method: "GET",
+          // Health checks must be fast — don't let them hang on cold start
+          signal: AbortSignal.timeout(8000),
+        });
+        setIsHfConnected(res.ok);
+      } catch {
         setIsHfConnected(false);
       }
     };
@@ -354,66 +342,75 @@ export default function MobileApp({
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
 
-    const userMsg: Message = { 
-      id: Date.now().toString(), 
-      role: "user", 
-      text: text.trim(), 
-      status: "sending"
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      text: text.trim(),
+      status: "sending",
     };
     const agentMsgId = (Date.now() + 1).toString();
     const initialAgentMsg: Message = {
       id: agentMsgId,
       role: "agent",
       text: "",
-      status: "loading"
+      status: "loading",
     };
 
-    const updatedMessages = [...messages, userMsg, initialAgentMsg];
-    
-    setMessages(updatedMessages);
+    setMessages((prev) => [...prev, userMsg, initialAgentMsg]);
     setInput("");
     setIsLoading(true);
     setActiveClarifications([]);
 
-    // Scroll to the top of the response (do not force scroll to bottom)
+    // Scroll to the new response placeholder
     setTimeout(() => {
       const el = document.getElementById(`msg-${agentMsgId}`);
       if (el && scrollContainerRef.current) {
         scrollContainerRef.current.scrollTo({
           top: el.offsetTop - 16,
-          behavior: 'smooth'
+          behavior: "smooth",
         });
       }
     }, 50);
 
-    try {
-      const history = messages.map(m => ({
-        role: m.role,
-        text: m.text
-      }));
+    // AbortController with a cold-start-friendly timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), COLD_START_TIMEOUT_MS);
 
-      const apiMessages = [...history.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text })), { role: "user", content: text.trim() }];
-      const res = await fetch("/api/gemini/chat", {
+    try {
+      const res = await fetch(API_ROUTES.chat, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          messages: apiMessages
-        }),
+        body: JSON.stringify({ message: text.trim() }),
+        signal: controller.signal,
       });
-      
+
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "AI request failed");
+        throw new Error(
+          (errData as any).error || `Backend responded with ${res.status}`
+        );
       }
-      
-      const data = await res.json();
-      let replyText = data.text || "Sorry, I had trouble processing that.";
-      let uiBlock: Message["uiBlock"] = null;
 
+      const data = await res.json();
+      let replyText: string =
+        typeof data?.reply === "string" ? data.reply : "";
+
+      if (!replyText) {
+        throw new Error("Empty reply from backend");
+      }
+
+      // Preserve the existing UI-token parsing pipeline
+      let uiBlock: Message["uiBlock"] = null;
       let followUps: string[] = [];
+
       const clarifyMatch = replyText.match(/\[CLARIFY:\s*([^\]]+)\]/);
       if (clarifyMatch) {
-        followUps = clarifyMatch[1].split("|").map((q: string) => q.trim()).filter(Boolean);
+        followUps = clarifyMatch[1]
+          .split("|")
+          .map((q: string) => q.trim())
+          .filter(Boolean);
         replyText = replyText.replace(/\[CLARIFY:\s*([^\]]+)\]/, "").trim();
       }
 
@@ -428,23 +425,43 @@ export default function MobileApp({
         replyText = replyText.replace("[UI:CV]", "").trim();
       }
 
-      setMessages(prev => prev.map(m => {
-        if (m.id === userMsg.id) return { ...m, status: "sent" as const };
-        if (m.id === agentMsgId) return { ...m, status: "streaming" as const, text: replyText, uiBlock };
-        return m;
-      }));
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === userMsg.id) return { ...m, status: "sent" as const };
+          if (m.id === agentMsgId)
+            return {
+              ...m,
+              status: "streaming" as const,
+              text: replyText,
+              uiBlock,
+            };
+          return m;
+        })
+      );
 
-      if (followUps.length > 0) {
-        setActiveClarifications(followUps);
-      }
-      setIsLoading(false);
+      if (followUps.length > 0) setActiveClarifications(followUps);
     } catch (error: any) {
+      clearTimeout(timeoutId);
+
+      const isAbort = error?.name === "AbortError";
+      const friendly = isAbort
+        ? "Kamo's AI is still warming up (Render cold start). Please try again in a moment."
+        : "Kamo's AI is currently offline. Please try again later.";
+
       console.error("Chat error:", error);
-      setMessages(prev => prev.map(m => {
-        if (m.id === userMsg.id) return { ...m, status: "error" as const };
-        if (m.id === agentMsgId) return { ...m, status: "error" as const, text: error?.message || "An error occurred." };
-        return m;
-      }));
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === userMsg.id) return { ...m, status: "error" as const };
+          if (m.id === agentMsgId)
+            return {
+              ...m,
+              status: "error" as const,
+              text: friendly,
+            };
+          return m;
+        })
+      );
+    } finally {
       setIsLoading(false);
     }
   };
@@ -861,7 +878,7 @@ export default function MobileApp({
                                     </div>
                                     {uiBlock === "projects" && <ProjectCards />}
                                     {uiBlock === "skills" && <SkillChips />}
-                                    {uiBlock === "cv" && <DownloadCV onViewCv={() => handleTabChange("cv")} />}
+                                    {uiBlock === "cv" && <DownloadCV />}
                                   </>
                                 )}
                               />

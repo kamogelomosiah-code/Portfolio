@@ -300,131 +300,13 @@ app.post('/api/gemini/transcribe', upload.single('audio'), async (req, res) => {
       },
     };
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       contents: { parts: [audioPart, { text: "Transcribe this audio. Return ONLY the transcribed text, without any additional comments or formatting." }] },
     });
     return res.status(200).json({ text: response.text });
   } catch (error: any) {
     console.error("Transcription error:", error);
     return res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/gemini/chat', async (req, res) => {
-  const { messages, options } = req.body || {};
-  const geminiKey = process.env.GEMINI_API_KEY;
-  const openRouterKey = process.env.OPENROUTER_API_KEY;
-
-  if (!geminiKey && !openRouterKey) {
-    return res.status(500).json({ error: "Missing GEMINI_API_KEY or OPENROUTER_API_KEY in environment" });
-  }
-  
-  try {
-    let systemInstruction = SYSTEM_PROMPT;
-    const apiMessages = Array.isArray(messages) ? messages : [];
-    if (apiMessages.length === 0 || apiMessages[0].role !== 'system') {
-       apiMessages.unshift({ role: 'system', content: SYSTEM_PROMPT });
-    }
-
-    let finalResponse = "";
-
-    if (geminiKey) {
-      const ai = new GoogleGenAI({ apiKey: geminiKey, httpOptions: { headers: { 'User-Agent': 'aistudio-build' } } });
-      const contents: any[] = [];
-      
-      for (const msg of apiMessages) {
-        if (msg.role === 'system') {
-          systemInstruction = msg.content;
-        } else {
-          contents.push({
-            role: msg.role === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.content }]
-          });
-        }
-      }
-
-      const response = await ai.models.generateContent({
-        model: "gemini-1.5-pro",
-        contents: contents,
-        config: {
-          systemInstruction,
-          temperature: 0.7,
-          maxOutputTokens: 2000
-        }
-      });
-      finalResponse = response.text || "";
-    } else {
-      // Fallback to OpenRouter
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openRouterKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": process.env.APP_URL || "https://ai.studio/build",
-          "X-Title": "AI Studio App"
-        },
-        body: JSON.stringify({
-          model: options?.model || process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",
-          messages: apiMessages,
-          temperature: options?.temperature ?? 0.7,
-          max_tokens: options?.maxTokens || 400
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return res.status(response.status).json({ error: errorText });
-      }
-
-      const data = await response.json();
-      finalResponse = data.choices?.[0]?.message?.content || "";
-    }
-
-    try {
-       finalResponse = await processAutomationRequests(finalResponse);
-    } catch(e) { }
-
-    return res.json({ text: finalResponse });
-  } catch (error: any) {
-    console.error("AI Chat Error:", error);
-    return res.status(500).json({ error: "Failed to communicate with AI provider", details: error.message });
-  }
-});
-
-app.post('/api/gemini/ping', async (req, res) => {
-  const geminiKey = process.env.GEMINI_API_KEY;
-  const openRouterKey = process.env.OPENROUTER_API_KEY;
-  
-  if (!geminiKey && !openRouterKey) {
-    return res.json({ success: false });
-  }
-  
-  try {
-    if (geminiKey) {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: "ping",
-        config: { maxOutputTokens: 5 }
-      });
-    } else {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openRouterKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "meta-llama/llama-3.3-70b-instruct",
-          messages: [{ role: "user", content: "ping" }],
-          max_tokens: 1
-        })
-      });
-      if (!response.ok) throw new Error("Ping failed");
-    }
-    res.json({ success: true, connected: true });
-  } catch (error) {
-    res.json({ success: false, connected: false });
   }
 });
 

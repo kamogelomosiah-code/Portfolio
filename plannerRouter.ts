@@ -4,7 +4,6 @@ import nodemailer from 'nodemailer';
 import cron from 'node-cron';
 import fs from 'fs';
 import path from 'path';
-import { GoogleGenAI, Type } from "@google/genai";
 
 const router = express.Router();
 const NOTES_FILE_PATH = path.join(process.cwd(), 'planner_notes.json');
@@ -147,111 +146,6 @@ router.post('/generate', async (req, res) => {
   } catch (error: any) {
     console.error('Planner Registration Error:', error);
     res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-
-router.post('/smart-add', async (req, res) => {
-  try {
-    const { prompt } = req.body;
-    const geminiKey = process.env.GEMINI_API_KEY;
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    
-    if (!geminiKey && !openRouterKey) {
-      return res.status(500).json({ error: "Missing GEMINI_API_KEY or OPENROUTER_API_KEY" });
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    const systemPrompt = `You are an intelligent calendar assistant. 
-Today's date is ${today}. 
-Extract the task description and the target date from the user's prompt.
-Target date MUST be in YYYY-MM-DD format.
-Return a strict JSON object with EXACTLY this structure:
-{
-  "date": "YYYY-MM-DD",
-  "task": "Cleaned up task description"
-}`;
-
-    let responseText = "";
-
-    if (geminiKey) {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-1.5-pro",
-        contents: prompt,
-        config: {
-          systemInstruction: systemPrompt,
-          responseMimeType: "application/json",
-          temperature: 0.1,
-          maxOutputTokens: 150
-        }
-      });
-      responseText = response.text || "";
-    } else {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openRouterKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "meta-llama/llama-3.3-70b-instruct",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: prompt }
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.1,
-          max_tokens: 150
-        })
-      });
-      if (!response.ok) throw new Error("OpenRouter smart-add failed");
-      const data = await response.json();
-      responseText = data.choices?.[0]?.message?.content || "";
-    }
-    let result;
-    try {
-      result = JSON.parse(responseText);
-    } catch(e) {
-      // fallback regex if model ignores json_object
-      const dateMatch = responseText.match(/"date":\s*"(\d{4}-\d{2}-\d{2})"/);
-      const taskMatch = responseText.match(/"task":\s*"([^"]+)"/);
-      if (dateMatch && taskMatch) {
-         result = { date: dateMatch[1], task: taskMatch[1] };
-      } else {
-         throw new Error("Failed to parse JSON response");
-      }
-    }
-
-    if (!result.date || !result.task) {
-       throw new Error("Incomplete JSON parsed");
-    }
-
-    // Now load existing notes, add it, and save.
-    const NOTES_FILE_PATH = path.join(process.cwd(), 'planner_notes.json');
-    let notes = {};
-    if (fs.existsSync(NOTES_FILE_PATH)) {
-      notes = JSON.parse(fs.readFileSync(NOTES_FILE_PATH, 'utf-8') || '{}');
-    }
-
-    if (!notes[result.date]) {
-      notes[result.date] = [];
-    }
-
-    const newNote = {
-      id: uuidv4(),
-      text: result.task,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    notes[result.date].push(newNote);
-    fs.writeFileSync(NOTES_FILE_PATH, JSON.stringify(notes, null, 2));
-
-    res.json({ success: true, date: result.date, task: result.task, notes });
-  } catch (error) {
-    console.error("Smart Add Error:", error);
-    res.status(500).json({ error: "Failed to smartly add todo", details: error.message, stack: error.stack });
   }
 });
 

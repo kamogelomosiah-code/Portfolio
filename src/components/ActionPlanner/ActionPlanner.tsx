@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MaterialIcon } from '../MaterialIcon';
+import { smartAdd } from "../../lib/smartAdd";
 import {
   format,
   addMonths,
@@ -95,34 +96,40 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
   const handleSmartAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!smartAddInput.trim()) return;
-    
+
     setIsSmartAdding(true);
     try {
-      const res = await fetch('/api/planner/smart-add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: smartAddInput.trim() })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setNotes(data.notes || {});
-        setSmartAddInput('');
-        setSaveStatus('Smart task added!');
-        setTimeout(() => setSaveStatus(null), 2500);
-        
-        if (data.date) {
-            const parsedDate = parseISO(data.date);
-            setSelectedDate(parsedDate);
-            setCurrentMonth(parsedDate);
-        }
-      } else {
-        setSaveStatus('Failed to smart add');
-        setTimeout(() => setSaveStatus(null), 2500);
-      }
-    } catch (err) {
-      console.error(err);
-      setSaveStatus('Error in smart add');
+      const { date, task } = await smartAdd(smartAddInput.trim());
+
+      const parsedDate = parseISO(date);
+      const dateKey = format(parsedDate, "yyyy-MM-dd");
+
+      const newNote: CalendarNote = {
+        id: crypto.randomUUID(),
+        text: task,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const updatedNotes: NotesState = {
+        ...notes,
+        [dateKey]: [...(notes[dateKey] || []), newNote],
+      };
+
+      setNotes(updatedNotes);
+      setSmartAddInput("");
+      setSelectedDate(parsedDate);
+      setCurrentMonth(parsedDate);
+      setSaveStatus("Smart task added!");
       setTimeout(() => setSaveStatus(null), 2500);
+
+      // Persist to planner_notes.json via the local server endpoint
+      await saveNotesToFile(updatedNotes);
+    } catch (err: any) {
+      console.error("Smart add error:", err);
+      const msg = (err?.message || "unknown").slice(0, 60);
+      setSaveStatus("AI error: " + msg);
+      setTimeout(() => setSaveStatus(null), 4500);
     } finally {
       setIsSmartAdding(false);
     }
@@ -203,6 +210,8 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
     saveNotesToFile(updatedNotes);
   };
 
+  const notesPanelRef = useRef<HTMLDivElement>(null);
+
   // Navigation handlers
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -210,6 +219,15 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
     const today = new Date();
     setCurrentMonth(today);
     setSelectedDate(today);
+  };
+
+  const handleDayClick = (day: Date) => {
+    setSelectedDate(day);
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        notesPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   };
 
   // Calendar calculations
@@ -290,7 +308,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                 type="text"
                 value={smartAddInput}
                 onChange={e => setSmartAddInput(e.target.value)}
-                placeholder="e.g., 'Remind me to call John next Tuesday'"
+                placeholder="Ask AI: e.g., 'Apply for PRDP next Friday'"
                 disabled={isSmartAdding}
                 className="flex-1 bg-surface border border-outline-variant rounded-xl px-4 py-2.5 text-body-medium focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50"
               />
@@ -300,7 +318,10 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                 className="bg-primary text-on-primary px-4 py-2.5 rounded-xl text-label-large font-medium hover:bg-primary/90 transition-all shadow-sm disabled:opacity-50 flex items-center justify-center min-w-[80px]"
               >
                 {isSmartAdding ? (
-                  <div className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin"></div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
+                    <span className="text-label-small">AI…</span>
+                  </div>
                 ) : (
                   "Add"
                 )}
@@ -332,10 +353,11 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
           </div>
 
           {/* Calendar Day Labels */}
-          <div className="grid grid-cols-7 gap-1 text-center font-medium text-label-medium text-on-surface-variant px-1">
+          <div className="grid grid-cols-7 gap-1 text-center font-medium text-[10px] sm:text-label-medium text-on-surface-variant px-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
               <div key={day} className="py-1">
-                {day}
+                <span className="sm:hidden">{day.slice(0, 1)}</span>
+                <span className="hidden sm:inline">{day}</span>
               </div>
             ))}
           </div>
@@ -352,9 +374,9 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
               return (
                 <button
                   key={idx}
-                  onClick={() => setSelectedDate(day)}
+                  onClick={() => handleDayClick(day)}
                   className={`calendar-day
-                    relative min-h-[70px] sm:min-h-[85px] p-1.5 sm:p-2 rounded-xl flex flex-col justify-between text-left transition-all cursor-pointer border
+                    relative min-h-[56px] sm:min-h-[85px] p-1.5 sm:p-2 rounded-xl flex flex-col justify-between text-left transition-all cursor-pointer border
                     ${isSelected
                       ? 'bg-primary/15 border-primary shadow-sm text-primary font-semibold'
                       : isCurrentMonthDay
@@ -376,20 +398,30 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                   </div>
                   {/* Note preview badge/snippet */}
                   {dayNotes.length > 0 && (
-                    <div className="mt-1 flex flex-col gap-0.5 overflow-hidden">
-                      {dayNotes.slice(0, 2).map((n, i) => (
-                        <div
-                          key={i}
-                          className="text-[10.5px] leading-tight line-clamp-1 px-1 py-0.5 rounded border border-outline-variant/60 text-on-surface-variant"
-                        >
-                          {n.text}
-                        </div>
-                      ))}
-                      {dayNotes.length > 2 && (
-                        <div className="text-[9.5px] text-on-surface-variant/70 italic px-1">
-                          +{dayNotes.length - 2} more
-                        </div>
-                      )}
+                    <div className="mt-1 flex flex-col gap-0.5 overflow-hidden w-full">
+                      <div className="hidden sm:flex flex-col gap-0.5 w-full">
+                        {dayNotes.slice(0, 2).map((n, i) => (
+                          <div
+                            key={i}
+                            className="text-[10.5px] leading-tight line-clamp-1 px-1 py-0.5 rounded border border-outline-variant/60 text-on-surface-variant bg-surface overflow-hidden"
+                          >
+                            {n.text}
+                          </div>
+                        ))}
+                        {dayNotes.length > 2 && (
+                          <div className="text-[9.5px] text-on-surface-variant/70 italic px-1">
+                            +{dayNotes.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex sm:hidden flex-wrap gap-1 mt-1">
+                        {dayNotes.slice(0, 3).map((_, i) => (
+                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/70"></div>
+                        ))}
+                        {dayNotes.length > 3 && (
+                          <div className="w-1 h-1 rounded-full bg-primary/40 mt-[1px]"></div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </button>
@@ -399,7 +431,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
         </div>
 
         {/* Right Column: Selected Date Notes Panel (5 cols on lg) */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
+        <div ref={notesPanelRef} className="lg:col-span-5 flex flex-col gap-4">
           <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant flex flex-col h-full min-h-[420px]">
             {/* Panel Header */}
             <div className="flex items-center justify-between pb-4 border-b border-outline-variant/60">

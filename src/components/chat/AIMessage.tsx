@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MarkdownRenderer } from "../MarkdownRenderer";
 import { Message } from "../ChatInterface";
 import { AppIcon } from "../AppIcon";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, AlertCircle } from "lucide-react";
 
 export function AIMessage({
   msg,
@@ -16,10 +16,17 @@ export function AIMessage({
   renderUIBlock?: (uiBlock: string) => React.ReactNode;
 }) {
   const hasAnimatedRef = useRef(false);
-  const [displayedText, setDisplayedText] = useState(msg.status === "sent" ? msg.text : "");
+  const [displayedText, setDisplayedText] = useState(msg.text || "");
   const [copied, setCopied] = useState(false);
-  const [localStatus, setLocalStatus] = useState<"loading" | "streaming" | "sent">(
-    msg.status === "sending" || msg.status === "loading" ? "loading" : msg.status === "sent" ? "sent" : "streaming"
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
+  const [localStatus, setLocalStatus] = useState<"loading" | "streaming" | "sent" | "error">(
+    msg.status === "sending" || msg.status === "loading"
+      ? "loading"
+      : msg.status === "error"
+      ? "error"
+      : msg.status === "sent"
+      ? "sent"
+      : "streaming"
   );
   
   // Use a ref for the callback so it doesn't trigger re-renders
@@ -38,32 +45,36 @@ export function AIMessage({
     onCompleteRef.current = onStreamingComplete;
   }, [onStreamingComplete]);
 
+  // Track cold start elapsed loading seconds
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (msg.status === "loading" || msg.status === "sending") {
+      setLoadingSeconds(0);
+      interval = setInterval(() => {
+        setLoadingSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      setLoadingSeconds(0);
+    }
+    return () => clearInterval(interval);
+  }, [msg.status]);
+
   useEffect(() => {
     if (msg.status === "loading" || msg.status === "sending") {
       setLocalStatus("loading");
       setDisplayedText("");
       hasAnimatedRef.current = false;
-    } else if (msg.text && !hasAnimatedRef.current && localStatus !== "sent") {
-      hasAnimatedRef.current = true;
-      setLocalStatus("streaming");
-      let currentIndex = 0;
-      
-      const interval = setInterval(() => {
-        currentIndex += Math.floor(Math.random() * 2) + 1; // 1-2 chars
-        if (currentIndex >= msg.text.length) {
-          currentIndex = msg.text.length;
-          clearInterval(interval);
-          setLocalStatus("sent");
-          onCompleteRef.current(msg.id);
-        }
-        setDisplayedText(msg.text.substring(0, currentIndex));
-      }, 15); // Slower stream
-
-      return () => clearInterval(interval);
-    } else if (msg.status === "sent" && localStatus !== "sent") {
-      hasAnimatedRef.current = true;
+    } else if (msg.status === "error") {
+      setLocalStatus("error");
       setDisplayedText(msg.text);
+      hasAnimatedRef.current = true;
+    } else if (msg.status === "streaming") {
+      setLocalStatus("streaming");
+      setDisplayedText(msg.text);
+    } else if (msg.status === "sent") {
       setLocalStatus("sent");
+      setDisplayedText(msg.text);
+      hasAnimatedRef.current = true;
     }
   }, [msg.text, msg.status, msg.id]);
 
@@ -88,13 +99,27 @@ export function AIMessage({
         
         <div className="text-on-background bg-transparent pb-1 w-full text-left max-w-3xl min-h-[24px]">
           {localStatus === "loading" ? (
-            <div className="flex items-center gap-1.5 text-on-surface-variant pt-1">
-              <span className="text-base sm:text-lg font-normal italic">Thinking</span>
-              <span className="flex gap-1 items-center h-full ml-1">
-                <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+            <div className="flex flex-col gap-1 text-on-surface-variant pt-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base sm:text-lg font-normal italic">
+                  Connecting to Kamo's AI
+                </span>
+                <span className="flex gap-1 items-center h-full ml-1">
+                  <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 bg-primary/80 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                </span>
+              </div>
+              <span className="text-xs opacity-70 font-normal">
+                First request may take up to 50 seconds (Render cold start).
               </span>
+            </div>
+          ) : localStatus === "error" ? (
+            <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 max-w-xl my-1">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <div className="text-body-medium font-normal leading-relaxed">
+                {displayedText || "Kamo's AI is currently offline. Please try again later."}
+              </div>
             </div>
           ) : (
             <>

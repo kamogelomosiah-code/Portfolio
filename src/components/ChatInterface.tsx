@@ -1,20 +1,11 @@
 import React, { useState, useRef, useEffect, UIEvent } from "react";
-import { 
-  Send, Sparkles, Mic, Link as LinkIcon, User, Mail, 
-  GraduationCap, FileText, Menu, MessageSquare, PlusCircle, X, 
-  AlertCircle, ChevronRight, CornerDownLeft, Plus,
-  List, Cpu, RotateCw, Paperclip, ChevronDown, Zap,
-  Image as ImageIcon, Database, Layers, Code2, Brain
-} from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ProjectCards, SkillChips, DownloadCV } from "./RichComponents";
 import { AppIcon } from "./AppIcon";
 import { AIMessage } from "./chat/AIMessage";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { MaterialIcon } from "./MaterialIcon";
-import { initAuth, googleSignIn, logout, getAccessToken } from "../lib/auth";
-import type { User as FirebaseUser } from "firebase/auth";
-import { router } from "../lib/modelRouter";
+import { API_ROUTES, COLD_START_TIMEOUT_MS } from "../config/api";
 
 
 export type Attachment = {
@@ -38,106 +29,26 @@ export type Message = {
   };
 };
 
-const PROMPT_SETS = [
-  [
-    { text: "What are Kamogelo's top technical skills?", icon: "sparkles" },
-    { text: "Tell me about Kamogelo's software engineering projects", icon: "code" },
-    { text: "How can I contact Kamogelo or download his CV?", icon: "user" },
-    { text: "What academic qualifications does Kamogelo hold?", icon: "cap" }
-  ],
-  [
-    { text: "What is Kamo's professional IT and customer experience?", icon: "user" },
-    { text: "Explain his 'CallTrax' billing platform project", icon: "layers" },
-    { text: "Tell me about the 'kamocodes Library' system", icon: "list" },
-    { text: "Does Kamo have experience with PHP and Laravel?", icon: "code" }
-  ],
-  [
-    { text: "What is Kamo's main focus or career objective?", icon: "sparkles" },
-    { text: "Explain the architecture of Kamo's AI Portfolio app", icon: "cpu" },
-    { text: "Tell me about the 'kamocodes API' gateway project", icon: "database" },
-    { text: "What databases is Kamo experienced with?", icon: "database" }
-  ]
-];
-
-function renderPromptIcon(iconName: string) {
-  switch (iconName) {
-    case "list":
-      return <List size={16} className="text-primary" />;
-    case "mail":
-      return <Mail size={16} className="text-primary" />;
-    case "text":
-      return <FileText size={16} className="text-primary" />;
-    case "cpu":
-      return <Cpu size={16} className="text-primary" />;
-    case "sparkles":
-      return <Sparkles size={16} className="text-primary" />;
-    case "code":
-      return <Code2 size={16} className="text-primary" />;
-    case "user":
-      return <User size={16} className="text-primary" />;
-    case "cap":
-      return <GraduationCap size={16} className="text-primary" />;
-    case "layers":
-      return <Layers size={16} className="text-primary" />;
-    case "database":
-      return <Database size={16} className="text-primary" />;
-    default:
-      return <MessageSquare size={16} className="text-primary" />;
-  }
-}
-
 export default function ChatInterface({ 
   selectedModel = "tiny",
   setSelectedModel,
   onToggleDrawer,
   messages,
-  setMessages,
-  onViewCv,
-  onViewProjects,
-  llmStatus,
-  isLargeReady
+  setMessages
 }: { 
   selectedModel?: string,
   setSelectedModel?: (model: string) => void,
   onToggleDrawer?: () => void,
   messages: Message[],
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  onViewCv?: () => void,
-  onViewProjects?: () => void,
-  llmStatus?: any,
-  isLargeReady?: boolean
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>
 }) {
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [introStage, setIntroStage] = useState<"initial" | "options">("initial");
   const [isHfConnected, setIsHfConnected] = useState<boolean | null>(null);
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [needsAuth, setNeedsAuth] = useState(true);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  const [aiEngine, setAiEngine] = useState<"cloud" | "local">("cloud");
-  const [localStatus, setLocalStatus] = useState(() => router.getStatus());
-  const [localInitialized, setLocalInitialized] = useState(router.initialized);
-  const [localLoading, setLocalLoading] = useState(router.loadingInProcess);
-  
-
-  useEffect(() => {
-    let active = true;
-    const tick = () => {
-      if (!active) return;
-      setLocalStatus(router.getStatus());
-      setLocalInitialized(router.initialized);
-      setLocalLoading(router.loadingInProcess);
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-    return () => {
-      active = false;
-    };
-  }, []);
+  const pendingStopRef = useRef(false);
 
 
   const isGenerating = messages.some(m => m.status === 'loading' || m.status === 'streaming');
@@ -250,6 +161,11 @@ export default function ChatInterface({
       };
 
       mediaRecorder.start();
+      if (pendingStopRef.current) {
+        pendingStopRef.current = false;
+        mediaRecorder.stop();
+        return;
+      }
       setIsRecording(true);
       setRecordingStatus("Listening... Release to transcribe");
     } catch (err) {
@@ -260,6 +176,10 @@ export default function ChatInterface({
   };
 
   const stopRecording = () => {
+    if (!isRecording && mediaRecorderRef.current === null && !recognitionRef.current) {
+      pendingStopRef.current = true;
+      return;
+    }
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -278,49 +198,15 @@ export default function ChatInterface({
   };
 
   useEffect(() => {
-    const unsubscribe = initAuth(
-      (user, token) => {
-        setUser(user);
-        setNeedsAuth(false);
-      },
-      () => {
-        setUser(null);
-        setNeedsAuth(true);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
-
-  const handleLogin = async () => {
-    setIsLoggingIn(true);
-    try {
-      const result = await googleSignIn();
-      if (result) {
-        setUser(result.user);
-        setNeedsAuth(false);
-      }
-    } catch (err: any) {
-      if (err?.code !== 'auth/popup-closed-by-user' && !err?.message?.includes('popup-closed-by-user')) {
-        console.error('Login failed:', err);
-      }
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    setUser(null);
-    setNeedsAuth(true);
-  };
-
-  useEffect(() => {
     const checkHfHealth = async () => {
       try {
-        const res = await fetch("/api/gemini/ping", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
-        const data = await res.json();
-        setIsHfConnected(!!data.connected);
-      } catch (err) {
+        const res = await fetch(API_ROUTES.health, {
+          method: "GET",
+          // Health checks must be fast — don't let them hang on cold start
+          signal: AbortSignal.timeout(8000),
+        });
+        setIsHfConnected(res.ok);
+      } catch {
         setIsHfConnected(false);
       }
     };
@@ -341,7 +227,6 @@ export default function ChatInterface({
     }
   }, [messages.length]);
 
-  const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -385,24 +270,6 @@ export default function ChatInterface({
   }, []);
 
   useEffect(() => {
-    if (!scrollContentRef.current) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-      if (scrollContainerRef.current) {
-        const container = scrollContainerRef.current;
-        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        const isStreaming = messages.some(m => m.status === 'streaming' || m.status === 'loading');
-        if (isNearBottom && !isStreaming) {
-          // Do not auto jump during generation per requirements
-        }
-      }
-    });
-
-    resizeObserver.observe(scrollContentRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       const scrollHeight = textareaRef.current.scrollHeight;
@@ -415,7 +282,6 @@ export default function ChatInterface({
 
   const handleScroll = (e: UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    setIsScrolled(scrollTop > 20);
     lastScrollY.current = scrollTop;
     setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
   };
@@ -423,74 +289,75 @@ export default function ChatInterface({
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
 
-    const userMsg: Message = { 
-      id: Date.now().toString(), 
-      role: "user", 
-      text: text.trim(), 
-      status: "sending"
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      text: text.trim(),
+      status: "sending",
     };
     const agentMsgId = (Date.now() + 1).toString();
     const initialAgentMsg: Message = {
       id: agentMsgId,
       role: "agent",
       text: "",
-      status: "loading"
+      status: "loading",
     };
 
-    const updatedMessages = [...messages, userMsg, initialAgentMsg];
-    
-    setMessages(updatedMessages);
+    setMessages((prev) => [...prev, userMsg, initialAgentMsg]);
     setInput("");
     setIsLoading(true);
     setActiveClarifications([]);
 
-    // Scroll to the top of the response (do not force scroll to bottom)
+    // Scroll to the new response placeholder
     setTimeout(() => {
       const el = document.getElementById(`msg-${agentMsgId}`);
       if (el && scrollContainerRef.current) {
         scrollContainerRef.current.scrollTo({
           top: el.offsetTop - 16,
-          behavior: 'smooth'
+          behavior: "smooth",
         });
       }
     }, 50);
 
+    // AbortController with a cold-start-friendly timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), COLD_START_TIMEOUT_MS);
+
     try {
-      const history = messages.map(m => ({
-        role: m.role === "user" ? "user" : "assistant",
-        text: m.text
-      }));
-
-      const chatHistory = history.map(m => ({
-        role: m.role as "system" | "user" | "assistant",
-        content: m.text
-      }));
-
-      const apiMessages = [
-        ...chatHistory,
-        { role: "user", content: text.trim() }
-      ];
-      const res = await fetch("/api/gemini/chat", {
+      const res = await fetch(API_ROUTES.chat, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: apiMessages
-        })
+        body: JSON.stringify({ message: text.trim() }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "AI request failed");
+        throw new Error(
+          (errData as any).error || `Backend responded with ${res.status}`
+        );
       }
-      const data = await res.json();
-      const resText = data.text || "";
-      
-      let replyText = resText || "Sorry, I had trouble processing that.";
-      let uiBlock: Message["uiBlock"] = null;
 
+      const data = await res.json();
+      let replyText: string =
+        typeof data?.reply === "string" ? data.reply : "";
+
+      if (!replyText) {
+        throw new Error("Empty reply from backend");
+      }
+
+      // Preserve the existing UI-token parsing pipeline
+      let uiBlock: Message["uiBlock"] = null;
       let followUps: string[] = [];
+
       const clarifyMatch = replyText.match(/\[CLARIFY:\s*([^\]]+)\]/);
       if (clarifyMatch) {
-        followUps = clarifyMatch[1].split("|").map((q: string) => q.trim()).filter(Boolean);
+        followUps = clarifyMatch[1]
+          .split("|")
+          .map((q: string) => q.trim())
+          .filter(Boolean);
         replyText = replyText.replace(/\[CLARIFY:\s*([^\]]+)\]/, "").trim();
       }
 
@@ -505,23 +372,43 @@ export default function ChatInterface({
         replyText = replyText.replace("[UI:CV]", "").trim();
       }
 
-      setMessages(prev => prev.map(m => {
-        if (m.id === userMsg.id) return { ...m, status: "sent" as const };
-        if (m.id === agentMsgId) return { ...m, status: "streaming" as const, text: replyText, uiBlock };
-        return m;
-      }));
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === userMsg.id) return { ...m, status: "sent" as const };
+          if (m.id === agentMsgId)
+            return {
+              ...m,
+              status: "streaming" as const,
+              text: replyText,
+              uiBlock,
+            };
+          return m;
+        })
+      );
 
-      if (followUps.length > 0) {
-        setActiveClarifications(followUps);
-      }
-      setIsLoading(false);
+      if (followUps.length > 0) setActiveClarifications(followUps);
     } catch (error: any) {
+      clearTimeout(timeoutId);
+
+      const isAbort = error?.name === "AbortError";
+      const friendly = isAbort
+        ? "Kamo's AI is still warming up (Render cold start). Please try again in a moment."
+        : "Kamo's AI is currently offline. Please try again later.";
+
       console.error("Chat error:", error);
-      setMessages(prev => prev.map(m => {
-        if (m.id === userMsg.id) return { ...m, status: "error" as const };
-        if (m.id === agentMsgId) return { ...m, status: "error" as const, text: error?.message || "An error occurred." };
-        return m;
-      }));
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === userMsg.id) return { ...m, status: "error" as const };
+          if (m.id === agentMsgId)
+            return {
+              ...m,
+              status: "error" as const,
+              text: friendly,
+            };
+          return m;
+        })
+      );
+    } finally {
       setIsLoading(false);
     }
   };
@@ -647,8 +534,8 @@ export default function ChatInterface({
           <div className="flex flex-col">
             <h1 className="text-title-medium font-bold text-on-surface leading-tight">CodeMind AI</h1>
             <div className="flex items-center gap-1.5 text-label-small text-on-surface-variant">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Ready
+              <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-ping' : 'bg-primary animate-pulse'}`} />
+              {isLoading ? "Connecting to Render..." : "Ready"}
             </div>
           </div>
         </div>
@@ -705,7 +592,7 @@ export default function ChatInterface({
                           <>
                             {uiBlock === "projects" && <ProjectCards />}
                             {uiBlock === "skills" && <SkillChips />}
-                            {uiBlock === "cv" && <DownloadCV onViewCv={onViewCv} />}
+                            {uiBlock === "cv" && <DownloadCV />}
                           </>
                         )}
                       />
@@ -713,7 +600,6 @@ export default function ChatInterface({
                   </div>
                 );
               })}
-              <div ref={endOfMessagesRef} className="h-4" />
             </div>
           )}
         </div>

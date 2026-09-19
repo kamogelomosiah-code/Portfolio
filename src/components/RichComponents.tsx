@@ -70,11 +70,7 @@ export function SkillChips() {
   );
 }
 
-interface DownloadCVProps {
-  onViewCv?: () => void;
-}
-
-export function DownloadCV({ onViewCv }: DownloadCVProps) {
+export function DownloadCV() {
   const handleDownload = () => {
     const cvText = `KAMOGELO MOSIA
 Software & IT Solutions Engineer
