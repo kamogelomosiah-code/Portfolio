@@ -413,34 +413,88 @@ app.post('/api/chat', async (req, res) => {
     console.warn(`[CHAT] Upstream Render call failed: ${err?.message || err}. Falling back to server intelligence.`);
   }
 
-  // Strategy 2: If Render didn't succeed, attempt Gemini API with system prompt & portfolio context
+  // Strategy 2: If Render didn't succeed, attempt Gemini API with multi-model fallback
   if (!finalReply) {
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
-      try {
-        const ai = new GoogleGenAI({
-          apiKey: geminiKey,
-          httpOptions: {
-            headers: {
-              'User-Agent': 'aistudio-build',
+      const candidateModels = [
+        process.env.GEMINI_MODEL,
+        "gemini-3.8-flash",
+        "gemini-3.7-flash",
+        "gemini-3.6-flash"
+      ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+
+      const ai = new GoogleGenAI({
+        apiKey: geminiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          },
+        },
+      });
+
+      const geminiPrompt = `${SYSTEM_PROMPT}\n\nPORTFOLIO CONTEXT:\n${JSON.stringify(meData, null, 2)}`;
+
+      for (const model of candidateModels) {
+        try {
+          const result = await ai.models.generateContent({
+            model: model,
+            contents: userMessage,
+            config: {
+              systemInstruction: geminiPrompt,
+              temperature: 0.7,
+              maxOutputTokens: 2000,
             },
-          },
-        });
-        const geminiPrompt = `${SYSTEM_PROMPT}\n\nPORTFOLIO CONTEXT:\n${JSON.stringify(meData, null, 2)}`;
-        const result = await ai.models.generateContent({
-          model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
-          contents: userMessage,
-          config: {
-            systemInstruction: geminiPrompt,
-            temperature: 0.7,
-            maxOutputTokens: 2000,
-          },
-        });
-        if (result.text) {
-          finalReply = result.text;
+          });
+          if (result.text) {
+            finalReply = result.text;
+            break;
+          }
+        } catch (geminiErr: any) {
+          const status = geminiErr?.status || geminiErr?.error?.code || geminiErr?.statusCode;
+          const isHighDemandOrQuota = status === 503 || status === 429 || status === "UNAVAILABLE" || status === "RESOURCE_EXHAUSTED";
+          if (isHighDemandOrQuota) {
+            console.warn(`[CHAT] Model ${model} is experiencing temporary high demand/load (${status}). Trying alternative...`);
+          } else {
+            console.warn(`[CHAT] Gemini call on ${model} failed (${status || 'error'}). Trying alternative...`);
+          }
         }
-      } catch (geminiErr: any) {
-        console.warn(`[CHAT] Gemini fallback failed: ${geminiErr?.message || geminiErr}`);
+      }
+    }
+  }
+
+  // Strategy 3: OpenRouter fallback if configured
+  if (!finalReply) {
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    if (openRouterKey && openRouterKey !== "MY_OPENROUTER_API_KEY") {
+      try {
+        const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${openRouterKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://ai.studio/build",
+            "X-Title": "CodeMind Assistant"
+          },
+          body: JSON.stringify({
+            model: process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",
+            messages: [
+              { role: "system", content: `${SYSTEM_PROMPT}\n\nPORTFOLIO CONTEXT:\n${JSON.stringify(meData, null, 2)}` },
+              { role: "user", content: userMessage }
+            ],
+            temperature: 0.7,
+            max_tokens: 800
+          })
+        });
+        if (orRes.ok) {
+          const orData = await orRes.json();
+          const orText = orData.choices?.[0]?.message?.content;
+          if (typeof orText === "string" && orText.trim()) {
+            finalReply = orText;
+          }
+        }
+      } catch (orErr: any) {
+        console.warn("[CHAT] OpenRouter fallback failed:", orErr?.message || orErr);
       }
     }
   }
