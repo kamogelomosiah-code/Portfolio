@@ -7,13 +7,15 @@ export const API_BASE_URL: string =
   (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") || "";
 
 export const API_ROUTES = {
-  chat: API_BASE_URL ? `${API_BASE_URL}/api/chat` : "/api/chat",
-  health: API_BASE_URL ? `${API_BASE_URL}/HEALTH` : "/HEALTH",
+  // Always use local full-stack server routes first to avoid cross-origin aborts and sleeping server delays
+  chat: "/api/chat",
+  health: "/HEALTH",
+  externalChat: API_BASE_URL ? `${API_BASE_URL}/api/chat` : "",
+  externalHealth: API_BASE_URL ? `${API_BASE_URL}/HEALTH` : "",
 } as const;
 
 /**
- * Render free-tier backends cold-start after ~15 min of inactivity.
- * The first request can take 30–50 s. We use a generous timeout so the
- * UI can show a "Warming up…" indicator rather than a hard failure.
+ * Standard request timeout. We use 30 seconds for local API calls,
+ * with explicit abort reasons and seamless local intelligence fallback.
  */
-export const COLD_START_TIMEOUT_MS = 60_000;
+export const COLD_START_TIMEOUT_MS = 30_000;

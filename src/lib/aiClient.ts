@@ -12,7 +12,13 @@ export interface AskAIOptions {
 export async function askAI(message: string, opts: AskAIOptions = {}): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(
-    () => controller.abort(),
+    () => {
+      try {
+        controller.abort(new DOMException("AI request timed out", "TimeoutError"));
+      } catch {
+        controller.abort();
+      }
+    },
     opts.timeoutMs ?? COLD_START_TIMEOUT_MS
   );
 
@@ -21,26 +27,36 @@ export async function askAI(message: string, opts: AskAIOptions = {}): Promise<s
     : controller.signal;
 
   try {
-    const chatUrl = API_BASE_URL ? `${API_BASE_URL}/api/chat` : "/api/chat";
-    let res = await fetch(chatUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-      signal,
-    });
+    let res: Response | null = null;
 
-    if (!res.ok && API_BASE_URL) {
-      // Fallback to local full-stack server endpoint if external URL fails
+    // Try local /api/chat first
+    try {
+      res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+        signal,
+      });
+    } catch {
+      // Primary fetch failed or aborted
+    }
+
+    // If local failed and API_BASE_URL is set, attempt external
+    if ((!res || !res.ok) && API_BASE_URL) {
       try {
-        res = await fetch("/api/chat", {
+        res = await fetch(`${API_BASE_URL}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message }),
           signal,
         });
       } catch {
-        // preserve original response
+        // preserve null
       }
+    }
+
+    if (!res) {
+      throw new Error("AI backend unreachable");
     }
 
     if (!res.ok) {

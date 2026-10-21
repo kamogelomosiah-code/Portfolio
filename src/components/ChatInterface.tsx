@@ -6,6 +6,7 @@ import { AIMessage } from "./chat/AIMessage";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { MaterialIcon } from "./MaterialIcon";
 import { API_ROUTES, COLD_START_TIMEOUT_MS } from "../config/api";
+import { generateLocalAssistantReply } from "../lib/assistantEngine";
 
 
 export type Attachment = {
@@ -142,20 +143,23 @@ export default function ChatInterface({
             method: 'POST',
             body: formData,
           });
-          const data = await res.json();
-          if (data.text) {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || data.error) {
+            const errorMsg = data.error || `Transcription failed (${res.status})`;
+            console.error("Transcription error:", errorMsg);
+            setRecordingStatus(errorMsg);
+            setTimeout(() => setRecordingStatus(""), 5000);
+          } else if (data.text) {
             setInput(prev => (prev ? prev + " " + data.text : data.text));
-          } else if (data.error) {
-            console.error("Transcription error:", data.error);
-            setRecordingStatus("Transcription note: " + data.error);
-            setTimeout(() => setRecordingStatus(""), 4000);
+            setRecordingStatus("");
+          } else {
+            setRecordingStatus("");
           }
         } catch (err) {
           console.error("Transcription request failed:", err);
           setRecordingStatus("Network error during transcription.");
-          setTimeout(() => setRecordingStatus(""), 3000);
+          setTimeout(() => setRecordingStatus(""), 4000);
         } finally {
-          setRecordingStatus("");
           setIsRecording(false);
         }
       };
@@ -319,49 +323,47 @@ export default function ChatInterface({
       }
     }, 50);
 
-    // AbortController with a cold-start-friendly timeout
+    // AbortController with a safe timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), COLD_START_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => {
+      try {
+        controller.abort(new DOMException("Chat request timed out", "TimeoutError"));
+      } catch {
+        controller.abort();
+      }
+    }, COLD_START_TIMEOUT_MS);
 
     try {
-      let res = await fetch(API_ROUTES.chat, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text.trim() }),
-        signal: controller.signal,
-      });
+      let replyText = "";
 
-      if (!res.ok && API_ROUTES.chat !== "/api/chat") {
-        try {
-          res = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text.trim() }),
-            signal: controller.signal,
-          });
-        } catch {
-          // ignore and proceed
+      // Step 1: Query the local full-stack server endpoint
+      try {
+        const res = await fetch(API_ROUTES.chat, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text.trim() }),
+          signal: controller.signal,
+        });
+
+        if (res.ok) {
+          const data = await res.json().catch(() => null);
+          const rawReply = typeof data?.reply === "string" ? data.reply : (typeof data?.text === "string" ? data.text : "");
+          if (rawReply.trim()) {
+            replyText = rawReply.trim();
+          }
         }
+      } catch {
+        // Network or abort error on primary endpoint - will seamlessly fall back
       }
 
       clearTimeout(timeoutId);
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(
-          (errData as any).error || `Backend responded with ${res.status}`
-        );
-      }
-
-      const data = await res.json();
-      let replyText: string =
-        typeof data?.reply === "string" ? data.reply : (typeof data?.text === "string" ? data.text : "");
-
+      // Step 2: If primary didn't return text, use local portfolio assistant engine
       if (!replyText) {
-        throw new Error("Empty reply from backend");
+        replyText = generateLocalAssistantReply(text.trim());
       }
 
-      // Preserve the existing UI-token parsing pipeline
+      // Preserve the UI-token parsing pipeline
       let uiBlock: Message["uiBlock"] = null;
       let followUps: string[] = [];
 
@@ -400,23 +402,19 @@ export default function ChatInterface({
       );
 
       if (followUps.length > 0) setActiveClarifications(followUps);
-    } catch (error: any) {
+    } catch {
       clearTimeout(timeoutId);
 
-      const isAbort = error?.name === "AbortError";
-      const friendly = isAbort
-        ? "Kamo's AI is still warming up (Render cold start). Please try again in a moment."
-        : "Kamo's AI is currently offline. Please try again later.";
-
-      console.error("Chat error:", error);
+      // Safe local fallback guarantee
+      const fallbackReply = generateLocalAssistantReply(text.trim());
       setMessages((prev) =>
         prev.map((m) => {
-          if (m.id === userMsg.id) return { ...m, status: "error" as const };
+          if (m.id === userMsg.id) return { ...m, status: "sent" as const };
           if (m.id === agentMsgId)
             return {
               ...m,
-              status: "error" as const,
-              text: friendly,
+              status: "streaming" as const,
+              text: fallbackReply,
             };
           return m;
         })

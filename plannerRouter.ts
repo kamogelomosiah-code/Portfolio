@@ -4,9 +4,34 @@ import nodemailer from 'nodemailer';
 import cron from 'node-cron';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 const router = express.Router();
 const NOTES_FILE_PATH = path.join(process.cwd(), 'planner_notes.json');
+
+function requireWriteAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const secret = process.env.API_WRITE_KEY;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(`[SECURITY WARNING] Write endpoint ${req.method} ${req.originalUrl} called but API_WRITE_KEY is not configured.`);
+    }
+    return next();
+  }
+
+  const clientKey = req.headers['x-api-key'] || req.headers['x-write-key'];
+  if (!clientKey || typeof clientKey !== 'string') {
+    return res.status(401).json({ error: "Unauthorized: Missing X-Api-Key header for write operation." });
+  }
+
+  const secretBuf = Buffer.from(secret);
+  const clientBuf = Buffer.from(clientKey);
+
+  if (secretBuf.length !== clientBuf.length || !crypto.timingSafeEqual(secretBuf, clientBuf)) {
+    return res.status(403).json({ error: "Forbidden: Invalid API write key." });
+  }
+
+  return next();
+}
 
 // Get all saved notes from JSON file
 router.get('/notes', (req, res) => {
@@ -25,7 +50,7 @@ router.get('/notes', (req, res) => {
 });
 
 // Save/Update notes to JSON file
-router.post('/notes', (req, res) => {
+router.post('/notes', requireWriteAuth, (req, res) => {
   try {
     const notes = req.body || {};
     fs.writeFileSync(NOTES_FILE_PATH, JSON.stringify(notes, null, 2));

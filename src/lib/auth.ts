@@ -14,31 +14,7 @@ export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  const checkSimulated = () => {
-    const isSimulated = typeof window !== 'undefined' && localStorage.getItem('is_simulated') === 'true';
-    if (isSimulated) {
-      const mockUser = {
-        uid: 'simulated-user',
-        displayName: 'Kamogelo Mosiah',
-        email: 'kamogelomosiah@gmail.com',
-        photoURL: 'https://ui-avatars.com/api/?name=Kamogelo+Mosiah&background=1E8E3E&color=fff'
-      } as User;
-      const token = typeof window !== 'undefined' ? localStorage.getItem('google_access_token') : 'simulated-token-12345';
-      if (onAuthSuccess) onAuthSuccess(mockUser, token || 'simulated-token-12345');
-      return true;
-    }
-    return false;
-  };
-
-  if (checkSimulated()) {
-    return () => {};
-  }
-
   return onAuthStateChanged(auth, async (user: User | null) => {
-    if (checkSimulated()) {
-      return;
-    }
-
     if (user) {
       if (!cachedAccessToken) {
         cachedAccessToken = localStorage.getItem('google_access_token');
@@ -68,22 +44,10 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
 
     cachedAccessToken = credential.accessToken;
     localStorage.setItem('google_access_token', cachedAccessToken);
-    localStorage.removeItem('is_simulated');
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
-    console.error('Sign in error, falling back to simulated auth:', error);
-    // Simulate successful sign in if Firebase fails
-    const mockUser = {
-      uid: 'simulated-user',
-      displayName: 'Kamogelo Mosiah',
-      email: 'kamogelomosiah@gmail.com',
-      photoURL: 'https://ui-avatars.com/api/?name=Kamogelo+Mosiah&background=1E8E3E&color=fff'
-    } as User;
-    
-    cachedAccessToken = 'simulated-token-12345';
-    localStorage.setItem('google_access_token', cachedAccessToken);
-    localStorage.setItem('is_simulated', 'true');
-    return { user: mockUser, accessToken: cachedAccessToken };
+    console.error('Sign in error:', error);
+    return null;
   } finally {
     isSigningIn = false;
   }
@@ -97,5 +61,4 @@ export const logout = async () => {
   await signOut(auth);
   cachedAccessToken = null;
   localStorage.removeItem('google_access_token');
-  localStorage.removeItem('is_simulated');
 };

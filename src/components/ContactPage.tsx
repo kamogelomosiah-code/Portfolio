@@ -10,34 +10,58 @@ interface ContactPageProps {
 export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPageProps) {
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+    const trimmedMessage = formData.message.trim();
+
+    if (!trimmedName || !trimmedEmail || !trimmedMessage) {
+      setErrorMessage("Please fill in all required fields (Name, Email, and Message).");
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 3000);
+      setTimeout(() => setStatus("idle"), 4000);
       return;
     }
+
     setStatus("submitting");
-    
+    setErrorMessage("");
+
     try {
-      // Format message
-      const waText = `Hi Kamogelo,\n\nI am ${formData.name} (${formData.email}).\n\nSubject: ${formData.subject || 'Opportunity'}\n\n${formData.message}`;
-      const emailBody = `Hi Kamogelo,\n\nI am ${formData.name} (${formData.email}).\n\n${formData.message}`;
-      
-      // Open WhatsApp
-      window.open(`https://wa.me/27677426447?text=${encodeURIComponent(waText)}`, '_blank');
-      
-      // Open Mailto in the same window
-      window.location.href = `mailto:kamogelomosiah@gmail.com?subject=${encodeURIComponent(formData.subject || 'Opportunity')}&body=${encodeURIComponent(emailBody)}`;
-      
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      const writeKey = (import.meta as any).env?.VITE_API_WRITE_KEY;
+      if (writeKey) {
+        headers["X-Api-Key"] = writeKey;
+      }
+
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name: trimmedName,
+          email: trimmedEmail,
+          subject: formData.subject.trim(),
+          message: trimmedMessage,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || `Server responded with status ${res.status}`);
+      }
+
       setStatus("success");
       setFormData({ name: "", email: "", subject: "", message: "" });
-      setTimeout(() => setStatus("idle"), 5000);
-    } catch (error) {
+      setTimeout(() => setStatus("idle"), 6000);
+    } catch (error: any) {
       console.error("Submission failed:", error);
+      setErrorMessage(error.message || "Failed to deliver message. Please try again or reach out directly via email.");
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 5000);
+      setTimeout(() => setStatus("idle"), 6000);
     }
   };
 
@@ -217,7 +241,7 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
                       <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
                       <div>
                         <p className="font-semibold text-body-medium">Transmission Error</p>
-                        <p className="mt-1 text-body-medium">Please ensure all required fields are filled correctly.</p>
+                        <p className="mt-1 text-body-medium">{errorMessage || "Please ensure all required fields are filled correctly."}</p>
                       </div>
                     </motion.div>
                   )}

@@ -9,6 +9,7 @@ import plannerRouter from './plannerRouter';
 import nodemailer from 'nodemailer';
 import { Pool } from 'pg';
 import { GoogleGenAI } from "@google/genai";
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -19,11 +20,98 @@ try {
   console.log("Could not load me.json");
 }
 
-const upload = multer({ storage: multer.memoryStorage() });
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+];
+const envAllowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+  : [];
+const allowedOrigins = [...defaultAllowedOrigins, ...envAllowedOrigins];
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB upload limit
+});
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser requests or same-origin requests
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    if (process.env.APP_URL && origin === process.env.APP_URL.replace(/\/$/, '')) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+  },
+  credentials: true,
+}));
+
 app.use(express.json());
+
+// In-memory sliding window rate limiter
+function createRateLimiter(options: { windowMs: number; max: number; message: string }) {
+  const hits = new Map<string, { count: number; resetTime: number }>();
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const now = Date.now();
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    let record = hits.get(ip);
+    if (!record || now > record.resetTime) {
+      record = { count: 1, resetTime: now + options.windowMs };
+      hits.set(ip, record);
+    } else {
+      record.count++;
+    }
+    if (record.count > options.max) {
+      return res.status(429).json({ error: options.message });
+    }
+    next();
+  };
+}
+
+const chatRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: "Too many chat requests. Please slow down."
+});
+
+const transcribeRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: "Too many transcription requests. Please try again shortly."
+});
+
+// Middleware for shared secret authentication on write endpoints
+function requireWriteAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const secret = process.env.API_WRITE_KEY;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(`[SECURITY WARNING] Write endpoint ${req.method} ${req.originalUrl} called but API_WRITE_KEY is not configured.`);
+    }
+    return next();
+  }
+
+  const clientKey = req.headers['x-api-key'] || req.headers['x-write-key'];
+  if (!clientKey || typeof clientKey !== 'string') {
+    return res.status(401).json({ error: "Unauthorized: Missing X-Api-Key header for write operation." });
+  }
+
+  const secretBuf = Buffer.from(secret);
+  const clientBuf = Buffer.from(clientKey);
+
+  if (secretBuf.length !== clientBuf.length || !crypto.timingSafeEqual(secretBuf, clientBuf)) {
+    return res.status(403).json({ error: "Forbidden: Invalid API write key." });
+  }
+
+  return next();
+}
+
 app.use('/api/planner', plannerRouter);
 const PORT = 3000;
 
@@ -83,7 +171,23 @@ RESPONSE CONSTRAINTS:
   - For CV/resume/contact: "[UI:CV]"
   - If none fits, append "[UI:CV]" as a default.`;
 
-async function processAutomationRequests(text) {
+const automationRateLimits = new Map<string, { count: number; resetTime: number }>();
+function checkAutomationRateLimit(key: string, max: number, windowMs: number): boolean {
+  const now = Date.now();
+  let record = automationRateLimits.get(key);
+  if (!record || now > record.resetTime) {
+    record = { count: 1, resetTime: now + windowMs };
+    automationRateLimits.set(key, record);
+    return true;
+  }
+  if (record.count >= max) {
+    return false;
+  }
+  record.count++;
+  return true;
+}
+
+async function processAutomationRequests(text: string, clientIp: string = 'unknown'): Promise<string> {
   const automateRegex = /\[AUTOMATE_GOAL:\s*({[\s\S]*?})\s*\]/;
   const match = text.match(automateRegex);
   
@@ -94,101 +198,133 @@ async function processAutomationRequests(text) {
 
   try {
     const data = JSON.parse(jsonStr);
-    const emailAddress = data.email_address;
-    const goal = data.goal;
-    const steps = data.steps;
+    const emailAddress = typeof data.email_address === 'string' ? data.email_address.trim() : '';
+    const rawGoal = typeof data.goal === 'string' ? data.goal.trim() : '';
+    const steps = Array.isArray(data.steps) ? data.steps : [];
 
-    if (emailAddress && goal && Array.isArray(steps)) {
-      let transporter;
-      let isEthereal = false;
-      const host = process.env.SMTP_HOST;
-      const user = process.env.SMTP_USER;
-      const pass = process.env.SMTP_PASS;
-
-      if (host && user && pass) {
-        transporter = nodemailer.createTransport({
-          host,
-          port: parseInt(process.env.SMTP_PORT || '587'),
-          secure: process.env.SMTP_SECURE === 'true',
-          auth: { user, pass }
-        });
-      } else {
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-          host: 'smtp.ethereal.email',
-          port: 587,
-          secure: false,
-          auth: {
-            user: testAccount.user,
-            pass: testAccount.pass,
-          },
-        });
-        isEthereal = true;
-      }
-
-      const emailHtml = `
-      <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 2px solid #e2e8f0; border-radius: 24px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-        <div style="border-bottom: 2px solid #4F46E5; padding-bottom: 16px; margin-bottom: 24px;">
-          <h2 style="color: #4F46E5; font-weight: 700; margin: 0; font-size: 24px;">🎯 Chat AI Strategic Goal Roadmap</h2>
-          <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">CodeMind AI-Generated Action Plan</p>
-        </div>
-        
-        <p style="font-size: 16px; line-height: 1.6; color: #334155;">
-          Hello! Kamo's Chat AI has prepared this customized, step-by-step strategic roadmap to help you achieve your goal:
-        </p>
-        
-        <div style="background-color: #f8fafc; border-radius: 18px; padding: 24px; border: 1px solid #f1f5f9; margin: 24px 0;">
-          <h3 style="color: #0f172a; margin-top: 0; font-size: 18px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px;">
-            Goal: "${goal}"
-          </h3>
-          <ul style="padding-left: 0; list-style-type: none; margin: 0;">
-            ${steps.map((step, idx) => {
-              let timeframeLabel = "";
-              if (step.frequency === 'daily') timeframeLabel = "Daily action / habit";
-              else if (step.frequency === 'weekly') timeframeLabel = `Week ${idx + 1} - Milestone`;
-              else if (step.frequency === 'monthly') timeframeLabel = `Month ${idx + 1} - Benchmark`;
-              else timeframeLabel = "Key milestone";
-
-              return `
-                <li style="margin-bottom: 20px; padding-left: 32px; position: relative; list-style: none;">
-                  <span style="position: absolute; left: 0; top: 2px; display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 50%; background-color: #e0e7ff; color: #4F46E5; font-size: 11px; font-weight: bold;">
-                    ${idx + 1}
-                  </span>
-                  <strong style="color: #0f172a; display: block; font-size: 15px; margin-bottom: 3px;">${step.action}</strong>
-                  <span style="font-size: 12.5px; color: #64748b; display: block;">
-                    ⏱️ Target Session: ${step.duration_minutes || 30}m | 📅 Time Frame: ${timeframeLabel}
-                  </span>
-                </li>
-              `;
-            }).join('')}
-          </ul>
-        </div>
-        
-        <p style="font-size: 14px; line-height: 1.5; color: #475569;">
-          This plan maps out the progressive timeline required for successful execution. Consistency is key!
-        </p>
-        
-        <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 28px 0;" />
-        <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 0;">
-          This roadmap was automatically sent by Kamo's AI Portfolio Assistant. &reg;
-        </p>
-      </div>
-      `;
-
-      const mailOptions = {
-        from: process.env.SMTP_FROM || '"CodeMind Assistant" <assistant@kamocodes.com>',
-        to: emailAddress,
-        subject: `🎯 Chat AI Strategic Roadmap: "${goal.slice(0, 50)}"`,
-        html: emailHtml,
-      };
-
-      const info = await transporter.sendMail(mailOptions);
-      if (isEthereal) {
-        const previewUrl = nodemailer.getTestMessageUrl(info);
-        newText += `\n\n*(Ethereal Sandbox Preview: [View Sent Email](${previewUrl}))*`;
-      }
-      console.log(`[CHAT PLANNER] Successfully sent automated roadmap email to ${emailAddress}`);
+    // 1. Strict email address validation
+    if (!emailAddress || !EMAIL_REGEX.test(emailAddress) || emailAddress.length > 254) {
+      console.warn(`[CHAT AUTOMATION REJECTED] Invalid email recipient format: ${emailAddress.slice(0, 30)}`);
+      return newText;
     }
+
+    if (!rawGoal || steps.length === 0) {
+      return newText;
+    }
+
+    // 2. Rate-limiting automated sends per IP and per destination email (max 3 per hour)
+    const ONE_HOUR = 60 * 60 * 1000;
+    const ipAllowed = checkAutomationRateLimit(`ip:${clientIp}`, 3, ONE_HOUR);
+    const emailAllowed = checkAutomationRateLimit(`email:${emailAddress.toLowerCase()}`, 3, ONE_HOUR);
+    if (!ipAllowed || !emailAllowed) {
+      console.warn(`[CHAT AUTOMATION RATE LIMIT] Send limit exceeded for IP: ${clientIp} or Email: ${emailAddress}`);
+      return newText + "\n\n*(Automated email delivery limit reached for this session. Please try again later.)*";
+    }
+
+    // 3. Capping fields and maximum steps
+    const goal = rawGoal.slice(0, 300);
+    const cappedSteps = steps.slice(0, 10).map((step: any) => ({
+      action: typeof step.action === 'string' ? step.action.slice(0, 250) : 'Action step',
+      duration_minutes: Math.min(Math.max(Number(step.duration_minutes) || 30, 5), 480),
+      frequency: typeof step.frequency === 'string' ? step.frequency.slice(0, 30) : 'weekly'
+    }));
+
+    let transporter;
+    let isEthereal = false;
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+
+    if (host && user && pass) {
+      transporter = nodemailer.createTransport({
+        host,
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: { user, pass }
+      });
+    } else {
+      // 4. Disable Ethereal in production
+      if (process.env.NODE_ENV === 'production') {
+        console.warn(`[CHAT AUTOMATION DISABLED] SMTP settings unconfigured in production. Email suppressed for ${emailAddress}`);
+        return newText + "\n\n*(Automated email delivery requires SMTP configuration in production.)*";
+      }
+
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      isEthereal = true;
+    }
+
+    const emailHtml = `
+    <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 2px solid #e2e8f0; border-radius: 24px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+      <div style="border-bottom: 2px solid #4F46E5; padding-bottom: 16px; margin-bottom: 24px;">
+        <h2 style="color: #4F46E5; font-weight: 700; margin: 0; font-size: 24px;">🎯 Chat AI Strategic Goal Roadmap</h2>
+        <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">CodeMind AI-Generated Action Plan</p>
+      </div>
+      
+      <p style="font-size: 16px; line-height: 1.6; color: #334155;">
+        Hello! Kamo's Chat AI has prepared this customized, step-by-step strategic roadmap to help you achieve your goal:
+      </p>
+      
+      <div style="background-color: #f8fafc; border-radius: 18px; padding: 24px; border: 1px solid #f1f5f9; margin: 24px 0;">
+        <h3 style="color: #0f172a; margin-top: 0; font-size: 18px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px;">
+          Goal: "${goal}"
+        </h3>
+        <ul style="padding-left: 0; list-style-type: none; margin: 0;">
+          ${cappedSteps.map((step, idx) => {
+            let timeframeLabel = "";
+            if (step.frequency === 'daily') timeframeLabel = "Daily action / habit";
+            else if (step.frequency === 'weekly') timeframeLabel = `Week ${idx + 1} - Milestone`;
+            else if (step.frequency === 'monthly') timeframeLabel = `Month ${idx + 1} - Benchmark`;
+            else timeframeLabel = "Key milestone";
+
+            return `
+              <li style="margin-bottom: 20px; padding-left: 32px; position: relative; list-style: none;">
+                <span style="position: absolute; left: 0; top: 2px; display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 50%; background-color: #e0e7ff; color: #4F46E5; font-size: 11px; font-weight: bold;">
+                  ${idx + 1}
+                </span>
+                <strong style="color: #0f172a; display: block; font-size: 15px; margin-bottom: 3px;">${step.action}</strong>
+                <span style="font-size: 12.5px; color: #64748b; display: block;">
+                  ⏱️ Target Session: ${step.duration_minutes}m | 📅 Time Frame: ${timeframeLabel}
+                </span>
+              </li>
+            `;
+          }).join('')}
+        </ul>
+      </div>
+      
+      <p style="font-size: 14px; line-height: 1.5; color: #475569;">
+        This plan maps out the progressive timeline required for successful execution. Consistency is key!
+      </p>
+      
+      <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 28px 0;" />
+      <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 0;">
+        This roadmap was automatically sent by Kamo's AI Portfolio Assistant. &reg;
+      </p>
+    </div>
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || '"CodeMind Assistant" <assistant@kamocodes.com>',
+      to: emailAddress,
+      subject: `🎯 Chat AI Strategic Roadmap: "${goal.slice(0, 50)}"`,
+      html: emailHtml,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    if (isEthereal) {
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      newText += `\n\n*(Ethereal Sandbox Preview: [View Sent Email](${previewUrl}))*`;
+    }
+    // 5. Log send without full email body
+    console.log(`[CHAT PLANNER] Successfully sent automated roadmap email to ${emailAddress} (goal: ${goal.slice(0, 50)})`);
   } catch (error) {
     console.error("Failed to execute local chat roadmap automation:", error);
   }
@@ -196,11 +332,12 @@ async function processAutomationRequests(text) {
   return newText;
 }
 
-let pgPool = null;
+let pgPool: Pool | null = null;
 if (process.env.DATABASE_URL) {
+  const rejectUnauthorized = process.env.PGSSL_REJECT_UNAUTHORIZED !== 'false';
   pgPool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized }
   });
   
   // Initialize table
@@ -230,57 +367,148 @@ app.get('/api/goals', async (req, res) => {
   }
 });
 
-app.post('/api/goals', async (req, res) => {
-  if (!pgPool) return res.json([]);
+app.post('/api/goals', requireWriteAuth, async (req, res) => {
+  if (!pgPool) {
+    return res.status(503).json({
+      error: "Postgres database persistence is not configured (DATABASE_URL is not set)."
+    });
+  }
+
   try {
     const goalData = req.body;
-    // Handle both single object and array of objects
-    const goalsToUpsert = Array.isArray(goalData) ? goalData : [goalData];
-    
-    for (const goal of goalsToUpsert) {
-      if (!goal.id) {
-        return res.status(400).json({ error: "Goal ID is required" });
-      }
-      await pgPool.query(`
-        INSERT INTO goals (id, data, updated_at)
-        VALUES ($1, $2, now())
-        ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
-      `, [goal.id, goal]);
+    if (!goalData || typeof goalData !== 'object') {
+      return res.status(400).json({ error: "Invalid payload: body must be a goal object or array of goals" });
     }
-    res.json({ success: true });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+
+    const goalsToUpsert = Array.isArray(goalData) ? goalData : [goalData];
+    if (goalsToUpsert.length === 0) {
+      return res.status(400).json({ error: "No goals provided in request payload" });
+    }
+
+    // Validate the entire batch first before writing any records
+    for (const goal of goalsToUpsert) {
+      if (!goal || typeof goal !== 'object' || !goal.id || typeof goal.id !== 'string') {
+        return res.status(400).json({ error: "Invalid goal item: each goal must be an object with an 'id' string" });
+      }
+    }
+
+    // Write the entire validated batch inside a single transaction
+    const client = await pgPool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const goal of goalsToUpsert) {
+        await client.query(`
+          INSERT INTO goals (id, data, updated_at)
+          VALUES ($1, $2, now())
+          ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
+        `, [goal.id, goal]);
+      }
+      await client.query('COMMIT');
+      return res.json({ success: true, count: goalsToUpsert.length });
+    } catch (txError: any) {
+      await client.query('ROLLBACK');
+      throw txError;
+    } finally {
+      client.release();
+    }
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
   }
 });
 
-app.delete('/api/goals/:id', async (req, res) => {
-  if (!pgPool) return res.json([]);
+app.delete('/api/goals/:id', requireWriteAuth, async (req, res) => {
+  if (!pgPool) {
+    return res.status(503).json({
+      error: "Postgres database persistence is not configured (DATABASE_URL is not set)."
+    });
+  }
+
   try {
     const id = req.params.id;
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: "Valid goal ID parameter is required" });
+    }
     await pgPool.query('DELETE FROM goals WHERE id = $1', [id]);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    return res.json({ success: true, id });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
   }
 });
+
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 app.post('/api/contact', async (req, res) => {
   try {
-    const { name, email, subject, message } = req.body;
-    
-    // Log the contact to stdout for live container audit
-    console.log(`[CONTACT INCOMING] Name: ${name} | Email: ${email} | Subject: ${subject || "N/A"}`);
-    console.log(`Message: ${message}`);
-    console.log(`[CONTACT ROUTING] Successfully processed and dispatched route to kamogelomosiah@gmail.com`);
-    
+    const { name, email, subject, message } = req.body || {};
+
+    if (!name || typeof name !== 'string' || !name.trim() || name.trim().length > 100) {
+      return res.status(400).json({ error: "Full Name is required and must be under 100 characters." });
+    }
+
+    if (!email || typeof email !== 'string' || !EMAIL_REGEX.test(email.trim()) || email.trim().length > 255) {
+      return res.status(400).json({ error: "A valid email address is required (under 255 characters)." });
+    }
+
+    if (subject && (typeof subject !== 'string' || subject.trim().length > 200)) {
+      return res.status(400).json({ error: "Subject must be under 200 characters." });
+    }
+
+    if (!message || typeof message !== 'string' || !message.trim() || message.trim().length > 5000) {
+      return res.status(400).json({ error: "Message is required and must be under 5000 characters." });
+    }
+
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+
+    if (!host || !user || !pass) {
+      return res.status(503).json({
+        error: "Contact email delivery is not configured on this server (SMTP settings missing)."
+      });
+    }
+
+    // Do not log the full message body to stdout in production
+    console.log(`[CONTACT INCOMING] Name: ${name.trim()} | Email: ${email.trim()} | Subject: ${subject ? subject.trim() : "N/A"}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[CONTACT DEBUG] Message preview: ${message.trim().slice(0, 100)}...`);
+    }
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user, pass }
+    });
+
+    const recipient = process.env.CONTACT_RECIPIENT_EMAIL || "kamogelomosiah@gmail.com";
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || `"Portfolio Contact" <${user}>`,
+      to: recipient,
+      replyTo: email.trim(),
+      subject: `[Portfolio Contact] ${subject ? subject.trim() : 'New Inquiry'} from ${name.trim()}`,
+      text: `From: ${name.trim()} <${email.trim()}>\nSubject: ${subject ? subject.trim() : 'N/A'}\n\n${message.trim()}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
+          <h2 style="color: #4F46E5; margin-top: 0; font-size: 20px;">New Portfolio Contact Message</h2>
+          <p style="margin: 6px 0;"><strong>Name:</strong> ${name.trim()}</p>
+          <p style="margin: 6px 0;"><strong>Email:</strong> <a href="mailto:${email.trim()}">${email.trim()}</a></p>
+          <p style="margin: 6px 0;"><strong>Subject:</strong> ${subject ? subject.trim() : 'N/A'}</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+          <div style="padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">
+${message.trim()}
+          </div>
+        </div>
+      `
+    });
+
     return res.status(200).json({ 
       success: true, 
-      recipient: "kamogelomosiah@gmail.com", 
-      message: "Message successfully routed to Kamogelo's mailbox." 
+      recipient, 
+      message: "Message successfully delivered to Kamogelo's mailbox." 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Contact Form Server Error:", error.message || "Unknown error");
-    return res.status(400).json({ success: false, error: "Internal server payload delivery failure" });
+    return res.status(500).json({ success: false, error: "Failed to deliver contact message: " + (error.message || "Unknown error") });
   }
 });
 
@@ -297,7 +525,13 @@ function generateLocalAssistantReply(userPrompt: string): string {
   const promptLower = userPrompt.toLowerCase().trim();
 
   // 1. Math solving heuristics
-  if (promptLower.includes('solve') || promptLower.includes('derivative') || promptLower.includes('integral') || promptLower.includes('equation') || promptLower.includes('latex') || /[\d\+\-\*\/\^\=]/.test(promptLower) && promptLower.length < 50) {
+  const isExplicitMath = 
+    /\b(solve|derivative|integral|equation|calculate|evaluate|algebra)\b/i.test(promptLower) ||
+    promptLower.includes('latex') ||
+    /\$\$|\\\(|\\\[/.test(userPrompt) ||
+    (/\d+\s*[\+\-\*\/\^=]\s*\d+/.test(promptLower) && !/\b(19\d\d|20\d\d)\b/.test(promptLower));
+
+  if (isExplicitMath) {
     if (promptLower.includes('2x + 5 = 15') || promptLower.includes('2x+5=15')) {
       return `To solve the linear equation $$2x + 5 = 15$$:
 
@@ -329,8 +563,17 @@ The solution is $$x = 5$$. [UI:CV]`;
 What is your email address so I can send this complete roadmap directly to your inbox? [UI:CV]`;
   }
 
-  // 3. Questions about Kamo / Background / Education / Degree
-  if (promptLower.includes('who are you') || promptLower.includes('about kamo') || promptLower.includes('background') || promptLower.includes('introduce') || promptLower.includes('hello') || promptLower.includes('hi')) {
+  // 3. Questions about Kamo / Background / Education / Degree / Greetings
+  const isGreetingOrIntro = 
+    promptLower.includes('who are you') ||
+    promptLower.includes('about kamo') ||
+    promptLower.includes('background') ||
+    promptLower.includes('introduce') ||
+    promptLower.includes('qualification') ||
+    promptLower.includes('education') ||
+    /\b(hi|hello|hey|greetings)\b/i.test(promptLower);
+
+  if (isGreetingOrIntro) {
     return `Hello! I am **Kamo's GPT**, an AI assistant and Goal Achievement Coach speaking on behalf of **Kamogelo (Kamo) Mosia**. 
 
 Kamo is an **IT Internship Candidate** and final-year **BSc IT** student at the University of Johannesburg (UJ), double majoring in **Computer Science and Informatics** (theoretical coursework completed, degree conferral pending).
@@ -376,7 +619,7 @@ You can download his official CV using the link below or send a message directly
   return `Thank you for your message. As Kamo's AI assistant, I can help you explore his software engineering projects, review technical skills, provide strategic goal roadmaps, or assist with computer science and mathematics queries. How can I help you today? [UI:CV]`;
 }
 
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', chatRateLimiter, async (req, res) => {
   const { message, prompt, messages } = req.body || {};
   const userMessage = (typeof message === 'string' ? message : '') || 
                      (typeof prompt === 'string' ? prompt : '') || 
@@ -384,6 +627,10 @@ app.post('/api/chat', async (req, res) => {
 
   if (!userMessage.trim()) {
     return res.status(400).json({ error: "Message is required" });
+  }
+
+  if (userMessage.length > 4000) {
+    return res.status(400).json({ error: "Message exceeds maximum allowed length of 4000 characters." });
   }
 
   let finalReply = "";
@@ -498,7 +745,8 @@ app.post('/api/chat', async (req, res) => {
 
   // Process any automated email roadmaps
   try {
-    finalReply = await processAutomationRequests(finalReply);
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    finalReply = await processAutomationRequests(finalReply, clientIp);
   } catch (automationErr) {
     console.warn("[CHAT] Automation processing error:", automationErr);
   }
@@ -510,13 +758,14 @@ app.post('/api/chat', async (req, res) => {
   });
 });
 
-app.post('/api/gemini/transcribe', upload.single('audio'), async (req, res) => {
+app.post('/api/gemini/transcribe', transcribeRateLimiter, upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No audio file provided" });
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      // Fallback to static text if no Gemini key is provided
-      return res.status(200).json({ text: "Can you explain how this application works and what your technical stack is?" });
+      return res.status(503).json({
+        error: "Audio transcription is currently unavailable because GEMINI_API_KEY is not configured on the server."
+      });
     }
     const ai = new GoogleGenAI({
       apiKey,

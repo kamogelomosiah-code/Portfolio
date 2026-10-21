@@ -73,9 +73,15 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
   const saveNotesToFile = async (updatedNotes: NotesState) => {
     setIsSaving(true);
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const writeKey = (import.meta as any).env?.VITE_API_WRITE_KEY;
+      if (writeKey) {
+        headers['X-Api-Key'] = writeKey;
+      }
+
       const res = await fetch('/api/planner/notes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(updatedNotes)
       });
       if (res.ok) {
