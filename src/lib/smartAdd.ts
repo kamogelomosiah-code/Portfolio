@@ -1,4 +1,13 @@
 import { askAI, extractJson } from "./aiClient";
+import { isBrowserAIReady, askBrowserAI } from "./browserAI";
+
+/** Local calendar date as YYYY-MM-DD (not UTC, so late-night entries land on the right day). */
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 export interface SmartAddResult {
   /** Canonical ISO date, YYYY-MM-DD */
@@ -7,18 +16,20 @@ export interface SmartAddResult {
   task: string;
 }
 
-function localFallbackSmartAdd(prompt: string): SmartAddResult {
+function localFallbackSmartAdd(prompt: string): SmartAddResult & { matchedDate: boolean } {
   const text = prompt.trim();
   const lower = text.toLowerCase();
   const now = new Date();
 
   let targetDate = new Date(now);
   let cleanedTask = text;
+  let matchedDate = true;
 
   // Check for ISO date format in prompt (YYYY-MM-DD)
   const isoMatch = text.match(/\b(\d{4}-\d{2}-\d{2})\b/);
   if (isoMatch) {
-    targetDate = new Date(isoMatch[1]);
+    const [y, m, d] = isoMatch[1].split("-").map(Number);
+    targetDate = new Date(y, m - 1, d);
     cleanedTask = text.replace(isoMatch[0], "").trim();
   } else if (lower.includes("tomorrow")) {
     targetDate.setDate(targetDate.getDate() + 1);
@@ -43,8 +54,10 @@ function localFallbackSmartAdd(prompt: string): SmartAddResult {
           if (diff <= 0) diff += 7;
           targetDate.setDate(targetDate.getDate() + diff);
           cleanedTask = text.replace(new RegExp(`(next\\s+)?(on\\s+)?${dayName}`, "i"), "").trim();
+          matchedDate = true;
           break;
         }
+        matchedDate = false;
       }
     }
   }
@@ -57,8 +70,8 @@ function localFallbackSmartAdd(prompt: string): SmartAddResult {
 
   if (!cleanedTask) cleanedTask = text;
 
-  const dateStr = targetDate.toISOString().split("T")[0];
-  return { date: dateStr, task: cleanedTask };
+  const dateStr = localDateKey(targetDate);
+  return { date: dateStr, task: cleanedTask, matchedDate };
 }
 
 /**
@@ -72,9 +85,11 @@ export async function smartAdd(prompt: string): Promise<SmartAddResult> {
   const trimmed = prompt.trim();
   if (!trimmed) throw new Error("Empty prompt");
 
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = localDateKey(now);
+  const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
 
-  const instruction = `You are a strict calendar parser. Today's date is ${today}.
+  const instruction = `You are a strict calendar parser. Today is ${weekday}, ${today}.
 
 Task: Extract the TASK DESCRIPTION and the TARGET DATE from the user's request.
 
@@ -92,18 +107,28 @@ User request:
 """${trimmed}"""`;
 
   try {
-    const reply = await askAI(instruction, { timeoutMs: 60_000 });
+    // Prefer the on-device model when the visitor has it running; otherwise the server.
+    const reply = isBrowserAIReady()
+      ? await askBrowserAI(instruction, {
+          system: "You convert requests into calendar JSON. Reply with JSON only.",
+          maxTokens: 120,
+          temperature: 0,
+        })
+      : await askAI(instruction, { timeoutMs: 60_000 });
     const parsed = extractJson<{ date?: string; task?: string }>(reply);
 
     if (parsed && typeof parsed.date === "string" && typeof parsed.task === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date)) {
       const task = parsed.task.trim();
       if (task) {
-        return { date: parsed.date, task };
+        // Rule-based date math is exact; trust it over the model when it found a date phrase.
+        const local = localFallbackSmartAdd(trimmed);
+        return { date: local.matchedDate ? local.date : parsed.date, task };
       }
     }
   } catch (err) {
     console.warn("AI smart-add parsing error, using local fallback parser:", err);
   }
 
-  return localFallbackSmartAdd(trimmed);
+  const { date, task } = localFallbackSmartAdd(trimmed);
+  return { date, task };
 }

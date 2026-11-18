@@ -7,6 +7,8 @@ import { MarkdownRenderer } from "./MarkdownRenderer";
 import { MaterialIcon } from "./MaterialIcon";
 import { API_ROUTES, COLD_START_TIMEOUT_MS } from "../config/api";
 import { generateLocalAssistantReply } from "../lib/assistantEngine";
+import { isBrowserAIReady, askBrowserAI } from "../lib/browserAI";
+import BrowserAIToggle from "./BrowserAIToggle";
 
 
 export type Attachment = {
@@ -336,8 +338,17 @@ export default function ChatInterface({
     try {
       let replyText = "";
 
+      // Step 0: If the visitor turned on Browser AI, answer on-device (private, no server)
+      if (isBrowserAIReady()) {
+        try {
+          replyText = await askBrowserAI(text.trim());
+        } catch (err) {
+          console.warn("Browser AI failed, falling back to server:", err);
+        }
+      }
+
       // Step 1: Query the local full-stack server endpoint
-      try {
+      if (!replyText) try {
         const res = await fetch(API_ROUTES.chat, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -546,10 +557,11 @@ export default function ChatInterface({
             <h1 className="text-title-medium font-bold text-on-surface leading-tight">CodeMind AI</h1>
             <div className="flex items-center gap-1.5 text-label-small text-on-surface-variant">
               <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-ping' : 'bg-primary animate-pulse'}`} />
-              {isLoading ? "Connecting to Render..." : "Ready"}
+              {isLoading ? "Thinking..." : "Ready"}
             </div>
           </div>
         </div>
+        <BrowserAIToggle />
       </header>
 
       {/* Messages */}

@@ -8,6 +8,8 @@ import { AIMessage } from "./chat/AIMessage";
 import MenuDrawer from "./MenuDrawer";
 import { API_ROUTES, COLD_START_TIMEOUT_MS } from "../config/api";
 import { generateLocalAssistantReply } from "../lib/assistantEngine";
+import { isBrowserAIReady, askBrowserAI } from "../lib/browserAI";
+import BrowserAIToggle from "./BrowserAIToggle";
 
 const ProjectsPage = lazy(() => import("./ProjectsPage"));
 const CvPage = lazy(() => import("./CvPage"));
@@ -389,8 +391,17 @@ export default function MobileApp({
     try {
       let replyText = "";
 
+      // Step 0: If the visitor turned on Browser AI, answer on-device (private, no server)
+      if (isBrowserAIReady()) {
+        try {
+          replyText = await askBrowserAI(text.trim());
+        } catch (err) {
+          console.warn("Browser AI failed, falling back to server:", err);
+        }
+      }
+
       // Step 1: Query the local full-stack server endpoint
-      try {
+      if (!replyText) try {
         const res = await fetch(API_ROUTES.chat, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -615,9 +626,12 @@ export default function MobileApp({
             </span>
           </div>
 
-          <span className="text-[10px] text-on-surface-variant font-normal">
-            Assistant can make mistakes.
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-on-surface-variant font-normal">
+              Assistant can make mistakes.
+            </span>
+            <BrowserAIToggle compact />
+          </div>
         </div>
       </div>
     );

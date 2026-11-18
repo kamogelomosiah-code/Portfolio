@@ -3,6 +3,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MaterialIcon } from '../MaterialIcon';
 import { smartAdd } from "../../lib/smartAdd";
 import {
+  PLANNER_STORAGE_KEY,
+  loadLocalNotes,
+  saveLocalNotes,
+  fetchLegacyServerNotes,
+  mergeNotes,
+  countNotes,
+  exportNotes,
+  readNotesFile,
+  sanitizeNotes,
+} from "../../lib/plannerStorage";
+import {
   format,
   addMonths,
   subMonths,
@@ -20,6 +31,7 @@ import {
 export interface CalendarNote {
   id: string;
   text: string;
+  done?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,52 +61,91 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
   const selectedDateKey = format(selectedDate, 'yyyy-MM-dd');
   const selectedDateNotes = notes[selectedDateKey] || [];
 
-  // 1. Load saved notes from JSON file inside project (/api/planner/notes)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flashStatus = (msg: string, ms = 2500) => {
+    setSaveStatus(msg);
+    if (statusTimer.current) clearTimeout(statusTimer.current);
+    statusTimer.current = setTimeout(() => setSaveStatus(null), ms);
+  };
+
+  // 1. Load notes saved in this browser. On first visit, import any notes that
+  //    were previously kept on the server (planner_notes.json) so nothing is lost.
   useEffect(() => {
-    fetchNotes();
+    let cancelled = false;
+    (async () => {
+      const local = loadLocalNotes();
+      if (local !== null) {
+        setNotes(local);
+        setIsLoading(false);
+        return;
+      }
+      const legacy = await fetchLegacyServerNotes();
+      if (cancelled) return;
+      setNotes(legacy);
+      saveLocalNotes(legacy);
+      setIsLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const fetchNotes = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/planner/notes');
-      if (res.ok) {
-        const data = await res.json();
-        setNotes(data || {});
+  // Keep multiple open tabs in sync
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== PLANNER_STORAGE_KEY) return;
+      try {
+        setNotes(e.newValue ? sanitizeNotes(JSON.parse(e.newValue)) : {});
+      } catch {
+        /* ignore malformed value */
       }
-    } catch (err) {
-      console.error('Failed to load planner notes:', err);
-    } finally {
-      setIsLoading(false);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // 2. Save notes to this device (localStorage)
+  const saveNotesToFile = (updatedNotes: NotesState) => {
+    setIsSaving(true);
+    const ok = saveLocalNotes(updatedNotes);
+    setIsSaving(false);
+    if (ok) {
+      flashStatus('Saved on this device');
+    } else {
+      flashStatus("Couldn't save — browser storage is blocked or full", 5000);
     }
   };
 
-  // 2. Save notes object to JSON file (/planner_notes.json via API)
-  const saveNotesToFile = async (updatedNotes: NotesState) => {
-    setIsSaving(true);
-    try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      const writeKey = (import.meta as any).env?.VITE_API_WRITE_KEY;
-      if (writeKey) {
-        headers['X-Api-Key'] = writeKey;
-      }
+  const handleToggleDone = (noteId: string) => {
+    const updatedNotes = {
+      ...notes,
+      [selectedDateKey]: selectedDateNotes.map(n =>
+        n.id === noteId ? { ...n, done: !n.done, updatedAt: new Date().toISOString() } : n
+      ),
+    };
+    setNotes(updatedNotes);
+    saveNotesToFile(updatedNotes);
+  };
 
-      const res = await fetch('/api/planner/notes', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(updatedNotes)
-      });
-      if (res.ok) {
-        setSaveStatus('Saved to planner_notes.json');
-        setTimeout(() => setSaveStatus(null), 2500);
-      } else {
-        setSaveStatus('Failed to save');
-      }
-    } catch (err) {
-      console.error('Failed to save planner notes:', err);
-      setSaveStatus('Error saving');
-    } finally {
-      setIsSaving(false);
+  const handleExport = () => {
+    exportNotes(notes);
+    flashStatus(`Exported ${countNotes(notes)} notes`);
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const imported = await readNotesFile(file);
+      const merged = mergeNotes(notes, imported);
+      setNotes(merged);
+      saveNotesToFile(merged);
+      flashStatus(`Imported ${countNotes(imported)} notes`);
+    } catch (err: any) {
+      flashStatus(`Import failed: ${(err?.message || 'invalid file').slice(0, 60)}`, 5000);
     }
   };
 
@@ -126,16 +177,13 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
       setSmartAddInput("");
       setSelectedDate(parsedDate);
       setCurrentMonth(parsedDate);
-      setSaveStatus("Smart task added!");
-      setTimeout(() => setSaveStatus(null), 2500);
 
-      // Persist to planner_notes.json via the local server endpoint
-      await saveNotesToFile(updatedNotes);
+      saveNotesToFile(updatedNotes);
+      flashStatus(`Added to ${format(parsedDate, "EEE, MMM d")}`);
     } catch (err: any) {
       console.error("Smart add error:", err);
       const msg = (err?.message || "unknown").slice(0, 60);
-      setSaveStatus("AI error: " + msg);
-      setTimeout(() => setSaveStatus(null), 4500);
+      flashStatus("AI error: " + msg, 4500);
     } finally {
       setIsSmartAdding(false);
     }
@@ -267,7 +315,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                 Calendar & Notes
               </h1>
               <p className="text-label-small text-on-surface-variant hidden sm:block">
-                Simple daily notes saved to <code className="text-primary font-mono bg-surface-container px-1 py-0.5 rounded">planner_notes.json</code>
+                Notes are saved privately in this browser
               </p>
             </div>
           </div>
@@ -279,6 +327,28 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
               {saveStatus}
             </span>
           )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          <button
+            onClick={handleExport}
+            disabled={countNotes(notes) === 0}
+            className="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-40"
+            title="Download a backup of all notes (JSON)"
+          >
+            <MaterialIcon name="download" className="text-xl" />
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            title="Restore notes from a backup file"
+          >
+            <MaterialIcon name="upload" className="text-xl" />
+          </button>
           <button
             onClick={handleToday}
             className="px-3 py-1.5 rounded-lg text-label-medium font-medium bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-colors"
@@ -411,7 +481,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                             key={i}
                             className="text-[10.5px] leading-tight line-clamp-1 px-1 py-0.5 rounded border border-outline-variant/60 text-on-surface-variant bg-surface overflow-hidden"
                           >
-                            {n.text}
+                            <span className={n.done ? 'line-through opacity-60' : ''}>{n.text}</span>
                           </div>
                         ))}
                         {dayNotes.length > 2 && (
@@ -450,7 +520,7 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                 </h3>
               </div>
               <div className="text-right font-mono text-label-small text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-lg border border-outline-variant/40">
-                {selectedDateNotes.length} {selectedDateNotes.length === 1 ? 'note' : 'notes'}
+                {selectedDateNotes.filter(n => n.done).length}/{selectedDateNotes.length} done
               </div>
             </div>
 
@@ -537,9 +607,18 @@ export default function ActionPlanner({ onBackToChat, onToggleDrawer }: ActionPl
                           </div>
                         ) : (
                           <>
-                            <p className="text-body-medium text-on-surface whitespace-pre-wrap leading-relaxed break-words">
-                              {note.text}
-                            </p>
+                            <label className="flex items-start gap-2.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={!!note.done}
+                                onChange={() => handleToggleDone(note.id)}
+                                className="mt-1 w-4 h-4 accent-primary cursor-pointer shrink-0"
+                                aria-label={note.done ? 'Mark as not done' : 'Mark as done'}
+                              />
+                              <p className={`text-body-medium whitespace-pre-wrap leading-relaxed break-words ${note.done ? 'line-through text-on-surface-variant/60' : 'text-on-surface'}`}>
+                                {note.text}
+                              </p>
+                            </label>
                             <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30 text-label-small text-on-surface-variant">
                               <span className="font-mono text-[11px] opacity-70">
                                 {format(parseISO(note.createdAt), 'h:mm a')}

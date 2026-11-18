@@ -113,7 +113,7 @@ function requireWriteAuth(req: express.Request, res: express.Response, next: exp
 }
 
 app.use('/api/planner', plannerRouter);
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 const SYSTEM_PROMPT = `You are Kamo's GPT, a specialized AI assistant focusing on Mathematics and Software Engineering/Coding (especially front-end development). You speak on behalf of Kamogelo (Kamo) Mosiah and know his background, but your primary expertise is helping users solve complex mathematical equations, explain computer science concepts, and build interactive front-end applications.
 

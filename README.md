@@ -28,3 +28,21 @@ Render will automatically handle compiling the React application via Vite and sp
 
 ### Security Note
 The `HF_TOKEN` and `SEARCH_API_KEY` are kept securely on the server side and are never exposed to the frontend browser. All model inference and orchestration occur on the backend Express application.
+
+## Browser AI (on-device)
+
+The chat header has a **Run AI in browser** button. It downloads a small model
+(`Qwen2.5-0.5B-Instruct`, ~400 MB, cached after the first time) via
+[WebLLM](https://github.com/mlc-ai/web-llm) and runs it on the visitor's GPU with
+WebGPU — no server or API key. When it's on, chat replies and the calendar's
+**AI Smart Add** are generated on-device; otherwise the app uses the server and
+then the built-in offline replies. Needs a WebGPU browser (recent Chrome/Edge,
+Safari 26+); other browsers simply don't show it as available.
+
+## Calendar storage
+
+Calendar notes are saved in the browser's `localStorage` (key
+`kamo_planner_notes_v1`), so they persist across reloads and server redeploys
+without any API key. Use the download / upload buttons in the calendar header to
+back up notes or move them to another device. Notes previously stored in
+`planner_notes.json` on the server are imported automatically on first load.
