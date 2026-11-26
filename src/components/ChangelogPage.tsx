@@ -11,58 +11,51 @@ interface ChangelogPageProps {
 export default function ChangelogPage({ onBackToChat, onToggleDrawer }: ChangelogPageProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.4 }}
-      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden relative"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden"
     >
-      {/* Top Navbar - Island Style */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-4 sm:px-6">
-        <div className="flex items-center justify-between w-full pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2 max-w-3xl">
-          <div className="flex items-center gap-2 m-0 p-0">
-            <h1 className="font-medium text-title-medium sm:text-title-large md:text-headline-small text-on-background tracking-normal font-display m-0 p-0 ml-1 py-1">System Changelog</h1>
-          </div>
+      <header className="h-14 shrink-0 border-b border-outline-variant bg-surface px-4 sm:px-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {onToggleDrawer && (
+            <button
+              type="button"
+              onClick={onToggleDrawer}
+              className="md:hidden w-10 h-10 -ml-1 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors cursor-pointer shrink-0"
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onBackToChat}
+            className="inline-flex items-center gap-1.5 h-10 px-2.5 -ml-1 md:ml-0 rounded-lg text-sm font-medium text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors cursor-pointer whitespace-nowrap shrink-0"
+          >
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </button>
+          <span className="text-outline-variant select-none">/</span>
+          <h1 className="text-sm sm:text-base font-semibold text-on-background truncate">Updates</h1>
         </div>
-      </div>
+      </header>
 
-      {/* Main Timeline Scrollable Area */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6 pt-[calc(env(safe-area-inset-top)+88px)]">
-        <div className="w-full max-w-2xl pt-4 sm:pt-8 text-left">
-          
-          <div className="mb-8 max-w-xl">
-            <p className="text-on-surface-variant text-title-small sm:text-title-medium leading-relaxed">
-              Tracking core platform system changes, layout iterations, chatbot features, and backend LLM pipeline optimizations.
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-8 sm:py-12">
+        <div className="w-full max-w-3xl mx-auto">
+          <div className="mb-8 pb-6 border-b border-outline-variant">
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-background">
+              Changelog
+            </h2>
+            <p className="text-sm sm:text-base text-on-surface-variant mt-2 leading-relaxed max-w-xl">
+              System changes, UI updates, and backend improvements.
             </p>
           </div>
 
-          <div className="p-4 sm:p-6 rounded-2xl bg-surface border-2 border-outline-variant shadow-sm w-full max-w-none">
+          <div className="p-5 sm:p-7 rounded-xl bg-surface border border-outline-variant w-full">
             <MarkdownRenderer content={changelogContent} />
           </div>
-
-        </div>
-      </div>
-
-      {/* Floating Bottom Navigation */}
-      <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
-          {onToggleDrawer && (
-            <button 
-              onClick={onToggleDrawer}
-              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
-              title="Menu"
-            >
-              <Menu size={24} />
-            </button>
-          )}
-          <button 
-            onClick={onBackToChat}
-            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
-            title="Back to Chat"
-          >
-            <ArrowLeft size={20} />
-            <span className="font-medium text-title-small">Back to Chat</span>
-          </button>
         </div>
       </div>
     </motion.div>

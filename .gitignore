@@ -7,3 +7,5 @@ coverage/
 .env*
 !.env.example
 INTEGRATION_REPORT.md
+.admin-cred.json
+

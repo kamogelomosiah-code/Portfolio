@@ -1,422 +1,390 @@
-import React from "react";
 import { motion } from "motion/react";
-import { Download, ArrowLeft, Mail, Phone, Github, Globe, MapPin, Menu, Award, FileText, CheckCircle2 } from "lucide-react";
+import { Download, ArrowLeft, Mail, Phone, Github, Globe, MapPin, Menu } from "lucide-react";
 
 interface CvPageProps {
   onBackToChat: () => void;
   onToggleDrawer?: () => void;
 }
 
+const SKILLS_DATA = [
+  {
+    category: "Software Development",
+    details: "Full-stack development, REST APIs, clean coding patterns, responsive design, state management, system architecture, database security",
+  },
+  {
+    category: "Programming Languages",
+    details: "JavaScript, Python (actively studying), SQL (PostgreSQL, MySQL), PHP, HTML5, CSS3",
+  },
+  {
+    category: "Frameworks & Libraries",
+    details: "React.js, Node.js, Express, Laravel, Flask (actively in progress), Tailwind CSS",
+  },
+  {
+    category: "Database & Systems",
+    details: "Database schema design, query optimization, indexing, data normalization, PostgreSQL, MySQL, Firebase/Firestore",
+  },
+  {
+    category: "IT Operations & Support",
+    details: "Hardware diagnostics, technical troubleshooting, software configuration, operating system setup, end-user support",
+  },
+  {
+    category: "DevOps & Tools",
+    details: "Git, GitHub, VS Code, Postman, Docker (actively studying), Chrome DevTools (Google Certified), Render, Android Studio, Excel",
+  },
+  {
+    category: "Soft Skills & Teamwork",
+    details: "Technical documentation, systems analysis, Agile methodologies, problem-solving, collaboration, prompt response times, self-motivated",
+  },
+  {
+    category: "Current Certifications",
+    details: "Google Developer Tools Certification (completed), CompTIA IT Certificate (in progress)",
+  },
+];
+
+const PROJECTS = [
+  {
+    title: "MasterAPI",
+    link: "github.com/kamogelomosiah-code/MasterAPI-main",
+    url: "https://github.com/kamogelomosiah-code/MasterAPI-main",
+    description:
+      "I designed a centralised REST API backend to solve a data duplication problem. Multiple components were all pulling the same data independently, which created inconsistency and inefficiency. I built one clean source of truth with structured endpoints and proper data validation. That is a data quality and governance problem solved in code.",
+  },
+  {
+    title: "Resume Maker",
+    link: "kamogelomosiah-code.github.io/CvMaker/",
+    url: "https://kamogelomosiah-code.github.io/CvMaker/",
+    description:
+      "A full-stack application with a PostgreSQL database that I designed, built, and deployed for a paying client. I handled the data schema design, query optimisation, and data accuracy checks throughout. The database is still running correctly in production today.",
+  },
+  {
+    title: "Real Time Chat Application",
+    link: "s-c4nk.onrender.com",
+    url: "https://s-c4nk.onrender.com",
+    description:
+      "A live application managing real-time data streams using WebSockets. Requires ongoing data integrity monitoring and performance oversight in a live environment.",
+  },
+];
+
 export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
   const handlePrint = () => {
     window.print();
   };
 
-  const skillsData = [
-    {
-      category: "Software Development",
-      details: "Full-stack development, REST APIs, clean coding patterns, responsive design, state management, system architecture, database security"
-    },
-    {
-      category: "Programming Languages",
-      details: "JavaScript, Python (actively studying), SQL (PostgreSQL, MySQL), PHP, HTML5, CSS3"
-    },
-    {
-      category: "Frameworks & Libraries",
-      details: "React.js, Node.js, Express, Laravel, Flask (actively in progress), Tailwind CSS"
-    },
-    {
-      category: "Database & Systems",
-      details: "Database schema design, query optimization, indexing, data normalization, PostgreSQL, MySQL, Firebase/Firestore"
-    },
-    {
-      category: "IT Operations & Support",
-      details: "Hardware diagnostics, technical troubleshooting, software configuration, operating system setup, end-user support"
-    },
-    {
-      category: "DevOps & Tools",
-      details: "Git, GitHub, VS Code, Postman, Docker (actively studying), Chrome DevTools (Google Certified), Render, Android Studio, Excel"
-    },
-    {
-      category: "Soft Skills & Teamwork",
-      details: "Technical documentation, systems analysis, Agile methodologies, problem-solving, collaboration, prompt response times, self-motivated"
-    },
-    {
-      category: "Current Certifications",
-      details: "Google Developer Tools Certification (completed), CompTIA IT Certificate (in progress)"
-    }
-  ];
-
-  const projects = [
-    {
-      title: "MasterAPI",
-      link: "github.com/kamogelomosiah-code/MasterAPI-main",
-      url: "https://github.com/kamogelomosiah-code/MasterAPI-main",
-      description: "I designed a centralised REST API backend to solve a data duplication problem. Multiple components were all pulling the same data independently, which created inconsistency and inefficiency. I built one clean source of truth with structured endpoints and proper data validation. That is a data quality and governance problem solved in code."
-    },
-    {
-      title: "Resume Maker",
-      link: "kamogelomosiah-code.github.io/CvMaker/",
-      url: "https://kamogelomosiah-code.github.io/CvMaker/",
-      description: "A full-stack application with a PostgreSQL database that I designed, built, and deployed for a paying client. I handled the data schema design, query optimisation, and data accuracy checks throughout. The database is still running correctly in production today."
-    },
-    {
-      title: "Real Time Chat Application",
-      link: "s-c4nk.onrender.com",
-      url: "https://s-c4nk.onrender.com",
-      description: "A live application managing real-time data streams using WebSockets. Requires ongoing data integrity monitoring and performance oversight in a live environment."
-    }
-  ];
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.4 }}
-      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden relative print:overflow-visible print:bg-surface print:text-on-background"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden print:overflow-visible print:bg-white print:text-black"
     >
-      {/* Top Navbar with Back Button - Island Style */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-4 sm:px-6 print:hidden">
-        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2 max-w-4xl">
-          <div className="flex items-center gap-2 m-0 p-0">
-            <h1 className="font-medium text-title-medium sm:text-title-large md:text-headline-small text-on-background tracking-normal font-display m-0 p-0 ml-1 py-1">Curriculum Vitae</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={handlePrint}
-              className="flex items-center gap-2 bg-primary hover:opacity-95 text-on-primary dark:bg-white dark:text-primary px-4 py-2 rounded-lg transition-colors font-medium text-body-medium cursor-pointer shadow-sm border-0"
-              title="Download or Print CV"
-            >
-              <Download size={18} /> <span className="hidden sm:inline">Download</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area - Print Container */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6 pt-[calc(env(safe-area-inset-top)+88px)] print:p-0 print:overflow-visible print:bg-surface print:pb-0">
-        <div className="w-full max-w-4xl pt-4 sm:pt-8 print:pt-0">
-          
-          {/* CV Sheet - Paper look */}
-          <div className="w-full bg-surface print:bg-surface border-2 border-outline-variant print:border-0 shadow-lg print:shadow-none rounded-[32px] print:rounded-none p-6 sm:p-12 md:p-16 flex flex-col text-left transition-all relative">
-            
-            {/* Header Block */}
-            <div className="border-b-2 border-primary pb-6 mb-8 print:mb-6">
-              <h1 className="text-display-medium sm:text-[44px] md:text-[50px] font-bold text-primary tracking-tight leading-none mb-3">
-                Kamogelo Mosia
-              </h1>
-              
-              <div className="text-body-medium sm:text-title-small text-on-surface-variant font-medium tracking-wide mb-4">
-                Software & IT Solutions Engineer <span className="mx-1 text-primary">•</span> Johannesburg, Gauteng
-              </div>
-
-              <div className="flex flex-col gap-1.5 text-body-small sm:text-body-medium text-on-surface-variant font-medium">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <a href="mailto:kamogelomosiah@gmail.com" className="hover:text-primary transition-colors flex items-center gap-1 shrink-0">
-                    <Mail size={14} className="text-primary" /> kamogelomosiah@gmail.com
-                  </a>
-                  <span className="flex items-center gap-1 shrink-0">
-                    <Phone size={14} className="text-primary" /> 067 742 6447
-                  </span>
-                  <span className="flex items-center gap-1 shrink-0">
-                    <Phone size={14} className="text-primary" /> 061 362 4165
-                  </span>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <a href="https://github.com/kamogelomosiah-code" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1 shrink-0">
-                    <Github size={14} className="text-primary" /> github.com/kamogelomosiah-code
-                  </a>
-                  <a href="https://portfolio-q5ji.onrender.com" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-1 shrink-0">
-                    <Globe size={14} className="text-primary" /> portfolio-q5ji.onrender.com
-                  </a>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-on-surface-variant text-label-medium sm:text-body-small">
-                  <span className="flex items-center gap-1"><MapPin size={13} className="text-primary" /> Alexandra, Johannesburg, Gauteng</span>
-                  <span className="hidden sm:inline text-on-surface-variant">|</span>
-                  <span>South African Citizen</span>
-                  <span className="hidden sm:inline text-on-surface-variant">|</span>
-                  <span>Unemployed</span>
-                  <span className="hidden sm:inline text-on-surface-variant">|</span>
-                  <span className="font-semibold text-primary">Available immediately</span>
-                </div>
-              </div>
-            </div>
-
-            {/* PROFESSIONAL PROFILE */}
-            <div className="mb-8 print:mb-6">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                PROFESSIONAL PROFILE
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              <div className="text-body-medium sm:text-title-small text-on-background leading-relaxed flex flex-col gap-4">
-                <p>
-                  I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
-                </p>
-                <p>
-                  I have completed the theoretical coursework for a BSc in Information Technology at the University of Johannesburg, double majoring in Computer Science and Informatics, with degree conferral pending. This comprehensive training equipped me with deep knowledge in software engineering paradigms, DBMS administration, networks, system analysis, and IT project management.
-                </p>
-                <p>
-                  My passion lies in leveraging modern technologies to build robust systems. I actively expand my competence beyond academic boundaries, and I am currently completing practical certifications in Python scripting, Docker containerization, and Flask web frameworks to ensure my skills remain at the forefront of the IT industry.
-                </p>
-              </div>
-            </div>
-
-            {/* TECHNICAL PHILOSOPHY & OBJECTIVE */}
-            <div className="mb-8 print:mb-6">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                TECHNICAL APPROACH & EXPERIENCE
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              <div className="text-body-medium sm:text-title-small text-on-background leading-relaxed flex flex-col gap-4">
-                <p>
-                  Every software system is only as good as the database and infrastructure behind it. When I design platforms, I prioritize security, data integrity, and API performance. For instance, when constructing MasterAPI, I solved critical data replication issues by engineering a singular, validated REST service. I enjoy resolving system-level bottlenecks and structuring clean information flows.
-                </p>
-                <p>
-                  I appreciate technical precision. Whether writing SQL queries, diagnosing hardware issues, or building a front-end interface, I aim for absolute correctness and high readability. Technology is a tool to solve real-world problems, and I approach it with the patience and discipline needed for reliable production deployments.
-                </p>
-                <p>
-                  As an IT professional, I am highly self-motivated and maintain stellar time management. I communicate complex technical concepts clearly with stakeholders and work efficiently both as an independent system builder and as a collaborative, Agile-minded team player.
-                </p>
-              </div>
-            </div>
-
-            {/* SKILLS TABLE */}
-            <div className="mb-8 print:mb-6 page-break-before">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                SKILLS
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              
-              <div className="border-2 border-outline-variant rounded-xl overflow-hidden shadow-sm flex flex-col">
-                {skillsData.map((skill, index) => (
-                  <div 
-                    key={index} 
-                    className={`flex flex-col sm:flex-row border-b-2 border-outline-variant last:border-0`}
-                  >
-                    <div className="w-full sm:w-[220px] md:w-[260px] bg-background p-4 text-primary font-semibold text-body-small sm:text-body-medium shrink-0 border-b sm:border-b-0 sm:border-r-2 border-outline-variant flex items-center">
-                      {skill.category}
-                    </div>
-                    <div className="flex-1 p-4 text-body-small sm:text-body-medium text-on-background bg-surface leading-relaxed">
-                      {skill.details}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* RELEVANT PROJECTS */}
-            <div className="mb-8 print:mb-6">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                RELEVANT PROJECTS
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              <p className="text-body-small sm:text-body-medium text-on-surface-variant italic mb-4">
-                These projects showcase my hands-on experience in full-stack development, database architecture, and real-time systems.
-              </p>
-              
-              <div className="flex flex-col gap-6">
-                {projects.map((proj, i) => (
-                  <div key={i} className="flex flex-col gap-1.5">
-                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                      <h3 className="text-title-medium sm:text-[17px] font-bold text-on-background">
-                        {proj.title}
-                      </h3>
-                      <a 
-                        href={proj.url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="text-label-medium sm:text-body-small text-primary hover:underline break-all font-mono"
-                      >
-                        {proj.link}
-                      </a>
-                    </div>
-                    <p className="text-body-small sm:text-body-medium text-on-surface-variant leading-relaxed">
-                      {proj.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* WORK EXPERIENCE */}
-            <div className="mb-8 print:mb-6">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                WORK EXPERIENCE
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              
-              <div className="flex flex-col gap-6">
-                {/* Job 1 */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                    <div className="flex flex-wrap items-baseline gap-1.5">
-                      <span className="text-title-medium sm:text-[17px] font-bold text-on-background">F-Stop Photolab</span>
-                      <span className="text-body-medium text-on-surface-variant italic">Semi-Technical Support and Cashier</span>
-                    </div>
-                    <div className="text-label-medium sm:text-body-small text-on-surface-variant font-mono font-medium flex gap-2 shrink-0">
-                      <span>Johannesburg</span> <span>2016</span>
-                    </div>
-                  </div>
-                  <p className="text-body-small sm:text-body-medium text-on-surface-variant leading-relaxed">
-                    I worked with equipment data every day. Device histories. Fault logs. Client records. I kept everything 
-                    accurate and I flagged inconsistencies when they appeared. In a small business environment, data 
-                    accuracy is not optional. A wrong record means a wrong decision and a frustrated customer.
-                  </p>
-                </div>
-
-                {/* Job 2 */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                    <div className="flex flex-wrap items-baseline gap-1.5">
-                      <span className="text-title-medium sm:text-[17px] font-bold text-on-background">Dis-Chem Pharmacy</span>
-                      <span className="text-body-medium text-on-surface-variant italic">Cashier and Customer Service Representative</span>
-                    </div>
-                    <div className="text-label-medium sm:text-body-small text-on-surface-variant font-mono font-medium flex gap-2 shrink-0">
-                      <span>Gauteng</span> <span>2021</span>
-                    </div>
-                  </div>
-                  <p className="text-body-small sm:text-body-medium text-on-surface-variant leading-relaxed">
-                    High-volume transaction processing with strict accuracy requirements. I maintained zero-error records 
-                    daily under sustained pressure. The discipline required to do that correctly, every time, is the same 
-                    discipline that data quality governance demands.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* EDUCATION */}
-            <div className="mb-8 print:mb-6 page-break-before">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                EDUCATION
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              
-              <div className="flex flex-col gap-6">
-                {/* UJ */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                    <span className="text-title-medium sm:text-[17px] font-bold text-on-background">University of Johannesburg</span>
-                    <span className="text-label-medium sm:text-body-small text-on-surface-variant font-mono shrink-0">2019 to 2024 (Coursework Completed, Conferral Pending)</span>
-                  </div>
-                  <div className="text-body-medium font-semibold text-primary mt-0.5 flex items-center flex-wrap gap-2">
-                    <span>BSc Information Technology in Computer Science and Informatics</span>
-                    <span className="text-label-medium px-2 py-0.5 rounded bg-primary-container border-2 border-primary/20 text-primary">NQF Level 7 (Pending)</span>
-                  </div>
-                  <div className="text-label-medium sm:text-body-small text-on-surface-variant font-mono mt-1">
-                    SAQA Reg 80372 <span className="mx-1.5">•</span> Student No 217004345
-                  </div>
-                  <ul className="list-disc list-outside ml-5 mt-2 flex flex-col gap-1 text-body-small sm:text-body-medium text-on-surface-variant">
-                    <li>Informatics 1A and IT Management 1A passed with distinction.</li>
-                    <li><span className="font-semibold text-on-background">Modules:</span> Software Engineering, System Design, Databases, IT Management, OOP, Algorithms, Informatics.</li>
-                  </ul>
-                </div>
-
-                {/* Hoerskool */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                    <span className="text-title-medium sm:text-[17px] font-bold text-on-background">Hoerskool Birchleigh</span>
-                    <span className="text-label-medium sm:text-body-small text-on-surface-variant font-mono shrink-0">2016</span>
-                  </div>
-                  <div className="text-body-medium font-semibold text-primary mt-0.5">
-                    National Senior Certificate <span className="mx-1 text-primary">•</span> Bachelor's Pass <span className="mx-1 text-primary">•</span> IT 71% (Highest in school)
-                  </div>
-                  <ul className="list-disc list-outside ml-5 mt-1 text-body-small sm:text-body-medium text-on-surface-variant">
-                    <li>Elected school prefect.</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* CERTIFICATIONS AND ACTIVE STUDY */}
-            <div className="mb-8 print:mb-6">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                CERTIFICATIONS AND ACTIVE STUDY
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              
-              <ul className="list-disc list-outside ml-5 flex flex-col gap-1.5 text-body-small sm:text-body-medium text-on-surface-variant leading-relaxed">
-                <li><span className="font-semibold text-on-background">Google Developer Tools Certification</span> — completed</li>
-                <li><span className="font-semibold text-on-background">Python Programming Certificate</span> — in progress</li>
-                <li><span className="font-semibold text-on-background">CompTIA IT Certificate</span> — in progress</li>
-                <li><span className="font-semibold text-on-background">Docker Certificate</span> — in progress</li>
-                <li><span className="font-semibold text-on-background">Flask Certificate</span> — in progress</li>
-              </ul>
-            </div>
-
-            {/* ONE LAST THING */}
-            <div className="mb-8 print:mb-6">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                ONE LAST THING
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              <div className="text-body-small sm:text-body-medium text-on-surface-variant leading-relaxed flex flex-col gap-3">
-                <p>
-                  I ice skate. I read. I do not drink. I show up every day clear-headed, focused, and ready to solve complex problems.
-                </p>
-                <p>
-                  Technology and IT infrastructure are the backbone of any modern enterprise. I am passionate about constructing robust software, 
-                  handling data streams with integrity, and providing stellar technical systems management. I want to be part of a team 
-                  that builds solutions of absolute quality, and I am ready to start immediately.
-                </p>
-              </div>
-            </div>
-
-            {/* REFERENCES */}
-            <div className="mb-0 print:mb-0">
-              <h2 className="text-title-large sm:text-headline-small font-bold text-primary tracking-wider uppercase mb-1">
-                REFERENCES
-              </h2>
-              <div className="w-full h-0.5 bg-primary mb-4" />
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-body-small sm:text-body-medium leading-relaxed text-on-surface-variant">
-                {/* Ref 1 */}
-                <div className="flex flex-col">
-                  <span className="font-bold text-on-background">Mr Tommy Ferrara</span>
-                  <span className="italic">F-Stop Photolab <span className="mx-1">•</span> Former employer</span>
-                  <span className="font-mono text-primary mt-0.5">073 400 1861</span>
-                </div>
-
-                {/* Ref 2 */}
-                <div className="flex flex-col">
-                  <span className="font-bold text-on-background">Store Manager</span>
-                  <span className="italic">Dis-Chem Pharmacy <span className="mx-1">•</span> Former employer</span>
-                  <span className="font-mono text-primary mt-0.5">011 391 2399</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-          
-        </div>
-      </div>
-      
-      {/* Floating Bottom Navigation */}
-      <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none print:hidden">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
+      <header className="h-14 shrink-0 border-b border-outline-variant bg-surface px-4 sm:px-6 flex items-center justify-between gap-3 print:hidden">
+        <div className="flex items-center gap-2 min-w-0">
           {onToggleDrawer && (
-            <button 
+            <button
+              type="button"
               onClick={onToggleDrawer}
-              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
-              title="Menu"
+              className="md:hidden w-10 h-10 -ml-1 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors cursor-pointer shrink-0"
+              aria-label="Open menu"
             >
-              <Menu size={24} />
+              <Menu size={20} />
             </button>
           )}
-          <button 
+          <button
+            type="button"
             onClick={onBackToChat}
-            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
-            title="Back to Chat"
+            className="inline-flex items-center gap-1.5 h-10 px-2.5 -ml-1 md:ml-0 rounded-lg text-sm font-medium text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
-            <ArrowLeft size={20} />
-            <span className="font-medium text-title-small">Back to Chat</span>
+            <ArrowLeft size={16} />
+            <span>Back</span>
           </button>
+          <span className="text-outline-variant select-none">/</span>
+          <h1 className="text-sm sm:text-base font-semibold text-on-background truncate">
+            Curriculum Vitae
+          </h1>
+        </div>
+
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="inline-flex items-center gap-2 bg-primary hover:opacity-90 text-on-primary px-3.5 h-9 rounded-lg transition-opacity font-medium text-xs sm:text-sm cursor-pointer whitespace-nowrap shrink-0"
+          title="Print or save CV as PDF"
+        >
+          <Download size={15} />
+          <span>Print / PDF</span>
+        </button>
+      </header>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 sm:py-10 print:p-0 print:overflow-visible print:bg-white">
+        <div className="w-full max-w-3xl mx-auto bg-surface print:bg-white border border-outline-variant print:border-0 rounded-xl print:rounded-none p-6 sm:p-10 md:p-12 text-left">
+          <div className="border-b border-outline-variant pb-6 mb-8">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-on-background tracking-tight leading-tight">
+              Kamogelo Mosia
+            </h1>
+            <p className="text-sm sm:text-base text-accent-ink font-medium mt-1.5">
+              Software &amp; IT Solutions Engineer · Johannesburg, Gauteng
+            </p>
+
+            <div className="flex flex-col gap-2 text-xs sm:text-sm text-on-surface-variant mt-4">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                <a
+                  href="mailto:kamogelomosiah@gmail.com"
+                  className="hover:text-on-background transition-colors inline-flex items-center gap-1.5"
+                >
+                  <Mail size={14} className="text-accent-ink" />
+                  <span>kamogelomosiah@gmail.com</span>
+                </a>
+                <span className="inline-flex items-center gap-1.5 font-mono tabular-nums">
+                  <Phone size={14} className="text-accent-ink" />
+                  <span>067 742 6447</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-mono tabular-nums">
+                  <Phone size={14} className="text-accent-ink" />
+                  <span>061 362 4165</span>
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                <a
+                  href="https://github.com/kamogelomosiah-code"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-on-background transition-colors inline-flex items-center gap-1.5"
+                >
+                  <Github size={14} className="text-accent-ink" />
+                  <span>github.com/kamogelomosiah-code</span>
+                </a>
+                <a
+                  href="https://portfolio-q5ji.onrender.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-on-background transition-colors inline-flex items-center gap-1.5"
+                >
+                  <Globe size={14} className="text-accent-ink" />
+                  <span>portfolio-q5ji.onrender.com</span>
+                </a>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1 text-xs text-on-surface-variant">
+                <span className="inline-flex items-center gap-1">
+                  <MapPin size={13} className="text-accent-ink" />
+                  Alexandra, Johannesburg, Gauteng
+                </span>
+                <span>·</span>
+                <span>South African Citizen</span>
+                <span>·</span>
+                <span>Unemployed</span>
+                <span>·</span>
+                <span className="font-medium text-accent-ink">Available immediately</span>
+              </div>
+            </div>
+          </div>
+
+          <section className="mb-8">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              Professional Profile
+            </h2>
+            <div className="text-sm text-on-background leading-relaxed flex flex-col gap-3">
+              <p>
+                I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
+              </p>
+              <p>
+                I have completed the theoretical coursework for a BSc in Information Technology at the University of Johannesburg, double majoring in Computer Science and Informatics, with degree conferral pending. This comprehensive training equipped me with deep knowledge in software engineering paradigms, DBMS administration, networks, system analysis, and IT project management.
+              </p>
+              <p>
+                My passion lies in leveraging modern technologies to build robust systems. I actively expand my competence beyond academic boundaries, and I am currently completing practical certifications in Python scripting, Docker containerization, and Flask web frameworks to ensure my skills remain at the forefront of the IT industry.
+              </p>
+            </div>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              Technical Approach &amp; Experience
+            </h2>
+            <div className="text-sm text-on-background leading-relaxed flex flex-col gap-3">
+              <p>
+                Every software system is only as good as the database and infrastructure behind it. When I design platforms, I prioritize security, data integrity, and API performance. For instance, when constructing MasterAPI, I solved critical data replication issues by engineering a singular, validated REST service. I enjoy resolving system-level bottlenecks and structuring clean information flows.
+              </p>
+              <p>
+                I appreciate technical precision. Whether writing SQL queries, diagnosing hardware issues, or building a front-end interface, I aim for absolute correctness and high readability. Technology is a tool to solve real-world problems, and I approach it with the patience and discipline needed for reliable production deployments.
+              </p>
+              <p>
+                As an IT professional, I am highly self-motivated and maintain stellar time management. I communicate complex technical concepts clearly with stakeholders and work efficiently both as an independent system builder and as a collaborative, Agile-minded team player.
+              </p>
+            </div>
+          </section>
+
+          <section className="mb-8 page-break-before">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              Skills
+            </h2>
+            <div className="border border-outline-variant rounded-lg overflow-hidden divide-y divide-outline-variant">
+              {SKILLS_DATA.map((skill) => (
+                <div key={skill.category} className="flex flex-col sm:flex-row">
+                  <div className="w-full sm:w-[210px] bg-surface-container-low px-4 py-3 text-on-background font-medium text-xs sm:text-sm shrink-0 sm:border-r border-outline-variant">
+                    {skill.category}
+                  </div>
+                  <div className="flex-1 px-4 py-3 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                    {skill.details}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              Relevant Projects
+            </h2>
+            <div className="flex flex-col gap-5">
+              {PROJECTS.map((proj) => (
+                <div key={proj.title} className="flex flex-col gap-1">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                    <h3 className="text-sm sm:text-base font-semibold text-on-background">
+                      {proj.title}
+                    </h3>
+                    <a
+                      href={proj.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-accent-ink hover:underline break-all font-mono"
+                    >
+                      {proj.link}
+                    </a>
+                  </div>
+                  <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                    {proj.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              Work Experience
+            </h2>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-sm sm:text-base font-semibold text-on-background">F-Stop Photolab</span>
+                    <span className="text-xs sm:text-sm text-on-surface-variant">Semi-Technical Support and Cashier</span>
+                  </div>
+                  <span className="text-xs text-on-surface-variant font-mono tabular-nums shrink-0">
+                    Johannesburg · 2016
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                  I worked with equipment data every day. Device histories. Fault logs. Client records. I kept everything accurate and I flagged inconsistencies when they appeared. In a small business environment, data accuracy is not optional. A wrong record means a wrong decision and a frustrated customer.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-sm sm:text-base font-semibold text-on-background">Dis-Chem Pharmacy</span>
+                    <span className="text-xs sm:text-sm text-on-surface-variant">Cashier and Customer Service Representative</span>
+                  </div>
+                  <span className="text-xs text-on-surface-variant font-mono tabular-nums shrink-0">
+                    Gauteng · 2021
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                  High-volume transaction processing with strict accuracy requirements. I maintained zero-error records daily under sustained pressure. The discipline required to do that correctly, every time, is the same discipline that data quality governance demands.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-8 page-break-before">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              Education
+            </h2>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                  <span className="text-sm sm:text-base font-semibold text-on-background">University of Johannesburg</span>
+                  <span className="text-xs text-on-surface-variant font-mono tabular-nums shrink-0">
+                    2019–2024 (Coursework Completed, Conferral Pending)
+                  </span>
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-accent-ink">
+                  BSc Information Technology in Computer Science and Informatics · NQF Level 7 (Pending)
+                </div>
+                <div className="text-xs text-on-surface-variant font-mono">
+                  SAQA Reg 80372 · Student No 217004345
+                </div>
+                <ul className="list-disc list-outside ml-4 mt-1.5 flex flex-col gap-1 text-xs sm:text-sm text-on-surface-variant">
+                  <li>Informatics 1A and IT Management 1A passed with distinction.</li>
+                  <li>
+                    <span className="font-medium text-on-background">Modules:</span> Software Engineering, System Design, Databases, IT Management, OOP, Algorithms, Informatics.
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                  <span className="text-sm sm:text-base font-semibold text-on-background">Hoerskool Birchleigh</span>
+                  <span className="text-xs text-on-surface-variant font-mono tabular-nums shrink-0">2016</span>
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-accent-ink">
+                  National Senior Certificate · Bachelor&apos;s Pass · IT 71% (Highest in school)
+                </div>
+                <ul className="list-disc list-outside ml-4 mt-1 text-xs sm:text-sm text-on-surface-variant">
+                  <li>Elected school prefect.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              Certifications &amp; Active Study
+            </h2>
+            <ul className="list-disc list-outside ml-4 flex flex-col gap-1 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+              <li><span className="font-medium text-on-background">Google Developer Tools Certification</span> — completed</li>
+              <li><span className="font-medium text-on-background">Python Programming Certificate</span> — in progress</li>
+              <li><span className="font-medium text-on-background">CompTIA IT Certificate</span> — in progress</li>
+              <li><span className="font-medium text-on-background">Docker Certificate</span> — in progress</li>
+              <li><span className="font-medium text-on-background">Flask Certificate</span> — in progress</li>
+            </ul>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              One Last Thing
+            </h2>
+            <div className="text-xs sm:text-sm text-on-surface-variant leading-relaxed flex flex-col gap-2.5">
+              <p>
+                I ice skate. I read. I do not drink. I show up every day clear-headed, focused, and ready to solve complex problems.
+              </p>
+              <p>
+                Technology and IT infrastructure are the backbone of any modern enterprise. I am passionate about constructing robust software, handling data streams with integrity, and providing stellar technical systems management. I want to be part of a team that builds solutions of absolute quality, and I am ready to start immediately.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-accent-ink pb-2 border-b border-outline-variant mb-4">
+              References
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs sm:text-sm text-on-surface-variant">
+              <div className="flex flex-col">
+                <span className="font-semibold text-on-background">Mr Tommy Ferrara</span>
+                <span>F-Stop Photolab · Former employer</span>
+                <span className="font-mono text-accent-ink mt-0.5 tabular-nums">073 400 1861</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-semibold text-on-background">Store Manager</span>
+                <span>Dis-Chem Pharmacy · Former employer</span>
+                <span className="font-mono text-accent-ink mt-0.5 tabular-nums">011 391 2399</span>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
-      
-      {/* CSS print utility specifically for pagination breaks */}
+
       <style>{`
         @media print {
           body {

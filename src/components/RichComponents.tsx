@@ -1,145 +1,160 @@
-import { ExternalLink, Download } from "lucide-react";
+import { ExternalLink, Download, FileText, Mail, MapPin, Phone } from "lucide-react";
+import defaultProfile from "../../me.json";
+import type { ProfileData, NavTab } from "../types/profile";
 
-export function ProjectCards() {
-  const projects = [
-    {
-      title: "CallTrax",
-      description: "Client tracking and billing platform built for corporate service providers.",
-      tags: ["PHP", "Laravel", "React.js", "MySQL"],
-      link: "https://call-trax.co.za"
-    },
-    {
-      title: "kamocodes API",
-      description: "Centralized server-side logging API and sandboxes gateway.",
-      tags: ["PHP", "Laravel", "PostgreSQL", "REST"],
-      link: "https://api.kamocodes.xyz"
-    },
-    {
-      title: "kamocodes Library",
-      description: "Cataloging and Borrow history system with membership analytics indicators.",
-      tags: ["TypeScript", "React", "Laravel", "MySQL"],
-      link: "https://library.kamocodes.xyz"
-    },
-    {
-      title: "Personal AI Portfolio App",
-      description: "Voice command transcriptions and Firestore CMS powered by Gemini.",
-      tags: ["TypeScript", "Firebase", "Gemini AI", "Vite", "Tailwind"],
-      link: "#"
-    }
-  ];
+export function ProjectCards({ profile }: { profile?: ProfileData }) {
+  const projects =
+    profile?.projects && profile.projects.length > 0
+      ? profile.projects
+      : defaultProfile.projects;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 w-full max-w-2xl font-sans">
-      {projects.map((project, i) => (
-        <div key={i} className="bg-surface border-2 border-outline-variant rounded-xl p-5 hover:border-primary dark:hover:border-primary transition-colors flex flex-col justify-between shadow-sm">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 w-full max-w-2xl font-sans">
+      {projects.map((project, idx) => (
+        <div
+          key={`${project.name}-${idx}`}
+          className="bg-surface border border-outline-variant rounded-xl p-4 hover:border-outline transition-colors flex flex-col justify-between gap-3"
+        >
           <div>
-            <h3 className="font-semibold text-base mb-2 text-on-background text-on-background">{project.title}</h3>
-            <p className="text-on-surface-variant text-xs sm:text-sm mb-4 leading-relaxed">{project.description}</p>
-            <div className="flex flex-wrap gap-1.5 mb-6">
-              {project.tags.map(tag => (
-                <span key={tag} className="text-[10px] sm:text-xs font-semibold px-2 py-1 bg-surface-container-low border-2 border-outline rounded-lg text-on-surface dark:text-gray-300">
-                  {tag}
-                </span>
-               ))}
-            </div>
+            <h3 className="font-semibold text-sm text-on-background">{project.name}</h3>
+            <p className="text-on-surface-variant text-xs mt-1 leading-relaxed">
+              {project.description}
+            </p>
+            {project.stack && (
+              <p className="font-mono text-[11px] text-on-surface-variant mt-2.5">
+                {project.stack}
+              </p>
+            )}
           </div>
-          <a href={project.link} target="_blank" rel="noreferrer" className="flex items-center text-xs sm:text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-            View Project <ExternalLink size={14} className="ml-1" />
-          </a>
+          {project.url && project.url !== "#" && (
+            <a
+              href={project.url.startsWith("http") ? project.url : `https://${project.url}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-accent-ink hover:underline"
+            >
+              <span>View Project</span>
+              <ExternalLink size={12} />
+            </a>
+          )}
         </div>
       ))}
     </div>
   );
 }
 
-export function SkillChips() {
-  const skills = [
-    "Systems Support", "Hardware Setup & Diagnosis", "SSD & RAM Upgrades",
-    "Tailwind CSS", "React.js", "Laravel Framework", "MySQL / PostgreSQL",
-    "REST APIs", "TypeScript", "TCP/IP & DNS Troubleshooting", "Support Ticket Logging"
-  ];
+export function SkillChips({ profile }: { profile?: ProfileData }) {
+  const skills =
+    profile?.skills && profile.skills.length > 0
+      ? profile.skills
+      : defaultProfile.skills;
 
   return (
-    <div className="flex flex-wrap gap-2 mt-4 max-w-xl font-sans">
-      {skills.map(skill => (
-        <div key={skill} className="px-3 py-1.5 border-2 border-outline-variant bg-surface-container-low rounded-full text-xs font-semibold text-on-surface  hover:bg-inverse-surface hover:text-on-primary dark:hover:bg-surface dark:hover:text-on-background transition-colors cursor-default shadow-sm">
-          {skill}
-        </div>
-      ))}
+    <div className="mt-2 max-w-2xl border border-outline-variant rounded-xl bg-surface p-4 font-sans">
+      <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-2.5">
+        Core Skills
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs sm:text-sm text-on-background">
+        {skills.map((skill, idx) => (
+          <div key={idx} className="flex items-start gap-2">
+            <span className="text-accent-ink shrink-0">·</span>
+            <span>{skill}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-export function DownloadCV() {
+export function ContactCard({
+  profile,
+  onNavigateTab,
+}: {
+  profile?: ProfileData;
+  onNavigateTab?: (tab: NavTab) => void;
+}) {
+  const email = profile?.email || defaultProfile.email;
+  const phone = profile?.phone || defaultProfile.phone;
+  const location = profile?.location || defaultProfile.location;
+
+  return (
+    <div className="mt-2 max-w-md border border-outline-variant rounded-xl bg-surface p-4 font-sans flex flex-col gap-3">
+      <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant">
+        Find &amp; Contact {profile?.nickname || "Kamo"}
+      </div>
+      <div className="flex flex-col gap-2 text-xs sm:text-sm">
+        <a
+          href={`mailto:${email}`}
+          className="inline-flex items-center gap-2 text-accent-ink hover:underline font-medium"
+        >
+          <Mail size={14} className="shrink-0" />
+          <span>{email}</span>
+        </a>
+        {phone && (
+          <span className="inline-flex items-center gap-2 text-on-surface-variant font-mono text-xs">
+            <Phone size={14} className="shrink-0 text-accent-ink" />
+            <span>{phone}</span>
+          </span>
+        )}
+        {location && (
+          <span className="inline-flex items-center gap-2 text-on-surface-variant text-xs">
+            <MapPin size={14} className="shrink-0 text-accent-ink" />
+            <span>{location}</span>
+          </span>
+        )}
+      </div>
+      {onNavigateTab && (
+        <button
+          type="button"
+          onClick={() => onNavigateTab("contact")}
+          className="self-start inline-flex items-center justify-center bg-primary hover:opacity-90 text-on-primary px-3.5 h-9 rounded-lg text-xs font-medium transition-opacity cursor-pointer"
+        >
+          Open Contact Form
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function DownloadCV({ profile }: { profile?: ProfileData }) {
   const handleDownload = () => {
-    const cvText = `KAMOGELO MOSIA
-Software & IT Solutions Engineer
-Johannesburg, Gauteng, South Africa
-Email: kamogelomosiah@gmail.com
-Phone: 067 742 6447 / 061 362 4165
-GitHub: github.com/kamogelomosiah-code
+    const p = profile || (defaultProfile as ProfileData);
+    const cvText = `${(p.name || "KAMOGELO MOSIA").toUpperCase()}
+${p.profession || "Software & IT Solutions Engineer"}
+${p.location || "Johannesburg, Gauteng, South Africa"}
+Email: ${p.email || "kamogelomosiah@gmail.com"}
+Phone: ${p.phone || "067 742 6447 / 061 362 4165"}
 
 ==================================================
 PROFESSIONAL PROFILE
 ==================================================
-I am a highly analytical and detail-oriented IT Professional and Full-Stack Developer with a strong foundation in Computer Science, Software Engineering, and Informatics. I specialize in designing structured, scalable database schemas, building secure and reliable REST APIs, and configuring custom hardware and software systems to optimize operational flow.
-
-Completed theoretical coursework for a BSc in Information Technology (Computer Science & Informatics double major) at the University of Johannesburg, with degree conferral pending.
+${p.overview || ""}
 
 ==================================================
 TECHNICAL SKILLS
 ==================================================
-* Software Development: Full-stack development, REST APIs, clean coding patterns, responsive design, state management, system architecture, database security
-* Programming Languages: JavaScript, Python (actively studying), SQL (PostgreSQL, MySQL), PHP, HTML5, CSS3
-* Frameworks & Libraries: React.js, Node.js, Express, Laravel, Flask (actively in progress), Tailwind CSS
-* Database & Systems: Database schema design, query optimization, indexing, data normalization, PostgreSQL, MySQL, Firebase/Firestore
-* IT Operations & Support: Hardware diagnostics, technical troubleshooting, software configuration, operating system setup, end-user support
-* DevOps & Tools: Git, GitHub, VS Code, Postman, Docker (actively studying), Chrome DevTools (Google Certified), Render, Android Studio, Excel
-* Current Certifications: Google Developer Tools Certification (completed), CompTIA IT Certificate (in progress)
+${(p.skills || []).map((s) => `* ${s}`).join("\n")}
 
 ==================================================
 EDUCATION
 ==================================================
-* University of Johannesburg (2019 - 2024, Coursework Completed, Conferral Pending)
-  BSc Information Technology in Computer Science and Informatics (NQF Level 7 - Pending)
-  SAQA Reg 80372 • Student No 217004345
-  - Informatics 1A and IT Management 1A passed with distinction.
-
-* Hoerskool Birchleigh (2016)
-  National Senior Certificate • Bachelor's Pass
-  - IT 71% (Highest in school)
-  - Elected school prefect
+${(p.education || [])
+  .map((e) => `* ${e.institution} (${e.years})\n  ${e.degree}\n  ${e.details || ""}`)
+  .join("\n\n")}
 
 ==================================================
 RELEVANT PROJECTS
 ==================================================
-* MasterAPI (github.com/kamogelomosiah-code/MasterAPI-main)
-  Designed a centralised REST API backend to solve a data duplication problem, establishing a clean source of truth with structured endpoints.
-
-* Resume Maker (kamogelomosiah-code.github.io/CvMaker/)
-  Full-stack application with a PostgreSQL database designed, built, and deployed for a paying client.
-
-* Real Time Chat Application (s-c4nk.onrender.com)
-  Live application managing real-time data streams using WebSockets.
+${(p.projects || [])
+  .map((pr) => `* ${pr.name}${pr.url ? ` (${pr.url})` : ""}\n  ${pr.description || ""}`)
+  .join("\n\n")}
 
 ==================================================
 WORK EXPERIENCE
 ==================================================
-* F-Stop Photolab (2016)
-  Semi-Technical Support and Cashier
-  - Managed equipment data, fault logs, client records, and transaction accuracy.
-
-* Dis-Chem Pharmacy (2021)
-  Cashier and Customer Service Representative
-  - High-volume transaction processing with strict accuracy requirements.
-
-==================================================
-REFERENCES
-==================================================
-* Mr Tommy Ferrara (F-Stop Photolab, Former employer)
-  Phone: 073 400 1861
-* Store Manager (Dis-Chem Pharmacy, Former employer)
-  Phone: 011 391 2399
+${(p.experience || [])
+  .map((ex) => `* ${ex.company} (${ex.year})\n  ${ex.title}\n  ${ex.details || ""}`)
+  .join("\n\n")}
 `;
 
     const blob = new Blob([cvText], { type: "text/plain;charset=utf-8" });
@@ -154,32 +169,25 @@ REFERENCES
   };
 
   return (
-    <div className="flex flex-row items-center justify-between p-3.5 sm:p-4 bg-surface-container-low border-2 border-outline-variant rounded-2xl w-full max-w-md mt-3 gap-3 shadow-sm hover:border-primary/40 transition-all">
+    <div className="flex flex-row items-center justify-between p-3.5 bg-surface border border-outline-variant rounded-xl w-full max-w-md mt-2 gap-3">
       <div className="flex items-center gap-3 min-w-0">
-        {/* Document Icon Graphic */}
-        <div className="w-11 h-11 shrink-0 bg-red-500/10 dark:bg-red-950/40 rounded-xl flex flex-col items-center justify-center border border-red-500/20 shadow-xs relative overflow-hidden select-none">
-          <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
-          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <span className="text-[8px] font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest font-mono">PDF</span>
+        <div className="w-10 h-10 shrink-0 rounded-lg bg-surface-container flex items-center justify-center border border-outline-variant text-accent-ink">
+          <FileText size={18} />
         </div>
-        
         <div className="flex flex-col text-left min-w-0">
-          <span className="font-bold text-sm text-on-surface leading-snug truncate">
+          <span className="font-medium text-sm text-on-surface leading-snug truncate">
             Kamogelo_CV.pdf
           </span>
-          <span className="text-xs text-on-surface-variant font-medium mt-0.5">
-            184 KB • Official CV
-          </span>
+          <span className="text-xs text-on-surface-variant font-mono">Official CV</span>
         </div>
       </div>
 
       <button
+        type="button"
         onClick={handleDownload}
-        className="flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-on-primary px-4 py-2.5 rounded-xl transition-all font-semibold text-xs sm:text-sm cursor-pointer shadow-sm border-0 shrink-0"
+        className="inline-flex items-center justify-center gap-1.5 bg-primary hover:opacity-90 text-on-primary px-3.5 h-9 rounded-lg transition-opacity font-medium text-xs cursor-pointer shrink-0"
       >
-        <Download size={15} />
+        <Download size={14} />
         <span>Download</span>
       </button>
     </div>

@@ -1,13 +1,24 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Mail, Send, MapPin, ArrowLeft, CheckCircle2, AlertCircle, Menu } from "lucide-react";
+import { Mail, Send, MapPin, ArrowLeft, CheckCircle2, AlertCircle, Menu, Phone, ExternalLink } from "lucide-react";
+import type { ProfileData } from "../types/profile";
 
 interface ContactPageProps {
   onBackToChat: () => void;
   onToggleDrawer?: () => void;
+  profile?: ProfileData;
 }
 
-export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPageProps) {
+export default function ContactPage({ onBackToChat, onToggleDrawer, profile }: ContactPageProps) {
+  const contactEmail = profile?.email || "kamogelomosiah@gmail.com";
+  const contactLocation = profile?.location || "Johannesburg, South Africa";
+  const contactPhone = profile?.phone || "";
+  const contactAvailability =
+    profile?.availability ||
+    "Open to remote full-stack contracts, IT support roles, and permanent engineering positions.";
+  const contactLinks = Array.isArray(profile?.links)
+    ? profile.links.filter((l) => l?.label && l?.url && /^https?:\/\//i.test(l.url))
+    : [];
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -29,17 +40,11 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
     setErrorMessage("");
 
     try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      const writeKey = (import.meta as any).env?.VITE_API_WRITE_KEY;
-      if (writeKey) {
-        headers["X-Api-Key"] = writeKey;
-      }
-
       const res = await fetch("/api/contact", {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           name: trimmedName,
           email: trimmedEmail,
@@ -67,212 +72,237 @@ export default function ContactPage({ onBackToChat, onToggleDrawer }: ContactPag
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.4 }}
-      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden relative"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden"
     >
-      {/* Top Navbar with Back Button - Island Style */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center transition-all duration-200 pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-4 sm:px-6">
-        <div className="flex items-center justify-between w-full transition-all duration-200 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2 max-w-3xl">
-          <div className="flex items-center gap-2 m-0 p-0">
-            <h1 className="font-medium text-title-medium sm:text-title-large md:text-headline-small text-on-background tracking-normal font-display m-0 p-0 ml-1 py-1">Get In Touch</h1>
-          </div>
+      <header className="h-14 shrink-0 border-b border-outline-variant bg-surface px-4 sm:px-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {onToggleDrawer && (
+            <button
+              type="button"
+              onClick={onToggleDrawer}
+              className="md:hidden w-10 h-10 -ml-1 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors cursor-pointer shrink-0"
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onBackToChat}
+            className="inline-flex items-center gap-1.5 h-10 px-2.5 -ml-1 md:ml-0 rounded-lg text-sm font-medium text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors cursor-pointer whitespace-nowrap shrink-0"
+          >
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </button>
+          <span className="text-outline-variant select-none">/</span>
+          <h1 className="text-sm sm:text-base font-semibold text-on-background truncate">Contact</h1>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-32 px-4 sm:px-6 pt-[calc(env(safe-area-inset-top)+88px)]">
-        <div className="w-full max-w-4xl pt-4 sm:pt-8">
-          
-          {/* Header Block inline within the sheet */}
-          <div className="mb-12">
-            <h1 className="text-display-small md:text-[40px] font-medium text-on-background mt-2 tracking-normal font-display">
-              Contact Me
-            </h1>
-            <p className="text-on-surface-variant mt-3 text-title-medium max-w-2xl leading-relaxed">
-              Have a project, job opening, or opportunity? Drop me a line directly through this form, or reach out via email.
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-8 sm:py-12">
+        <div className="w-full max-w-3xl mx-auto">
+          <div className="mb-8 pb-6 border-b border-outline-variant">
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-background">
+              Get in Touch
+            </h2>
+            <p className="text-sm sm:text-base text-on-surface-variant mt-2 leading-relaxed max-w-xl">
+              Have a project, role, or engineering inquiry? Send a message below or reach out directly via email.
             </p>
           </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
-          {/* Information Column (col-span 1) */}
-          <div className="flex flex-col gap-6">
-            <div className="border-2 border-outline-variant shadow-sm rounded-[24px] p-6 bg-surface flex flex-col gap-4">
-              <h3 className="text-body-medium font-medium text-on-surface-variant tracking-wide">
-                Direct Communication
-              </h3>
-              
-              <div className="flex items-start gap-4 mt-2">
-                <div className="p-3 bg-primary-container rounded-full text-accent shrink-0">
-                  <Mail size={20} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-4">
+              <div className="border border-outline-variant rounded-xl p-5 bg-surface flex flex-col gap-4">
+                <h3 className="font-mono text-xs uppercase tracking-[0.1em] text-on-surface-variant">
+                  Direct
+                </h3>
+
+                <div className="flex items-start gap-3">
+                  <Mail size={16} className="text-accent-ink shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-on-surface-variant">Email</p>
+                    <a
+                      href={`mailto:${contactEmail}`}
+                      className="text-sm text-accent-ink font-medium hover:underline break-all select-all"
+                    >
+                      {contactEmail}
+                    </a>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-label-medium text-on-surface-variant font-medium">Email address</p>
-                  <a href="mailto:kamogelomosiah@gmail.com" className="text-body-medium text-primary font-medium hover:underline transition-colors select-all">
-                    kamogelomosiah@gmail.com
-                  </a>
+
+                {contactPhone && (
+                  <div className="flex items-start gap-3">
+                    <Phone size={16} className="text-accent-ink shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-on-surface-variant">Phone</p>
+                      <p className="text-sm text-on-background font-medium font-mono">
+                        {contactPhone}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-3">
+                  <MapPin size={16} className="text-accent-ink shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-on-surface-variant">Location</p>
+                    <p className="text-sm text-on-background font-medium">
+                      {contactLocation}
+                    </p>
+                  </div>
                 </div>
+
+                {contactLinks.length > 0 && (
+                  <div className="pt-2 border-t border-outline-variant flex flex-wrap gap-3">
+                    {contactLinks.map((link, idx) => (
+                      <a
+                        key={`${link.label}-${idx}`}
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-accent-ink hover:underline"
+                      >
+                        <span>{link.label}</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-start gap-4 mt-3">
-                <div className="p-3 bg-primary-container rounded-full text-primary shrink-0">
-                  <MapPin size={20} />
-                </div>
-                <div>
-                  <p className="text-label-medium text-on-surface-variant font-medium">Location</p>
-                  <p className="text-body-medium text-on-background font-medium">
-                    Johannesburg, South Africa
-                  </p>
-                </div>
+              <div className="border border-outline-variant rounded-xl p-5 bg-surface flex flex-col gap-2">
+                <h4 className="font-mono text-xs uppercase tracking-[0.1em] text-on-surface-variant">
+                  Availability
+                </h4>
+                <p className="text-sm text-on-surface-variant leading-relaxed">
+                  {contactAvailability}
+                </p>
               </div>
             </div>
 
-            <div className="border-2 border-outline-variant shadow-sm rounded-[24px] p-6 bg-surface flex flex-col gap-3">
-              <h4 className="text-body-medium text-primary font-medium tracking-wide">
-                Availability
-              </h4>
-              <p className="text-body-medium text-on-background leading-relaxed">
-                Currently open to remote full-stack engineering contracts, startup contributions, and permanent roles.
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                <span className="text-body-small font-medium text-primary">Available Now</span>
-              </div>
-            </div>
-          </div>
+            <div className="lg:col-span-2">
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-col gap-4 border border-outline-variant rounded-xl p-5 sm:p-6 bg-surface"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="name" className="text-xs font-medium text-on-surface-variant">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Jane Doe"
+                      className="bg-background border border-outline-variant text-on-background px-3.5 h-11 rounded-lg focus:outline-none focus:border-primary text-sm placeholder:text-on-surface-variant/60"
+                    />
+                  </div>
 
-          {/* Form Column (col-span 2) */}
-          <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6 border-2 border-outline-variant shadow-sm rounded-[28px] p-6 md:p-8 bg-surface">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="name" className="text-body-small font-medium text-on-surface-variant">Full Name</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="email" className="text-xs font-medium text-on-surface-variant">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="jane@example.com"
+                      className="bg-background border border-outline-variant text-on-background px-3.5 h-11 rounded-lg focus:outline-none focus:border-primary text-sm placeholder:text-on-surface-variant/60"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="subject" className="text-xs font-medium text-on-surface-variant">
+                    Subject
+                  </label>
                   <input
                     type="text"
-                    id="name"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Jane Doe"
-                    className="bg-background border-2 border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
+                    id="subject"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    placeholder="Contract inquiry / Permanent role"
+                    className="bg-background border border-outline-variant text-on-background px-3.5 h-11 rounded-lg focus:outline-none focus:border-primary text-sm placeholder:text-on-surface-variant/60"
                   />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="email" className="text-body-small font-medium text-on-surface-variant">Email Address</label>
-                  <input
-                    type="email"
-                    id="email"
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="message" className="text-xs font-medium text-on-surface-variant">
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
                     required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="jane@example.com"
-                    className="bg-background border-2 border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
+                    rows={5}
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    placeholder="Hi Kamo, let's connect about..."
+                    className="bg-background border border-outline-variant text-on-background px-3.5 py-2.5 rounded-lg focus:outline-none focus:border-primary text-sm placeholder:text-on-surface-variant/60 resize-none"
                   />
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="subject" className="text-body-small font-medium text-on-surface-variant">Subject</label>
-                <input
-                  type="text"
-                  id="subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  placeholder="Opportunity for Contract work / Permanent Hire"
-                  className="bg-background border-2 border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant"
-                />
-              </div>
+                <div className="flex flex-col gap-3 pt-1">
+                  <button
+                    type="submit"
+                    disabled={status === "submitting" || status === "success"}
+                    className="w-full sm:w-auto sm:self-end inline-flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-on-primary px-6 h-11 rounded-lg disabled:opacity-50 font-medium text-sm transition-opacity cursor-pointer"
+                  >
+                    {status === "submitting" ? (
+                      <span>Sending...</span>
+                    ) : (
+                      <>
+                        <span>Send Message</span>
+                        <Send size={15} />
+                      </>
+                    )}
+                  </button>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="message" className="text-body-small font-medium text-on-surface-variant">Message</label>
-                <textarea
-                  id="message"
-                  required
-                  rows={5}
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder="Hi Kamo, let's schedule an introductory call to discuss..."
-                  className="bg-background border-2 border-outline-variant text-on-background px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-primary transition-all text-title-small font-medium placeholder:font-normal placeholder:text-on-surface-variant resize-none"
-                />
-              </div>
+                  <AnimatePresence>
+                    {status === "success" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        className="bg-surface-container-low border border-outline-variant text-on-background p-3.5 rounded-lg flex items-start gap-2.5"
+                      >
+                        <CheckCircle2 className="text-accent-ink shrink-0 mt-0.5" size={18} />
+                        <div className="text-xs sm:text-sm">
+                          <p className="font-medium">Message sent</p>
+                          <p className="text-on-surface-variant mt-0.5">
+                            Thank you for reaching out. Kamogelo will reply shortly.
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
 
-              {/* Action and feedback messaging */}
-              <div className="flex flex-col gap-4 mt-2">
-                <button
-                  type="submit"
-                  disabled={status === "submitting" || status === "success"}
-                  className="w-full md:w-auto self-end flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-on-primary dark:bg-white dark:text-primary px-8 py-3.5 rounded-full disabled:bg-[#F1F3F4] dark:disabled:bg-[#2C2C2C] disabled:text-[#9AA0A6] dark:disabled:text-[#5F5F5F] font-medium text-title-small transition-colors cursor-pointer border-0"
-                >
-                  {status === "submitting" ? (
-                    <span>Sending...</span>
-                  ) : (
-                    <>
-                      <span>Send Message</span> <Send size={18} />
-                    </>
-                  )}
-                </button>
-
-                <AnimatePresence>
-                  {status === "success" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="bg-primary-container border-2 border-primary/20 text-on-background p-4 rounded-lg flex items-start gap-3"
-                    >
-                      <CheckCircle2 className="text-primary shrink-0 mt-0.5" size={20} />
-                      <div>
-                        <p className="font-semibold text-body-medium">Message sent successfully</p>
-                        <p className="mt-1 text-body-medium text-on-surface-variant">Thank you for reaching out. I will get back to your query within 24 hours.</p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {status === "error" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="bg-red-500/10 border-2 border-red-500/20 text-red-600  p-4 rounded-lg flex items-start gap-3"
-                    >
-                      <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
-                      <div>
-                        <p className="font-semibold text-body-medium">Transmission Error</p>
-                        <p className="mt-1 text-body-medium">{errorMessage || "Please ensure all required fields are filled correctly."}</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </form>
+                    {status === "error" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        className="bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 p-3.5 rounded-lg flex items-start gap-2.5"
+                      >
+                        <AlertCircle className="shrink-0 mt-0.5" size={18} />
+                        <div className="text-xs sm:text-sm">
+                          <p className="font-medium">Unable to send</p>
+                          <p className="mt-0.5">{errorMessage}</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      </div>
-      </div>
-      
-      {/* Floating Bottom Navigation */}
-      <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
-          {onToggleDrawer && (
-            <button 
-              onClick={onToggleDrawer}
-              className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
-              title="Menu"
-            >
-              <Menu size={24} />
-            </button>
-          )}
-          <button 
-            onClick={onBackToChat}
-            className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent"
-            title="Back to Chat"
-          >
-            <ArrowLeft size={20} />
-            <span className="font-medium text-title-small">Back to Chat</span>
-          </button>
         </div>
       </div>
     </motion.div>
