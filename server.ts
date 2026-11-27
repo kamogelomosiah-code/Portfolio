@@ -5,19 +5,22 @@ import { createServer as createViteServer } from 'vite';
 import multer from 'multer';
 import * as dotenv from 'dotenv';
 import fsModule from 'fs';
-import plannerRouter from './plannerRouter';
-import { masterApiEnabled, upsertDoc, listDocs, deleteDoc, MasterApiError, masterApiHealth, incrementCounter, getCounter, createDoc, recentDocs } from './masterapi';
 import nodemailer from 'nodemailer';
-import { Pool } from 'pg';
 import { GoogleGenAI } from "@google/genai";
 import crypto from 'crypto';
+import { masterApiEnabled, masterApiHealth, incrementCounter, getCounter, createDoc, recentDocs } from './masterapi';
 
 dotenv.config();
 
-let meData = {};
+const ME_FILE_PATH = path.resolve(process.cwd(), 'me.json');
+const ADMIN_CRED_PATH = path.resolve(process.cwd(), '.admin-cred.json');
+const SESSION_SIGNING_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
+
+let meData: Record<string, any> = {};
 try {
-  meData = JSON.parse(fsModule.readFileSync(path.join(process.cwd(), 'me.json'), 'utf-8'));
-} catch (e) {
+  meData = JSON.parse(fsModule.readFileSync(ME_FILE_PATH, 'utf-8'));
+} catch {
   console.log("Could not load me.json");
 }
 
@@ -34,14 +37,13 @@ const allowedOrigins = [...defaultAllowedOrigins, ...envAllowedOrigins];
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB upload limit
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 const app = express();
 
 app.use(cors((req, done) => done(null, {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow non-browser requests or same-origin requests
     if (!origin) return callback(null, true);
     // The site's own pages always count as allowed (browsers send Origin on module scripts too).
     try {
@@ -58,9 +60,8 @@ app.use(cors((req, done) => done(null, {
   credentials: true,
 })));
 
-app.use(express.json());
+app.use(express.json({ limit: '256kb' }));
 
-// In-memory sliding window rate limiter
 function createRateLimiter(options: { windowMs: number; max: number; message: string }) {
   const hits = new Map<string, { count: number; resetTime: number }>();
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -92,386 +93,248 @@ const transcribeRateLimiter = createRateLimiter({
   message: "Too many transcription requests. Please try again shortly."
 });
 
-// Middleware for shared secret authentication on write endpoints
-function requireWriteAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const secret = process.env.API_WRITE_KEY;
-  if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      console.warn(`[SECURITY WARNING] Write endpoint ${req.method} ${req.originalUrl} called but API_WRITE_KEY is not configured.`);
+const adminAuthRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: "Too many authentication attempts. Please try again later."
+});
+
+const PORT = Number(process.env.PORT) || 3000;
+
+// --- Owner Passcode & Session Token Helpers ---
+function getAdminMode(): 'env' | 'claimed' | 'unclaimed' {
+  if (process.env.ADMIN_PASSCODE && process.env.ADMIN_PASSCODE.trim().length > 0) {
+    return 'env';
+  }
+  if (fsModule.existsSync(ADMIN_CRED_PATH)) {
+    return 'claimed';
+  }
+  return 'unclaimed';
+}
+
+function hashPasscodeScrypt(passcode: string, salt: string): Buffer {
+  return crypto.scryptSync(passcode, salt, 64);
+}
+
+function verifyPasscode(passcode: string): boolean {
+  const envPass = process.env.ADMIN_PASSCODE;
+  if (envPass && envPass.trim().length > 0) {
+    const a = crypto.createHash('sha256').update(passcode).digest();
+    const b = crypto.createHash('sha256').update(envPass.trim()).digest();
+    return crypto.timingSafeEqual(a, b);
+  }
+  if (!fsModule.existsSync(ADMIN_CRED_PATH)) {
+    return false;
+  }
+  try {
+    const cred = JSON.parse(fsModule.readFileSync(ADMIN_CRED_PATH, 'utf-8'));
+    if (typeof cred?.salt !== 'string' || typeof cred?.hash !== 'string') {
+      return false;
     }
-    return next();
+    const derived = hashPasscodeScrypt(passcode, cred.salt);
+    const stored = Buffer.from(cred.hash, 'hex');
+    if (derived.length !== stored.length) return false;
+    return crypto.timingSafeEqual(derived, stored);
+  } catch {
+    return false;
   }
+}
 
-  const clientKey = req.headers['x-api-key'] || req.headers['x-write-key'];
-  if (!clientKey || typeof clientKey !== 'string') {
-    return res.status(401).json({ error: "Unauthorized: Missing X-Api-Key header for write operation." });
+function createOwnerToken(): string {
+  const payload = {
+    sub: 'owner',
+    iat: Date.now(),
+    exp: Date.now() + TOKEN_TTL_MS,
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload), 'utf-8').toString('base64url');
+  const sig = crypto.createHmac('sha256', SESSION_SIGNING_SECRET).update(payloadB64).digest('base64url');
+  return `${payloadB64}.${sig}`;
+}
+
+function verifyOwnerToken(token: string): boolean {
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+  const [payloadB64, sig] = parts;
+  const expectedSig = crypto.createHmac('sha256', SESSION_SIGNING_SECRET).update(payloadB64).digest('base64url');
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expectedSig);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
+  try {
+    const parsed = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
+    return parsed?.sub === 'owner' && typeof parsed?.exp === 'number' && parsed.exp > Date.now();
+  } catch {
+    return false;
   }
+}
 
-  const secretBuf = Buffer.from(secret);
-  const clientBuf = Buffer.from(clientKey);
-
-  if (secretBuf.length !== clientBuf.length || !crypto.timingSafeEqual(secretBuf, clientBuf)) {
-    return res.status(403).json({ error: "Forbidden: Invalid API write key." });
+function requireOwnerAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "Owner authentication required." });
   }
-
+  const token = authHeader.slice(7).trim();
+  if (!verifyOwnerToken(token)) {
+    return res.status(401).json({ error: "Session expired or invalid. Please unlock again." });
+  }
   return next();
 }
 
-app.use('/api/planner', plannerRouter);
-const PORT = Number(process.env.PORT) || 3000;
-
-const SYSTEM_PROMPT = `You are Kamo's GPT, a specialized AI assistant focusing on Mathematics and Software Engineering/Coding (especially front-end development). You speak on behalf of Kamogelo (Kamo) Mosiah and know his background, but your primary expertise is helping users solve complex mathematical equations, explain computer science concepts, and build interactive front-end applications.
-
-Additionally, you are the "Goal Achievement Coach" — a premium feature inside my portfolio app.
-
-**YOUR JOB AS GOAL COACH:**
-When a user says "I want to achieve X" or shares a goal, you help them break it down, find better/strategic ways to achieve it step-by-step, and offer to send the strategic roadmap directly to their email address.
-
-We NEVER connect to Google Accounts or Gmail OAuth. Instead, we ask for their email address and email the roadmap directly!
-
-**HOW YOU WORK:**
-
-1. **DETECT THE GOAL**
-   - User says: "I want to..." / "My goal is..." / "Help me..." / "I need to..."
-   - Offer to break down the goal and map out the timeframe chronologically.
-   - Ask: "What is your email address so I can send this complete, mapped-out strategic roadmap directly to your inbox?"
-
-2. **IF THE USER PROVIDES THEIR EMAIL ADDRESS & GOAL:**
-   - Devise 3-5 progressive, highly strategic milestone steps to achieve the goal.
-   - Map out the timeframe chronologically (e.g. Day 1, Week 1, Week 2, Week 3).
-   - Display the roadmap clearly on screen.
-   - Trigger the automatic email delivery by outputting this exact JSON token at the end of your message:
-     [AUTOMATE_GOAL: {"email_address": "user@example.com", "goal": "The goal summary", "steps": [{"action": "Detailed action step", "frequency": "weekly", "duration_minutes": 45}]}]
-   - The server will intercept this block, send the email instantly using nodemailer, and remove the block before showing your message.
-
-3. **TRACK PROGRESS & ADJUST**
-   - Keep your advice focused on efficient, optimal pathways.
-
-When a user greets you or asks who you are, introduce yourself as Kamo's GPT, a math and coding specialist.
-
-Kamo's Background Details:
-- Kamo is an IT Internship Candidate and final-year BSc IT student at the University of Johannesburg (double majoring in Computer Science and Informatics). 
-- His degree status: Coursework completed, but degree not fully completed yet (graduation/conferral is pending).
-
-You must know Kamo's technical details:
-1. Programming Languages & Frameworks: JavaScript, TypeScript, PHP, Python, SQL (PostgreSQL, MySQL). React.js, Node.js, Express, Laravel, HTML5, CSS3/Tailwind.
-2. Projects: MasterAPI, Resume Maker (ResumeCraft), UJ Stock Manager, Portfolio Website, Real-Time Chat App.
-
-MATH AND CODING OUTPUT INSTRUCTIONS:
-1. MATHEMATICS FORMATTING:
-   - You must format all mathematical equations, symbols, and formulas using standard LaTeX delimiters so they are rendered beautifully by KaTeX in the chat UI:
-     - Use "$$ <equation> $$" (on separate lines) for block/display math.
-     - Use "$ <symbol or equation> $" or "\\( <symbol or equation> \\)" for inline math.
-
-2. FRONT-END CODE PREVIEWS:
-   - When asked to write, design, or show any front-end component, UI, web page, widget, or layout, you MUST output the complete, self-contained code inside a triple-backtick html code block.
-   - Within this block, combine the HTML structure, CSS (you can import Tailwind via '<script src="https://unpkg.com/@tailwindcss/browser@4"></script>' or CDN for a high-fidelity look), and any interactive JavaScript.
-
-RESPONSE CONSTRAINTS:
-- Keep your explanations extremely concise, clear, and structured. Avoid unnecessary conversational filler or fluff.
-- DO NOT use excessive emojis. Limit emojis to at most 1 or 2 per response (or none at all). Keep the tone professional, direct, and focused.
-- Always include a quick action at the bottom of your answers by appending one of these exact tokens:
-  - For projects or work: "[UI:PROJECTS]"
-  - For skills or expertise: "[UI:SKILLS]"
-  - For CV/resume/contact: "[UI:CV]"
-  - If none fits, append "[UI:CV]" as a default.`;
-
-const automationRateLimits = new Map<string, { count: number; resetTime: number }>();
-function checkAutomationRateLimit(key: string, max: number, windowMs: number): boolean {
-  const now = Date.now();
-  let record = automationRateLimits.get(key);
-  if (!record || now > record.resetTime) {
-    record = { count: 1, resetTime: now + windowMs };
-    automationRateLimits.set(key, record);
-    return true;
+function sanitizeJsonValue(val: unknown, depth = 0): unknown {
+  if (depth > 10) return null;
+  if (val === null || typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
+    return val;
   }
-  if (record.count >= max) {
+  if (Array.isArray(val)) {
+    return val.slice(0, 200).map(item => sanitizeJsonValue(item, depth + 1));
+  }
+  if (typeof val === 'object') {
+    const clean: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+      if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+      clean[k] = sanitizeJsonValue(v, depth + 1);
+    }
+    return clean;
+  }
+  return null;
+}
+
+function isSafeHttpUrl(url: unknown): boolean {
+  if (url === undefined || url === null || url === '') return true;
+  if (typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed) return true;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
     return false;
   }
-  record.count++;
-  return true;
 }
 
-async function processAutomationRequests(text: string, clientIp: string = 'unknown'): Promise<string> {
-  const automateRegex = /\[AUTOMATE_GOAL:\s*({[\s\S]*?})\s*\]/;
-  const match = text.match(automateRegex);
-  
-  if (!match) return text;
-  
-  const jsonStr = match[1];
-  let newText = text.replace(automateRegex, "").trim();
-
-  try {
-    const data = JSON.parse(jsonStr);
-    const emailAddress = typeof data.email_address === 'string' ? data.email_address.trim() : '';
-    const rawGoal = typeof data.goal === 'string' ? data.goal.trim() : '';
-    const steps = Array.isArray(data.steps) ? data.steps : [];
-
-    // 1. Strict email address validation
-    if (!emailAddress || !EMAIL_REGEX.test(emailAddress) || emailAddress.length > 254) {
-      console.warn(`[CHAT AUTOMATION REJECTED] Invalid email recipient format: ${emailAddress.slice(0, 30)}`);
-      return newText;
-    }
-
-    if (!rawGoal || steps.length === 0) {
-      return newText;
-    }
-
-    // 2. Rate-limiting automated sends per IP and per destination email (max 3 per hour)
-    const ONE_HOUR = 60 * 60 * 1000;
-    const ipAllowed = checkAutomationRateLimit(`ip:${clientIp}`, 3, ONE_HOUR);
-    const emailAllowed = checkAutomationRateLimit(`email:${emailAddress.toLowerCase()}`, 3, ONE_HOUR);
-    if (!ipAllowed || !emailAllowed) {
-      console.warn(`[CHAT AUTOMATION RATE LIMIT] Send limit exceeded for IP: ${clientIp} or Email: ${emailAddress}`);
-      return newText + "\n\n*(Automated email delivery limit reached for this session. Please try again later.)*";
-    }
-
-    // 3. Capping fields and maximum steps
-    const goal = rawGoal.slice(0, 300);
-    const cappedSteps = steps.slice(0, 10).map((step: any) => ({
-      action: typeof step.action === 'string' ? step.action.slice(0, 250) : 'Action step',
-      duration_minutes: Math.min(Math.max(Number(step.duration_minutes) || 30, 5), 480),
-      frequency: typeof step.frequency === 'string' ? step.frequency.slice(0, 30) : 'weekly'
-    }));
-
-    let transporter;
-    let isEthereal = false;
-    const host = process.env.SMTP_HOST;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-
-    if (host && user && pass) {
-      transporter = nodemailer.createTransport({
-        host,
-        port: parseInt(process.env.SMTP_PORT || '587', 10),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: { user, pass }
-      });
-    } else {
-      // 4. Disable Ethereal in production
-      if (process.env.NODE_ENV === 'production') {
-        console.warn(`[CHAT AUTOMATION DISABLED] SMTP settings unconfigured in production. Email suppressed for ${emailAddress}`);
-        return newText + "\n\n*(Automated email delivery requires SMTP configuration in production.)*";
-      }
-
-      const testAccount = await nodemailer.createTestAccount();
-      transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
-      isEthereal = true;
-    }
-
-    const emailHtml = `
-    <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 2px solid #e2e8f0; border-radius: 24px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-      <div style="border-bottom: 2px solid #4F46E5; padding-bottom: 16px; margin-bottom: 24px;">
-        <h2 style="color: #4F46E5; font-weight: 700; margin: 0; font-size: 24px;">🎯 Chat AI Strategic Goal Roadmap</h2>
-        <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">Kamo's AI-Generated Action Plan</p>
-      </div>
-      
-      <p style="font-size: 16px; line-height: 1.6; color: #334155;">
-        Hello! Kamo's Chat AI has prepared this customized, step-by-step strategic roadmap to help you achieve your goal:
-      </p>
-      
-      <div style="background-color: #f8fafc; border-radius: 18px; padding: 24px; border: 1px solid #f1f5f9; margin: 24px 0;">
-        <h3 style="color: #0f172a; margin-top: 0; font-size: 18px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px;">
-          Goal: "${goal}"
-        </h3>
-        <ul style="padding-left: 0; list-style-type: none; margin: 0;">
-          ${cappedSteps.map((step, idx) => {
-            let timeframeLabel = "";
-            if (step.frequency === 'daily') timeframeLabel = "Daily action / habit";
-            else if (step.frequency === 'weekly') timeframeLabel = `Week ${idx + 1} - Milestone`;
-            else if (step.frequency === 'monthly') timeframeLabel = `Month ${idx + 1} - Benchmark`;
-            else timeframeLabel = "Key milestone";
-
-            return `
-              <li style="margin-bottom: 20px; padding-left: 32px; position: relative; list-style: none;">
-                <span style="position: absolute; left: 0; top: 2px; display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 50%; background-color: #e0e7ff; color: #4F46E5; font-size: 11px; font-weight: bold;">
-                  ${idx + 1}
-                </span>
-                <strong style="color: #0f172a; display: block; font-size: 15px; margin-bottom: 3px;">${step.action}</strong>
-                <span style="font-size: 12.5px; color: #64748b; display: block;">
-                  ⏱️ Target Session: ${step.duration_minutes}m | 📅 Time Frame: ${timeframeLabel}
-                </span>
-              </li>
-            `;
-          }).join('')}
-        </ul>
-      </div>
-      
-      <p style="font-size: 14px; line-height: 1.5; color: #475569;">
-        This plan maps out the progressive timeline required for successful execution. Consistency is key!
-      </p>
-      
-      <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 28px 0;" />
-      <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 0;">
-        This roadmap was automatically sent by Kamo's AI Portfolio Assistant. &reg;
-      </p>
-    </div>
-    `;
-
-    const mailOptions = {
-      from: process.env.SMTP_FROM || "\"Kamo's AI\" <assistant@kamocodes.com>",
-      to: emailAddress,
-      subject: `🎯 Chat AI Strategic Roadmap: "${goal.slice(0, 50)}"`,
-      html: emailHtml,
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    if (isEthereal) {
-      const previewUrl = nodemailer.getTestMessageUrl(info);
-      newText += `\n\n*(Ethereal Sandbox Preview: [View Sent Email](${previewUrl}))*`;
-    }
-    // 5. Log send without full email body
-    console.log(`[CHAT PLANNER] Successfully sent automated roadmap email to ${emailAddress} (goal: ${goal.slice(0, 50)})`);
-  } catch (error) {
-    console.error("Failed to execute local chat roadmap automation:", error);
-  }
-
-  return newText;
-}
-
-let pgPool: Pool | null = null;
-if (process.env.DATABASE_URL) {
-  const rejectUnauthorized = process.env.PGSSL_REJECT_UNAUTHORIZED !== 'false';
-  pgPool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized }
-  });
-  
-  // Initialize table
-  pgPool.query(`
-    CREATE TABLE IF NOT EXISTS goals (
-      id UUID PRIMARY KEY,
-      data JSONB NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT now()
-    );
-  `).then(() => {
-    console.log("Goals table ready in Postgres.");
-  }).catch((err) => {
-    console.error("Failed to create goals table:", err);
-  });
-} else {
-  console.log("DATABASE_URL is not set. Postgres persistence is disabled.");
-}
-
-app.get('/api/goals', async (req, res) => {
-  if (masterApiEnabled) {
-    try {
-      const rows = await listDocs('goals');
-      return res.json(rows.map(({ id, createdAt, updatedAt, ...goal }) => ({ id, ...goal })));
-    } catch (error: any) {
-      return res.status(502).json({ error: 'Could not load goals from MasterAPI.' });
-    }
-  }
-  if (!pgPool) return res.json([]);
-  try {
-    const result = await pgPool.query('SELECT data FROM goals');
-    const goals = result.rows.map(row => row.data);
-    res.json(goals);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+// --- Admin Auth & Profile JSON Routes ---
+app.get('/api/admin/status', (_req, res) => {
+  const mode = getAdminMode();
+  return res.json({ configured: mode !== 'unclaimed', mode });
 });
 
-app.post('/api/goals', requireWriteAuth, async (req, res) => {
-  if (!pgPool && !masterApiEnabled) {
-    return res.status(503).json({
-      error: "Postgres database persistence is not configured (DATABASE_URL is not set)."
-    });
+app.post('/api/admin/claim', adminAuthRateLimiter, (req, res) => {
+  if (getAdminMode() !== 'unclaimed') {
+    return res.status(409).json({ error: "Owner passcode is already configured." });
   }
+  const passcode = typeof req.body?.passcode === 'string' ? req.body.passcode : '';
+  if (passcode.length < 6 || passcode.length > 128) {
+    return res.status(400).json({ error: "Passcode must be between 6 and 128 characters." });
+  }
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = hashPasscodeScrypt(passcode, salt).toString('hex');
+  fsModule.writeFileSync(ADMIN_CRED_PATH, JSON.stringify({ salt, hash }, null, 2), { mode: 0o600 });
+  const token = createOwnerToken();
+  return res.status(201).json({ token, mode: 'claimed' });
+});
 
+app.post('/api/admin/login', adminAuthRateLimiter, (req, res) => {
+  if (getAdminMode() === 'unclaimed') {
+    return res.status(400).json({ error: "No owner passcode configured yet. Set one first." });
+  }
+  const passcode = typeof req.body?.passcode === 'string' ? req.body.passcode : '';
+  if (!passcode || !verifyPasscode(passcode)) {
+    return res.status(401).json({ error: "Incorrect passcode." });
+  }
+  const token = createOwnerToken();
+  return res.json({ token, mode: getAdminMode() });
+});
+
+app.get('/api/profile', (_req, res) => {
+  return res.json(meData);
+});
+
+app.put('/api/profile', requireOwnerAuth, (req, res) => {
   try {
-    const goalData = req.body;
-    if (!goalData || typeof goalData !== 'object') {
-      return res.status(400).json({ error: "Invalid payload: body must be a goal object or array of goals" });
+    const body = req.body;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return res.status(400).json({ error: "Profile payload must be a JSON object." });
     }
 
-    const goalsToUpsert = Array.isArray(goalData) ? goalData : [goalData];
-    if (goalsToUpsert.length === 0) {
-      return res.status(400).json({ error: "No goals provided in request payload" });
+    const sanitized = sanitizeJsonValue(body) as Record<string, any>;
+    if (!sanitized || typeof sanitized.name !== 'string' || !sanitized.name.trim()) {
+      return res.status(400).json({ error: "Profile JSON must include a non-empty 'name' string." });
+    }
+    if (typeof sanitized.email !== 'string' || !EMAIL_REGEX.test(sanitized.email.trim())) {
+      return res.status(400).json({ error: "Profile JSON must include a valid 'email' address." });
     }
 
-    // Validate the entire batch first before writing any records
-    for (const goal of goalsToUpsert) {
-      if (!goal || typeof goal !== 'object' || !goal.id || typeof goal.id !== 'string') {
-        return res.status(400).json({ error: "Invalid goal item: each goal must be an object with an 'id' string" });
+    if (Array.isArray(sanitized.links)) {
+      for (const link of sanitized.links) {
+        if (!link || typeof link !== 'object' || !isSafeHttpUrl(link.url)) {
+          return res.status(400).json({ error: "Every link URL must start with http:// or https://." });
+        }
       }
     }
 
-    if (masterApiEnabled) {
-      for (const goal of goalsToUpsert) await upsertDoc('goals', goal.id, goal);
-      return res.json({ success: true, count: goalsToUpsert.length, store: 'masterapi' });
-    }
-
-    // Write the entire validated batch inside a single transaction
-    const client = await pgPool.connect();
-    try {
-      await client.query('BEGIN');
-      for (const goal of goalsToUpsert) {
-        await client.query(`
-          INSERT INTO goals (id, data, updated_at)
-          VALUES ($1, $2, now())
-          ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
-        `, [goal.id, goal]);
+    if (Array.isArray(sanitized.projects)) {
+      for (const proj of sanitized.projects) {
+        if (!proj || typeof proj !== 'object' || !isSafeHttpUrl(proj.url)) {
+          return res.status(400).json({ error: "Every project URL must start with http:// or https://." });
+        }
       }
-      await client.query('COMMIT');
-      return res.json({ success: true, count: goalsToUpsert.length });
-    } catch (txError: any) {
-      await client.query('ROLLBACK');
-      throw txError;
-    } finally {
-      client.release();
     }
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
+
+    const serialized = JSON.stringify(sanitized, null, 2);
+    if (Buffer.byteLength(serialized, 'utf-8') > 100 * 1024) {
+      return res.status(400).json({ error: "Profile JSON exceeds 100 KB limit." });
+    }
+
+    fsModule.writeFileSync(ME_FILE_PATH, serialized + '\n', 'utf-8');
+    meData = sanitized;
+    return res.json({ success: true, profile: meData });
+  } catch (err: any) {
+    console.error("Failed to save profile JSON:", err);
+    return res.status(500).json({ error: "Failed to save profile JSON." });
   }
 });
 
-app.delete('/api/goals/:id', requireWriteAuth, async (req, res) => {
-  if (!pgPool && !masterApiEnabled) {
-    return res.status(503).json({
-      error: "Postgres database persistence is not configured (DATABASE_URL is not set)."
-    });
-  }
+// --- Purposeful Portfolio System Prompt ---
+function buildSystemPrompt(profile: Record<string, any>): string {
+  const ownerName = profile?.name || "Kamogelo Mosia";
+  const nickname = profile?.nickname || "Kamo";
 
-  try {
-    const id = req.params.id;
-    if (!id || typeof id !== 'string') {
-      return res.status(400).json({ error: "Valid goal ID parameter is required" });
-    }
-    if (masterApiEnabled) {
-      await deleteDoc('goals', id);
-    } else {
-      await pgPool!.query('DELETE FROM goals WHERE id = $1', [id]);
-    }
-    return res.json({ success: true, id });
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  return `You are ${nickname}'s dedicated personal portfolio assistant, speaking on behalf of ${ownerName}.
+
+STRICT PURPOSE & SCOPE:
+Your ONLY purpose is to:
+1. Speak accurately about ${ownerName} (${nickname}) — his background, skills, projects, education, experience, availability, and any custom notes/facts provided in the LIVE PROFILE JSON below.
+2. Help visitors find ${ownerName} online (GitHub, portfolio links, CV, location).
+3. Help visitors contact ${ownerName} (email, phone, availability, and directing them to the Contact page).
+
+OUT-OF-SCOPE GUARDRAIL:
+- Do NOT act as a general-purpose assistant, math solver, homework helper, trivia bot, or generic coding tutor.
+- If a visitor asks about anything unrelated to ${ownerName}, his work, finding him, or contacting him, politely decline and explain that you are ${ownerName}'s personal portfolio assistant who can share his background, projects, CV, or contact information instead.
+
+GROUNDING & VOICE:
+- Craft natural, helpful, concise responses on ${ownerName}'s behalf using ONLY the LIVE PROFILE JSON below.
+- If the owner added items in "customNotes", "projects", "skills", "links", or other fields in the JSON, incorporate them naturally whenever relevant.
+- Never invent facts, dates, employers, or links that are not in the LIVE PROFILE JSON.
+- Keep responses concise, direct, and professional without excessive emojis.
+
+UI ACTION TOKENS:
+Always append exactly one of these tokens at the end of your reply when relevant:
+- For projects or portfolio work: "[UI:PROJECTS]"
+- For skills or technical stack: "[UI:SKILLS]"
+- For contacting, hiring, availability, or finding ${nickname}: "[UI:CONTACT]"
+- For CV, background, education, or general introduction: "[UI:CV]"
+
+LIVE PROFILE JSON:
+${JSON.stringify(profile, null, 2)}`;
+}
 
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 // Saves a contact message to MasterAPI when MASTERAPI_URL and MASTERAPI_KEY are set.
+// Failures are logged and ignored: the email has already been sent.
 function saveContactToMasterAPI(doc: Record<string, string>) {
-  const base = process.env.MASTERAPI_URL?.replace(/\/$/, '');
-  const key = process.env.MASTERAPI_KEY;
-  if (!base || !key) return;
-  fetch(`${base}/api/v1/data/contact_messages`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': key },
-    body: JSON.stringify({ ...doc, source: 'portfolio', read: false }),
-    signal: AbortSignal.timeout(8000),
-  })
-    .then(async (r) => { if (!r.ok) console.warn(`MasterAPI contact save failed: HTTP ${r.status}`); })
-    .catch((e) => console.warn(`MasterAPI contact save failed: ${e.message}`));
+  if (!masterApiEnabled) return;
+  createDoc('contact_messages', { ...doc, source: 'portfolio', read: false })
+    .catch((e: any) => console.warn(`MasterAPI contact save failed: ${e.message}`));
 }
 
 app.post('/api/contact', async (req, res) => {
@@ -504,7 +367,6 @@ app.post('/api/contact', async (req, res) => {
       });
     }
 
-    // Do not log the full message body to stdout in production
     console.log(`[CONTACT INCOMING] Name: ${name.trim()} | Email: ${email.trim()} | Subject: ${subject ? subject.trim() : "N/A"}`);
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[CONTACT DEBUG] Message preview: ${message.trim().slice(0, 100)}...`);
@@ -517,7 +379,7 @@ app.post('/api/contact', async (req, res) => {
       auth: { user, pass }
     });
 
-    const recipient = process.env.CONTACT_RECIPIENT_EMAIL || "kamogelomosiah@gmail.com";
+    const recipient = process.env.CONTACT_RECIPIENT_EMAIL || meData?.email || "kamogelomosiah@gmail.com";
     await transporter.sendMail({
       from: process.env.SMTP_FROM || `"Portfolio Contact" <${user}>`,
       to: recipient,
@@ -526,7 +388,7 @@ app.post('/api/contact', async (req, res) => {
       text: `From: ${name.trim()} <${email.trim()}>\nSubject: ${subject ? subject.trim() : 'N/A'}\n\n${message.trim()}`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
-          <h2 style="color: #4F46E5; margin-top: 0; font-size: 20px;">New Portfolio Contact Message</h2>
+          <h2 style="color: #DC2626; margin-top: 0; font-size: 20px;">New Portfolio Contact Message</h2>
           <p style="margin: 6px 0;"><strong>Name:</strong> ${name.trim()}</p>
           <p style="margin: 6px 0;"><strong>Email:</strong> <a href="mailto:${email.trim()}">${email.trim()}</a></p>
           <p style="margin: 6px 0;"><strong>Subject:</strong> ${subject ? subject.trim() : 'N/A'}</p>
@@ -538,8 +400,6 @@ ${message.trim()}
       `
     });
 
-    // Keep a copy in MasterAPI (optional). Server-side only, so the API key never reaches the browser.
-    // A failure here is logged and ignored: the email has already been sent.
     saveContactToMasterAPI({ name: name.trim(), email: email.trim(), subject: subject ? subject.trim() : '', message: message.trim() });
 
     return res.status(200).json({ 
@@ -552,7 +412,6 @@ ${message.trim()}
     return res.status(500).json({ success: false, error: "Failed to deliver contact message: " + (error.message || "Unknown error") });
   }
 });
-
 
 // ---------- Live MasterAPI demo (used by the "API" page) ----------
 // Every call goes through this server, so the MasterAPI key is never sent to the browser.
@@ -613,111 +472,105 @@ app.post('/api/masterapi/guestbook', async (req, res) => {
   }
 });
 
-app.get('/HEALTH', (req, res) => {
-  res.json({ status: 'ok', service: "Kamo's AI", timestamp: new Date().toISOString() });
+app.get('/HEALTH', (_req, res) => {
+  res.json({ status: 'ok', service: 'CodeMind Assistant', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: "Kamo's AI", timestamp: new Date().toISOString() });
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', service: 'CodeMind Assistant', timestamp: new Date().toISOString() });
 });
 
-// Helper for local knowledge assistant when upstream LLM/RAG is offline
-function generateLocalAssistantReply(userPrompt: string): string {
+// Dynamic local knowledge responder grounded in me.json
+function generateLocalAssistantReply(userPrompt: string, profile: Record<string, any>): string {
   const promptLower = userPrompt.toLowerCase().trim();
+  const name = profile?.name || "Kamogelo Mosia";
+  const nickname = profile?.nickname || "Kamo";
+  const profession = profile?.profession || "Software & IT Solutions Engineer";
+  const overview = profile?.overview || "";
+  const email = profile?.email || "kamogelomosiah@gmail.com";
+  const phone = profile?.phone || "";
+  const location = profile?.location || "Johannesburg, South Africa";
+  const availability = profile?.availability || "";
+  const links: Array<{ label: string; url: string }> = Array.isArray(profile?.links) ? profile.links : [];
+  const projects: Array<{ name: string; url?: string; stack?: string; description?: string }> = Array.isArray(profile?.projects) ? profile.projects : [];
+  const skills: string[] = Array.isArray(profile?.skills) ? profile.skills : [];
+  const education: Array<{ degree: string; years: string; institution: string; details?: string }> = Array.isArray(profile?.education) ? profile.education : [];
+  const experience: Array<{ title: string; year: string; company: string; details?: string }> = Array.isArray(profile?.experience) ? profile.experience : [];
+  const customNotes: Array<{ topic: string; content: string }> = Array.isArray(profile?.customNotes) ? profile.customNotes : [];
 
-  // 1. Math solving heuristics
-  const isExplicitMath = 
-    /\b(solve|derivative|integral|equation|calculate|evaluate|algebra)\b/i.test(promptLower) ||
-    promptLower.includes('latex') ||
-    /\$\$|\\\(|\\\[/.test(userPrompt) ||
-    (/\d+\s*[\+\-\*\/\^=]\s*\d+/.test(promptLower) && !/\b(19\d\d|20\d\d)\b/.test(promptLower));
-
-  if (isExplicitMath) {
-    if (promptLower.includes('2x + 5 = 15') || promptLower.includes('2x+5=15')) {
-      return `To solve the linear equation $$2x + 5 = 15$$:
-
-1. Subtract $5$ from both sides:
-$$2x = 15 - 5$$
-$$2x = 10$$
-
-2. Divide both sides by $2$:
-$$x = \\frac{10}{2} = 5$$
-
-The solution is $$x = 5$$. [UI:CV]`;
-    }
+  // 1. Check customNotes added by owner via JSON/Forms
+  const matchedNotes = customNotes.filter((note) => {
+    const topicWords = String(note?.topic || "").toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    return topicWords.some(word => promptLower.includes(word));
+  });
+  if (matchedNotes.length > 0) {
+    const formatted = matchedNotes.map(n => `- **${n.topic}:** ${n.content}`).join('\n');
+    return `Here is what ${nickname} shared on this topic:\n\n${formatted}\n\nFeel free to ask more or reach out via the Contact tab. [UI:CONTACT]`;
   }
 
-  // 2. Goal coaching request
-  const goalRegex = /(?:i want to|my goal is to|help me|plan for|roadmap for)\s+([^.?!]+)/i;
-  const goalMatch = userPrompt.match(goalRegex);
-  if (goalMatch) {
-    const goalTitle = goalMatch[1].trim();
-    return `Here is a structured strategic milestone roadmap to achieve **${goalTitle}**:
-
-1. **Phase 1: Foundation & Planning (Day 1 - Week 1)**
-   - Audit requirements, assemble toolchains, and define success metrics.
-2. **Phase 2: Core Execution & Iteration (Week 2 - Week 3)**
-   - Build MVP components, test incrementally, and refine based on feedback.
-3. **Phase 3: Final Delivery & Review (Week 4)**
-   - Complete quality assurance, deploy, and conduct a retrospective.
-
-What is your email address so I can send this complete roadmap directly to your inbox? [UI:CV]`;
+  // 2. Contact / Find / Hire / Links / Location / Availability
+  if (
+    /\b(contact|email|reach|find|hire|phone|call|location|where|linkedin|github|link|links|available|availability|social)\b/i.test(promptLower)
+  ) {
+    const lines = [
+      `You can reach **${name}** directly using these details:`,
+      `- **Email:** \`${email}\``,
+    ];
+    if (phone) lines.push(`- **Phone:** ${phone}`);
+    if (location) lines.push(`- **Location:** ${location}`);
+    if (availability) lines.push(`- **Availability:** ${availability}`);
+    links.forEach((l) => {
+      if (l?.label && l?.url) lines.push(`- **${l.label}:** [${l.url}](${l.url})`);
+    });
+    lines.push(`\nYou can also send a direct message from the **Contact** tab below. [UI:CONTACT]`);
+    return lines.join('\n');
   }
 
-  // 3. Questions about Kamo / Background / Education / Degree / Greetings
-  const isGreetingOrIntro = 
-    promptLower.includes('who are you') ||
-    promptLower.includes('about kamo') ||
-    promptLower.includes('background') ||
-    promptLower.includes('introduce') ||
-    promptLower.includes('qualification') ||
-    promptLower.includes('education') ||
-    /\b(hi|hello|hey|greetings)\b/i.test(promptLower);
-
-  if (isGreetingOrIntro) {
-    return `Hello! I am **Kamo's GPT**, an AI assistant and Goal Achievement Coach speaking on behalf of **Kamogelo (Kamo) Mosia**. 
-
-Kamo is an **IT Internship Candidate** and final-year **BSc IT** student at the University of Johannesburg (UJ), double majoring in **Computer Science and Informatics** (theoretical coursework completed, degree conferral pending).
-
-Feel free to ask about his projects, technical skills, CV, or request help with mathematics and software development! [UI:CV]`;
+  // 3. CV / Resume / Education / Experience / Background
+  if (
+    /\b(cv|resume|education|degree|university|uj|qualification|study|experience|work history|background)\b/i.test(promptLower)
+  ) {
+    const eduText = education.map(e => `- **${e.degree}** — ${e.institution} (${e.years})${e.details ? `: ${e.details}` : ''}`).join('\n');
+    const expText = experience.map(x => `- **${x.title}** at **${x.company}** (${x.year})${x.details ? `: ${x.details}` : ''}`).join('\n');
+    return `**${name}** — ${profession}\n\n${overview}\n\n${eduText ? `**Education:**\n${eduText}\n\n` : ''}${expText ? `**Experience:**\n${expText}\n\n` : ''}You can download his CV below or open the **CV** tab. [UI:CV]`;
   }
 
   // 4. Projects
-  if (promptLower.includes('project') || promptLower.includes('calltrax') || promptLower.includes('library') || promptLower.includes('work') || promptLower.includes('portfolio')) {
-    return `Here are key projects built and engineered by Kamogelo:
-
-- **CallTrax** (\`call-trax.co.za\`): A client tracking and billing platform for corporate service providers built with PHP, Laravel, React.js, and MySQL.
-- **kamocodes API** (\`api.kamocodes.xyz\`): Central REST API gateway managing distributed sandbox requests (Laravel, PostgreSQL).
-- **kamocodes Library** (\`library.kamocodes.xyz\`): Cataloging and library management system with borrowing analytics (TypeScript, React, Laravel, MySQL).
-- **Personal AI Portfolio App**: Full-stack resume and assistant platform with voice transcription and dynamic sandboxes.
-
-[UI:PROJECTS]`;
+  if (
+    /\b(project|projects|portfolio|built|build|app|apps)\b/i.test(promptLower) ||
+    projects.some(p => p?.name && promptLower.includes(p.name.toLowerCase()))
+  ) {
+    if (projects.length === 0) {
+      return `No projects are currently listed in ${nickname}'s profile JSON. [UI:PROJECTS]`;
+    }
+    const projLines = projects.map(p => {
+      const urlPart = p.url ? ` (${p.url})` : '';
+      const stackPart = p.stack ? ` — *${p.stack}*` : '';
+      return `- **${p.name}**${urlPart}${stackPart}: ${p.description || ''}`;
+    }).join('\n');
+    return `Here are ${nickname}'s software engineering projects:\n\n${projLines}\n\n[UI:PROJECTS]`;
   }
 
-  // 5. Skills
-  if (promptLower.includes('skill') || promptLower.includes('stack') || promptLower.includes('tech') || promptLower.includes('language') || promptLower.includes('react') || promptLower.includes('typescript') || promptLower.includes('laravel')) {
-    return `Kamogelo's core technical proficiencies include:
-
-- **Languages**: JavaScript, TypeScript, PHP, Python, SQL (MySQL, PostgreSQL), HTML5, CSS3.
-- **Frameworks & Libraries**: React.js, Node.js, Express, Laravel, Tailwind CSS, Vite.
-- **Systems & IT Support**: Hardware diagnostics, desktop & peripheral setup, Windows 10/11 & Linux, network configuration (TCP/IP, DNS, DHCP, VPN).
-- **Tools**: Git, GitHub, Postman, VS Code, Chrome DevTools (Certified), Docker.
-
-[UI:SKILLS]`;
+  // 5. Skills / Tech Stack
+  if (
+    /\b(skill|skills|stack|tech|technology|technologies|languages|frameworks|tools|database|databases)\b/i.test(promptLower)
+  ) {
+    if (skills.length === 0) {
+      return `No technical skills are currently listed in ${nickname}'s profile JSON. [UI:SKILLS]`;
+    }
+    const skillLines = skills.map(s => `- ${s}`).join('\n');
+    return `${name}'s technical capabilities:\n\n${skillLines}\n\n[UI:SKILLS]`;
   }
 
-  // 6. Contact / Hire / Resume / CV
-  if (promptLower.includes('contact') || promptLower.includes('email') || promptLower.includes('hire') || promptLower.includes('cv') || promptLower.includes('resume')) {
-    return `You can connect with Kamogelo Mosia directly:
-- **Email**: \`kamogelomosiah@gmail.com\`
-- **Profession**: Software & IT Solutions Engineer / BSc IT Candidate
-- **Location**: Johannesburg, South Africa
-
-You can download his official CV using the link below or send a message directly through the contact drawer. [UI:CV]`;
+  // 6. Greetings / Who is Kamo / About
+  if (
+    /\b(hi|hello|hey|greetings|who|about|introduce|kamo|kamogelo)\b/i.test(promptLower)
+  ) {
+    return `Hello! I'm **${nickname}'s portfolio assistant**, speaking on behalf of **${name}** (${profession}).\n\n${overview}\n\nAsk me about ${nickname}'s projects, skills, CV, or how to find and contact him! [UI:CV]`;
   }
 
-  // General fallback response
-  return `Thank you for your message. As Kamo's AI assistant, I can help you explore his software engineering projects, review technical skills, provide strategic goal roadmaps, or assist with computer science and mathematics queries. How can I help you today? [UI:CV]`;
+  // 7. Out-of-scope polite redirect
+  return `I'm **${name}'s portfolio assistant**, focused strictly on helping visitors learn about ${nickname}, explore his work, and contact him.\n\nTry asking about:\n- **${nickname}'s projects or technical skills**\n- **His education, experience, or CV**\n- **How to find or contact him** (${email})\n\n[UI:CONTACT]`;
 }
 
 app.post('/api/chat', chatRateLimiter, async (req, res) => {
@@ -735,15 +588,18 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
   }
 
   let finalReply = "";
+  let strategy = "";
+  let isFallback = false;
+  const systemPrompt = buildSystemPrompt(meData);
 
-  // Strategy 1: Attempt Gemini API with multi-model fallback (primary AI engine)
+  // Strategy 1: Attempt Gemini API with multi-model fallback
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     const candidateModels = [
       process.env.GEMINI_MODEL,
       "gemini-3.8-flash",
-      "gemini-3.7-flash",
-      "gemini-3.6-flash"
+      "gemini-flash-latest",
+      "gemini-3.1-flash-lite",
     ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
 
     const ai = new GoogleGenAI({
@@ -755,35 +611,35 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
       },
     });
 
-    const geminiPrompt = `${SYSTEM_PROMPT}\n\nPORTFOLIO CONTEXT:\n${JSON.stringify(meData, null, 2)}`;
-
     for (const model of candidateModels) {
       try {
         const result = await ai.models.generateContent({
           model: model,
           contents: userMessage,
           config: {
-            systemInstruction: geminiPrompt,
-            temperature: 0.7,
-            maxOutputTokens: 2000,
+            systemInstruction: systemPrompt,
+            temperature: 0.5,
+            maxOutputTokens: 1200,
           },
         });
         if (result.text) {
           finalReply = result.text;
+          strategy = `Gemini API (${model})`;
           break;
         }
-      } catch (geminiErr: any) {
-        // Silently try next model on high demand or failure
+      } catch {
+        // Try next model
       }
     }
   }
 
-  // Strategy 2: Upstream Render backend if explicitly enabled and configured
+  // Strategy 2: Upstream Render backend if configured
   if (!finalReply && process.env.RENDER_BACKEND_URL) {
     const renderUrl = process.env.RENDER_BACKEND_URL.replace(/\/$/, "");
+    const renderTimeoutMs = parseInt(process.env.RENDER_BACKEND_TIMEOUT_MS || "30000", 10);
     try {
       const renderController = new AbortController();
-      const timeout = setTimeout(() => renderController.abort(), 3500);
+      const timeout = setTimeout(() => renderController.abort(), renderTimeoutMs);
       const renderRes = await fetch(`${renderUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -796,10 +652,11 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
         const renderData = await renderRes.json();
         if (typeof renderData?.reply === 'string' && renderData.reply.trim()) {
           finalReply = renderData.reply;
+          strategy = "Render Backend";
         }
       }
     } catch {
-      // Gracefully continue to fallback without emitting noisy console errors
+      // Continue to fallback
     }
   }
 
@@ -814,15 +671,15 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
             "Authorization": `Bearer ${openRouterKey}`,
             "Content-Type": "application/json",
             "HTTP-Referer": "https://ai.studio/build",
-            "X-Title": "Kamo's AI"
+            "X-Title": "CodeMind Assistant"
           },
           body: JSON.stringify({
             model: process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",
             messages: [
-              { role: "system", content: `${SYSTEM_PROMPT}\n\nPORTFOLIO CONTEXT:\n${JSON.stringify(meData, null, 2)}` },
+              { role: "system", content: systemPrompt },
               { role: "user", content: userMessage }
             ],
-            temperature: 0.7,
+            temperature: 0.5,
             max_tokens: 800
           })
         });
@@ -831,31 +688,30 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
           const orText = orData.choices?.[0]?.message?.content;
           if (typeof orText === "string" && orText.trim()) {
             finalReply = orText;
+            strategy = "OpenRouter";
           }
         }
       } catch {
-        // Fall through to local intelligence
+        // Fall through to local responder
       }
     }
   }
 
-  // Strategy 4: Local intelligent knowledge base and assistant response
+  // Strategy 4: Local knowledge responder grounded in meData
   if (!finalReply) {
-    finalReply = generateLocalAssistantReply(userMessage);
+    finalReply = generateLocalAssistantReply(userMessage, meData);
+    strategy = "Local Knowledge Assistant";
+    isFallback = true;
   }
 
-  // Process any automated email roadmaps
-  try {
-    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
-    finalReply = await processAutomationRequests(finalReply, clientIp);
-  } catch (automationErr) {
-    console.warn("[CHAT] Automation processing error:", automationErr);
-  }
+  console.log(`[CHAT STRATEGY] Answered via ${strategy} (fallback: ${isFallback})`);
 
   return res.json({
     reply: finalReply,
     text: finalReply,
     success: true,
+    fallback: isFallback,
+    strategy,
   });
 });
 
@@ -903,7 +759,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

@@ -25,32 +25,6 @@ async function call(method: string, path: string, body?: unknown): Promise<any> 
 
 const col = (name: string) => `/data/${encodeURIComponent(name)}`;
 
-/** Creates or updates one document by id. */
-export async function upsertDoc(collection: string, id: string, doc: Record<string, unknown>) {
-  try {
-    return await call('PATCH', `${col(collection)}/${encodeURIComponent(id)}`, doc);
-  } catch (e) {
-    if (e instanceof MasterApiError && e.status === 404) {
-      return call('POST', col(collection), { ...doc, id });
-    }
-    throw e;
-  }
-}
-
-export async function listDocs(collection: string, limit = 200) {
-  const r = await call('GET', `${col(collection)}?limit=${limit}&sort=createdAt`);
-  return r.data as any[];
-}
-
-export async function deleteDoc(collection: string, id: string) {
-  try {
-    return await call('DELETE', `${col(collection)}/${encodeURIComponent(id)}`);
-  } catch (e) {
-    if (e instanceof MasterApiError && e.status === 404) return { deleted: false };
-    throw e;
-  }
-}
-
 /** Health of the MasterAPI server (no key needed). */
 export async function masterApiHealth(): Promise<{ ok: boolean; storage?: string }> {
   if (!base) return { ok: false };

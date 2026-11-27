@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { ArrowLeft, Menu, Send, Copy, Check, Database, Users, Hash, KeyRound, Sparkles, Webhook } from "lucide-react";
+import { ArrowLeft, Send, Copy, Check, Database, Users, Hash, KeyRound, Sparkles, Webhook } from "lucide-react";
 
 interface ApiPageProps {
   onBackToChat: () => void;
-  onToggleDrawer?: () => void;
 }
 
 type Status = { configured: boolean; online: boolean; storage?: string | null } | null;
@@ -77,7 +76,7 @@ function CodeBlock({ title, code }: { title: string; code: string }) {
   );
 }
 
-export default function ApiPage({ onBackToChat, onToggleDrawer }: ApiPageProps) {
+export default function ApiPage({ onBackToChat }: ApiPageProps) {
   const [status, setStatus] = useState<Status>(null);
   const [visits, setVisits] = useState<number | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -145,23 +144,32 @@ export default function ApiPage({ onBackToChat, onToggleDrawer }: ApiPageProps) 
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.4 }}
-      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden relative"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="flex-1 h-full w-full bg-background text-on-background flex flex-col overflow-hidden"
     >
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center pointer-events-none pt-[calc(env(safe-area-inset-top)+12px)] sm:pt-[calc(env(safe-area-inset-top)+20px)] px-4 sm:px-6">
-        <div className="flex items-center justify-between w-full pointer-events-auto bg-surface/90 backdrop-blur-md rounded-xl shadow-md border-2 border-outline-variant/60 px-4 py-2 max-w-3xl">
-          <h1 className="font-medium text-title-medium sm:text-title-large md:text-headline-small text-on-background tracking-normal font-display m-0 ml-1 py-1">My API</h1>
-          <span className="flex items-center gap-2 text-label-medium text-on-surface-variant" data-testid="api-status">
-            <span className={`w-2 h-2 rounded-full ${live ? "bg-emerald-500" : status === null ? "bg-zinc-400" : "bg-rose-500"}`} />
-            {statusText}
-          </span>
+      <header className="h-14 shrink-0 border-b border-outline-variant bg-surface px-4 sm:px-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={onBackToChat}
+            className="inline-flex items-center gap-1.5 h-10 px-2.5 -ml-1 rounded-lg text-sm font-medium text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors cursor-pointer border-0 bg-transparent"
+          >
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </button>
+          <span className="text-outline-variant select-none">/</span>
+          <h1 className="font-medium text-base text-on-background m-0 truncate">My API</h1>
         </div>
-      </div>
+        <span className="flex items-center gap-2 text-xs text-on-surface-variant shrink-0" data-testid="api-status">
+          <span className={`w-2 h-2 rounded-full ${live ? "bg-emerald-500" : status === null ? "bg-zinc-400" : "bg-rose-500"}`} />
+          {statusText}
+        </span>
+      </header>
 
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center pb-36 px-4 sm:px-6 pt-[calc(env(safe-area-inset-top)+92px)]">
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-6 py-6">
         <div className="w-full max-w-3xl flex flex-col gap-6">
           <section>
             <p className="text-body-large text-on-surface-variant leading-relaxed m-0">
@@ -268,19 +276,6 @@ export default function ApiPage({ onBackToChat, onToggleDrawer }: ApiPageProps) 
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface-container-high rounded-full shadow-xl border-2 border-outline-variant/60 px-2 py-2">
-          {onToggleDrawer && (
-            <button onClick={onToggleDrawer} className="md:hidden flex items-center justify-center w-12 h-12 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent" title="Menu">
-              <Menu size={24} />
-            </button>
-          )}
-          <button onClick={onBackToChat} className="flex items-center justify-center gap-2 h-12 px-5 md:px-6 rounded-full hover:bg-background text-on-background transition-colors cursor-pointer border-0 bg-transparent" title="Back to Chat">
-            <ArrowLeft size={20} />
-            <span className="font-medium text-title-small">Back to Chat</span>
-          </button>
-        </div>
-      </div>
     </motion.div>
   );
 }

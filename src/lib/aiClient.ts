@@ -80,13 +80,30 @@ export async function askAI(message: string, opts: AskAIOptions = {}): Promise<s
  * timeout signal with an externally supplied one.
  */
 function anySignal(signals: AbortSignal[]): AbortSignal {
+  if (typeof (AbortSignal as any).any === "function") {
+    return (AbortSignal as any).any(signals);
+  }
   const controller = new AbortController();
   for (const s of signals) {
     if (s.aborted) {
-      controller.abort(s.reason);
-      break;
+      if (s.reason !== undefined) {
+        controller.abort(s.reason);
+      } else {
+        controller.abort();
+      }
+      return controller.signal;
     }
-    s.addEventListener("abort", () => controller.abort(s.reason), { once: true });
+    s.addEventListener(
+      "abort",
+      () => {
+        if (s.reason !== undefined) {
+          controller.abort(s.reason);
+        } else {
+          controller.abort();
+        }
+      },
+      { once: true }
+    );
   }
   return controller.signal;
 }

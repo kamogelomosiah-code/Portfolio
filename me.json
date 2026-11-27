@@ -2,8 +2,21 @@
   "name": "Kamogelo Mosia",
   "nickname": "Kamo",
   "email": "kamogelomosiah@gmail.com",
+  "phone": "067 742 6447 / 061 362 4165",
+  "location": "Johannesburg, Gauteng, South Africa",
+  "availability": "Available immediately for IT internships, full-stack contracts, and permanent software engineering roles.",
   "profession": "Software & IT Solutions Engineer",
   "overview": "IT Internship Candidate and final-year BSc IT Student (coursework completed, degree conferral pending). Passionate about software system configurations, hardware diagnostic troubleshooting, web applications development, and AI tools integration.",
+  "links": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/kamogelomosiah-code"
+    },
+    {
+      "label": "Portfolio",
+      "url": "https://portfolio-q5ji.onrender.com"
+    }
+  ],
   "education": [
     {
       "degree": "BSc Information Technology in Computer Science & Informatics",
@@ -35,26 +48,26 @@
   "projects": [
     {
       "name": "CallTrax",
-      "url": "call-trax.co.za",
+      "url": "https://call-trax.co.za",
       "stack": "PHP, Laravel, React.js, MySQL",
       "description": "Deployed a client tracking and billing platform for active corporate service providers."
     },
     {
       "name": "kamocodes API",
-      "url": "api.kamocodes.xyz",
+      "url": "https://api.kamocodes.xyz",
       "stack": "PHP, Laravel, PostgreSQL, REST API",
       "description": "A central API gateway managing distributed sandbox requests."
     },
     {
       "name": "kamocodes Library",
-      "url": "library.kamocodes.xyz",
+      "url": "https://library.kamocodes.xyz",
       "stack": "TypeScript, React.js, Laravel, MySQL",
       "description": "Active cataloging and library catalog system with borrowing analytics trackers."
     },
     {
       "name": "Personal AI Portfolio App",
-      "stack": "TypeScript, Firebase, Gemini AI, Vite, Tailwind CSS",
-      "description": "A full-stack resume platform with voice transcription and interactive Firestore sandboxes."
+      "stack": "TypeScript, React, Express, Gemini AI, Vite, Tailwind CSS",
+      "description": "A full-stack portfolio and AI representative platform with voice transcription and dynamic JSON-driven knowledge."
     }
   ],
   "skills": [
@@ -69,5 +82,6 @@
     "Basic cybersecurity & security policy adherence, data backup awareness",
     "Git, GitHub, VS Code, Postman, Chrome DevTools (Google Certified), Docker (in progress)",
     "Customer service orientation, professional client communication, time management"
-  ]
+  ],
+  "customNotes": []
 }

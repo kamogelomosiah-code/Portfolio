@@ -31,3 +31,7 @@ services:
         sync: false
       - key: OPENROUTER_API_KEY # optional: server-side AI
         sync: false
+      - key: ADMIN_PASSCODE     # admin sign-in for the Data page
+        sync: false
+      - key: SESSION_SECRET     # signs admin sessions
+        generateValue: true
