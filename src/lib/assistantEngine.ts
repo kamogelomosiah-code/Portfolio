@@ -79,7 +79,7 @@ What is your email address so I can send this complete roadmap directly to your 
 
 Kamo is an **IT Internship Candidate** and final-year **BSc IT** student at the University of Johannesburg (UJ), double majoring in **Computer Science and Informatics** (theoretical coursework completed, degree conferral pending).
 
-Feel free to ask about his projects, technical skills, CV, or request help with mathematics and software development! [UI:CV]`;
+Feel free to ask about his projects, technical skills, CV or how to get in touch! [UI:CV]`;
   }
 
   // 4. Projects
@@ -142,5 +142,5 @@ Feel free to ask about his projects, technical skills, CV, or request help with 
   // Default intelligent response
   return `I am **Kamo's GPT**, speaking on behalf of **Kamogelo Mosia** (BSc IT final-year candidate at UJ). 
 
-I can assist you with details regarding his software development projects (CallTrax, kamocodes API), technical skills (TypeScript, React, PHP/Laravel, SQL), downloading his CV, or working through mathematics and algorithmic problems! [UI:CV]`;
+I can assist you with details regarding his software development projects (CallTrax, kamocodes API), technical skills (TypeScript, React, PHP/Laravel, SQL), or downloading his CV! [UI:CV]`;
 }

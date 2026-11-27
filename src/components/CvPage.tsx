@@ -395,7 +395,7 @@ export default function CvPage({ onBackToChat, onToggleDrawer }: CvPageProps) {
       
       {/* Floating Bottom Navigation */}
       <div className="absolute bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none print:hidden">
-        <div className="flex items-center gap-2 pointer-events-auto bg-surface/90 backdrop-blur-md rounded-full shadow-lg border-2 border-outline-variant/60 px-2 py-2">
+        <div className="flex items-center gap-2 pointer-events-auto bg-surface-container-high rounded-full shadow-xl border-2 border-outline-variant/60 px-2 py-2">
           {onToggleDrawer && (
             <button 
               onClick={onToggleDrawer}

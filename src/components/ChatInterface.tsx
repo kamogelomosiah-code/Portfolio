@@ -512,7 +512,7 @@ export default function ChatInterface({
                      handleSend(input);
                  }
               }}
-              placeholder="Ask me about math or coding!" 
+              placeholder="Ask about Kamo's projects, skills or experience…" 
               ref={textareaRef}
               className="flex-1 min-w-0 bg-transparent text-on-background py-2.5 px-3 focus:outline-none resize-none placeholder:text-on-surface-variant font-normal text-[15.5px] sm:text-[16.5px] leading-relaxed border-0"
               disabled={isLoading || isGenerating}
@@ -569,17 +569,24 @@ export default function ChatInterface({
         <div className="flex flex-col gap-5 p-4 sm:p-6 w-full max-w-3xl mx-auto">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="w-20 h-20 mb-6 relative">
-                <div className="absolute inset-0 bg-primary/20 rounded-3xl rotate-6 animate-pulse"></div>
-                <div className="absolute inset-0 bg-secondary/20 rounded-3xl -rotate-6 animate-pulse delay-75"></div>
-                <div className="relative bg-surface border-2 border-outline-variant rounded-2xl w-full h-full flex items-center justify-center shadow-lg">
-                  <MaterialIcon name="smart_toy" className="text-4xl text-primary" />
-                </div>
+              <div className="w-16 h-16 mb-6 rounded-2xl bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center">
+                <MaterialIcon name="smart_toy" className="text-4xl text-primary" />
               </div>
-              <h2 className="text-headline-medium font-bold text-on-surface mb-3 tracking-tight">How can I help you?</h2>
+              <h2 className="text-headline-medium font-bold text-on-surface mb-3 tracking-tight">Hi, I'm Kamo's AI</h2>
               <p className="text-body-large text-on-surface-variant max-w-md mx-auto mb-8 font-normal leading-relaxed">
-                I'm Kamo's dedicated AI assistant. I can explain his projects, detail his technical skills, or help you solve coding and math problems.
+                I'm Kamo's AI assistant. Ask me about his projects, technical skills, experience or how to get in touch.
               </p>
+              <div className="flex flex-wrap justify-center gap-2 max-w-xl">
+                {["What projects has Kamo built?", "What are his main skills?", "Show me his CV", "How can I contact him?"].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => handleSend(q)}
+                    className="px-4 py-2 rounded-full border border-outline-variant bg-surface-container text-on-surface-variant text-sm hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-5">

@@ -627,7 +627,7 @@ export default function MobileApp({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-on-surface-variant font-normal">
+            <span className="hidden sm:inline text-[10px] text-on-surface-variant font-normal">
               Assistant can make mistakes.
             </span>
             <BrowserAIToggle compact />
