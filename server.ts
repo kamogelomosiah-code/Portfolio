@@ -6,7 +6,7 @@ import multer from 'multer';
 import * as dotenv from 'dotenv';
 import fsModule from 'fs';
 import plannerRouter from './plannerRouter';
-import { masterApiEnabled, upsertDoc, listDocs, deleteDoc, MasterApiError } from './masterapi';
+import { masterApiEnabled, upsertDoc, listDocs, deleteDoc, MasterApiError, masterApiHealth, incrementCounter, getCounter, createDoc, recentDocs } from './masterapi';
 import nodemailer from 'nodemailer';
 import { Pool } from 'pg';
 import { GoogleGenAI } from "@google/genai";
@@ -39,10 +39,14 @@ const upload = multer({
 
 const app = express();
 
-app.use(cors({
-  origin: (origin, callback) => {
+app.use(cors((req, done) => done(null, {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     // Allow non-browser requests or same-origin requests
     if (!origin) return callback(null, true);
+    // The site's own pages always count as allowed (browsers send Origin on module scripts too).
+    try {
+      if (new URL(origin).host === req.headers.host) return callback(null, true);
+    } catch { /* malformed origin: fall through */ }
     if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
@@ -52,7 +56,7 @@ app.use(cors({
     return callback(new Error(`Origin ${origin} is not allowed by CORS`));
   },
   credentials: true,
-}));
+})));
 
 app.use(express.json());
 
@@ -546,6 +550,66 @@ ${message.trim()}
   } catch (error: any) {
     console.error("Contact Form Server Error:", error.message || "Unknown error");
     return res.status(500).json({ success: false, error: "Failed to deliver contact message: " + (error.message || "Unknown error") });
+  }
+});
+
+
+// ---------- Live MasterAPI demo (used by the "API" page) ----------
+// Every call goes through this server, so the MasterAPI key is never sent to the browser.
+app.get('/api/masterapi/status', async (_req, res) => {
+  if (!masterApiEnabled) return res.json({ configured: false, online: false });
+  const h = await masterApiHealth();
+  res.json({ configured: true, online: h.ok, storage: h.storage || null });
+});
+
+app.post('/api/masterapi/visit', async (_req, res) => {
+  if (!masterApiEnabled) return res.status(503).json({ error: 'MasterAPI is not connected.' });
+  try {
+    res.json({ visits: await incrementCounter('portfolio-visits') });
+  } catch {
+    res.status(502).json({ error: 'Could not reach MasterAPI.' });
+  }
+});
+
+app.get('/api/masterapi/visits', async (_req, res) => {
+  if (!masterApiEnabled) return res.status(503).json({ error: 'MasterAPI is not connected.' });
+  try {
+    res.json({ visits: await getCounter('portfolio-visits') });
+  } catch {
+    res.status(502).json({ error: 'Could not reach MasterAPI.' });
+  }
+});
+
+app.get('/api/masterapi/guestbook', async (_req, res) => {
+  if (!masterApiEnabled) return res.status(503).json({ error: 'MasterAPI is not connected.' });
+  try {
+    const { data, total } = await recentDocs('guestbook', 20);
+    res.json({ total, entries: data.map((d) => ({ id: d.id, name: d.name, message: d.message, createdAt: d.createdAt })) });
+  } catch {
+    res.status(502).json({ error: 'Could not reach MasterAPI.' });
+  }
+});
+
+// Max 5 guestbook posts per visitor every 10 minutes.
+const guestbookHits = new Map<string, { n: number; until: number }>();
+app.post('/api/masterapi/guestbook', async (req, res) => {
+  if (!masterApiEnabled) return res.status(503).json({ error: 'MasterAPI is not connected.' });
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  const hit = guestbookHits.get(ip);
+  if (hit && hit.until > now && hit.n >= 5) return res.status(429).json({ error: 'Thanks! Please wait a few minutes before posting again.' });
+  const name = String(req.body?.name || '').trim();
+  const message = String(req.body?.message || '').trim();
+  if (!name || name.length > 60) return res.status(400).json({ error: 'Please enter your name (up to 60 characters).' });
+  if (!message || message.length > 500) return res.status(400).json({ error: 'Please write a message (up to 500 characters).' });
+  try {
+    const doc = await createDoc('guestbook', { name, message });
+    if (!hit || hit.until < now) guestbookHits.set(ip, { n: 1, until: now + 10 * 60e3 });
+    else hit.n++;
+    if (guestbookHits.size > 5000) guestbookHits.clear();
+    res.status(201).json({ entry: { id: doc.id, name: doc.name, message: doc.message, createdAt: doc.createdAt } });
+  } catch {
+    res.status(502).json({ error: 'Could not save to MasterAPI. Please try again.' });
   }
 });
 

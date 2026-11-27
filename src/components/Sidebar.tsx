@@ -3,8 +3,8 @@ import { MaterialIcon } from "./MaterialIcon";
 import { AppIcon } from "./AppIcon";
 
 interface SidebarProps {
-  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner";
-  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner") => void;
+  currentTab: "chat" | "projects" | "cv" | "contact" | "api" | "planner";
+  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "api" | "planner") => void;
 }
 
 const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps) {
@@ -99,18 +99,18 @@ const Sidebar = memo(function Sidebar({ currentTab, onTabChange }: SidebarProps)
 
 
           <button 
-            onClick={() => onTabChange("changelog")}
+            onClick={() => onTabChange("api")}
             className={`flex flex-col items-center justify-center w-full gap-1 p-2 rounded-none transition-all duration-300 group cursor-pointer border-0 ${
-              currentTab === "changelog" 
+              currentTab === "api" 
                 ? "text-primary font-semibold" 
                 : "bg-transparent text-on-surface-variant hover:text-on-background font-normal"
             }`}
-            title="System Updates Log"
+            title="My API (live demo)"
           >
-            <div className={`flex items-center justify-center transition-all ${currentTab === "changelog" ? "text-primary" : "text-inherit"}`}>
-               <MaterialIcon name="history" className="text-headline-medium" />
+            <div className={`flex items-center justify-center transition-all ${currentTab === "api" ? "text-primary" : "text-inherit"}`}>
+               <MaterialIcon name="api" className="text-headline-medium" />
             </div>
-            <span className="text-label-small font-sans text-center leading-none mt-1">Updates</span>
+            <span className="text-label-small font-sans text-center leading-none mt-1">API</span>
           </button>
         </div>
       </div>

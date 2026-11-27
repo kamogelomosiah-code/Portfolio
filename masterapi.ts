@@ -50,3 +50,35 @@ export async function deleteDoc(collection: string, id: string) {
     throw e;
   }
 }
+
+/** Health of the MasterAPI server (no key needed). */
+export async function masterApiHealth(): Promise<{ ok: boolean; storage?: string }> {
+  if (!base) return { ok: false };
+  try {
+    const r = await fetch(`${base}/api/health`, { signal: AbortSignal.timeout(6000) });
+    const j: any = await r.json().catch(() => ({}));
+    return { ok: r.ok && j.status === 'ok', storage: j.storage };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export async function incrementCounter(name: string, by = 1): Promise<number> {
+  const r = await call('POST', `/counters/${encodeURIComponent(name)}/increment`, { by });
+  return r.value;
+}
+
+export async function getCounter(name: string): Promise<number> {
+  const r = await call('GET', `/counters/${encodeURIComponent(name)}`);
+  return r.value || 0;
+}
+
+export async function createDoc(collection: string, doc: Record<string, unknown>) {
+  const r = await call('POST', col(collection), doc);
+  return r.data;
+}
+
+export async function recentDocs(collection: string, limit = 20) {
+  const r = await call('GET', `${col(collection)}?limit=${limit}&sort=-createdAt`);
+  return { data: r.data as any[], total: r.pagination?.total ?? 0 };
+}

@@ -14,7 +14,7 @@ import BrowserAIToggle from "./BrowserAIToggle";
 const ProjectsPage = lazy(() => import("./ProjectsPage"));
 const CvPage = lazy(() => import("./CvPage"));
 const ContactPage = lazy(() => import("./ContactPage"));
-const ChangelogPage = lazy(() => import("./ChangelogPage"));
+const ApiPage = lazy(() => import("./ApiPage"));
 const ActionPlanner = lazy(() => import("./ActionPlanner").then(module => ({ default: module.ActionPlanner })));
 
 const FallbackLoader = () => (
@@ -30,7 +30,7 @@ interface MobileAppProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
-const TABS = ["chat", "projects", "cv", "contact", "changelog", "planner"] as const;
+const TABS = ["chat", "projects", "cv", "contact", "api", "planner"] as const;
 type TabType = typeof TABS[number];
 
 const PROMPT_SETS = [
@@ -971,9 +971,9 @@ export default function MobileApp({
               </Suspense>
             )}
 
-            {activeTab === "changelog" && (
+            {activeTab === "api" && (
               <Suspense fallback={<FallbackLoader />}>
-                <ChangelogPage 
+                <ApiPage 
                   onBackToChat={() => handleTabChange("chat")} 
                   onToggleDrawer={() => setDrawerOpen(true)}
                 />

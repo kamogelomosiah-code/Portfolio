@@ -3,20 +3,20 @@ import { MaterialIcon } from "./MaterialIcon";
 import { AppIcon } from "./AppIcon";
 
 interface MenuDrawerProps {
-  currentTab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner";
-  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner") => void;
+  currentTab: "chat" | "projects" | "cv" | "contact" | "api" | "planner";
+  onTabChange: (tab: "chat" | "projects" | "cv" | "contact" | "api" | "planner") => void;
   isOpen: boolean;
   onToggle: () => void;
 }
 
 export default function MenuDrawer({ currentTab, onTabChange, isOpen, onToggle }: MenuDrawerProps) {
-  const menuItems: Array<{ id: "chat" | "projects" | "cv" | "contact" | "changelog" | "planner"; label: string; icon: React.ReactNode; desc: string }> = [
+  const menuItems: Array<{ id: "chat" | "projects" | "cv" | "contact" | "api" | "planner"; label: string; icon: React.ReactNode; desc: string }> = [
     { id: "chat", label: "Chat Assistant", icon: <MaterialIcon name="forum" className="text-headline-small" />, desc: "Ask the AI anything" },
     { id: "planner", label: "AI Action Planner", icon: <MaterialIcon name="track_changes" className="text-headline-small" />, desc: "Goal breakdowns" },
     { id: "projects", label: "Projects", icon: <MaterialIcon name="code" className="text-headline-small" />, desc: "Explore Live Projects" },
     { id: "cv", label: "Resume / CV", icon: <MaterialIcon name="description" className="text-headline-small" />, desc: "Career history & skills" },
     { id: "contact", label: "Contact", icon: <MaterialIcon name="mail" className="text-headline-small" />, desc: "Get in touch directly" },
-    { id: "changelog", label: "System Updates", icon: <MaterialIcon name="history" className="text-headline-small" />, desc: "View version history & logs" }
+    { id: "api", label: "My API", icon: <MaterialIcon name="api" className="text-headline-small" />, desc: "Live demo of the API behind my apps" }
   ];
 
   return (
