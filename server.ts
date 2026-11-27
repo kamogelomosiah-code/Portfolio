@@ -437,6 +437,21 @@ app.delete('/api/goals/:id', requireWriteAuth, async (req, res) => {
 
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
+// Saves a contact message to MasterAPI when MASTERAPI_URL and MASTERAPI_KEY are set.
+function saveContactToMasterAPI(doc: Record<string, string>) {
+  const base = process.env.MASTERAPI_URL?.replace(/\/$/, '');
+  const key = process.env.MASTERAPI_KEY;
+  if (!base || !key) return;
+  fetch(`${base}/api/v1/data/contact_messages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': key },
+    body: JSON.stringify({ ...doc, source: 'portfolio', read: false }),
+    signal: AbortSignal.timeout(8000),
+  })
+    .then(async (r) => { if (!r.ok) console.warn(`MasterAPI contact save failed: HTTP ${r.status}`); })
+    .catch((e) => console.warn(`MasterAPI contact save failed: ${e.message}`));
+}
+
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, subject, message } = req.body || {};
@@ -500,6 +515,10 @@ ${message.trim()}
         </div>
       `
     });
+
+    // Keep a copy in MasterAPI (optional). Server-side only, so the API key never reaches the browser.
+    // A failure here is logged and ignored: the email has already been sent.
+    saveContactToMasterAPI({ name: name.trim(), email: email.trim(), subject: subject ? subject.trim() : '', message: message.trim() });
 
     return res.status(200).json({ 
       success: true, 
