@@ -10,11 +10,12 @@ front end, Express on the server. Suggested GitHub name: `kamo-portfolio`.
 
 | | |
 |---|---|
-| **Works and tested** | All seven tabs (Chat, Projects, CV, Contact, Data, Updates, API) load on phone and desktop with no page errors and no sideways scrolling. The **API** page (status, visit counter, guestbook, code examples) and the **contact form** (emailed, and saved to MasterAPI) pass 11 server checks in production mode against a local MasterAPI. The guestbook rejects bad input and allows 5 posts per visitor every 10 minutes |
-| **Not tested** | The **Data** page and admin sign-in (from the 26 Nov redesign), the live Render site with a real MasterAPI address, and real email delivery |
+| **Works and tested** | The **floating menu** (a pill that grows upward into all seven pages) on phone and desktop, with every page reachable and no sideways scrolling. The **chat** through a stand-in for Hugging Face's API: it sends the token, the profile and the last few turns, tries the next model when one fails, and falls back to built-in answers when Hugging Face is missing, down, slow or refuses the token. The **API** page and the **contact form** (emailed, and saved to MasterAPI) |
+| **Not tested** | The chat against the **real Hugging Face service** (it could not be reached from the build environment, so check which models your token can use), the **Data** page and admin sign-in, the live Render site, and real email delivery |
 | **Left over, not used** | `browserAI.ts` and `BrowserAIToggle.tsx` (the on-device AI) are no longer shown in the app after the redesign. They can be wired back in or deleted |
 
-**To turn on the API page:** set `MASTERAPI_URL` and `MASTERAPI_KEY` on the Render service. Without them the page says "Not connected" and the rest of the site works as normal.
+**To turn on the chat AI:** set `HF_TOKEN` (a Hugging Face token) on the Render service. Without it the chat still answers, from built-in knowledge.
+**To turn on the API page:** set `MASTERAPI_URL` and `MASTERAPI_KEY`. Without them the page says "Not connected" and the rest of the site works as normal.
 
 ## My projects
 
@@ -24,13 +25,14 @@ front end, Express on the server. Suggested GitHub name: `kamo-portfolio`.
 | MasterAPI | Shared backend for my apps (data, accounts, settings, counters) | `masterapi` |
 | Elysian | Video directory with an admin panel | `elysian-video-site` |
 | Household budget | Phone-first money app that syncs through MasterAPI | `household-budget` |
-| Portfolio AI backend | RAG chat backend for this site | `portfolio-ai-backend` |
+| Portfolio AI backend | Separate RAG chat backend (Hugging Face + Pinecone). This site's chat no longer uses it | `portfolio-ai-backend` |
 | UJ Cafeteria Stock Manager | Inventory and orders for a cafeteria (prototype) | `uj-cafeteria-stock-manager` |
 | Realtime chat | Private one-to-one chat over websockets (prototype) | `realtime-chat-app` |
 
 ## Pages
 
-- **Chat** answers from Kamo's profile (`me.json`). Answers come from the server's AI when it is set up, and built-in answers otherwise, so the chat always replies.
+- **Chat** answers from Kamo's profile (`me.json`) using small open models on **Hugging Face**: `Qwen/Qwen2.5-7B-Instruct`, then `meta-llama/Llama-3.2-3B-Instruct` if that one fails (set `HF_MODEL` to try your own first). It remembers the last few turns. If `HF_TOKEN` is missing or Hugging Face is unavailable, it answers from built-in knowledge, so the chat always replies.
+- **Navigation** is a floating pill at the bottom. Tap the menu button and it grows upward into every page.
 - **Projects, CV and Contact.** The contact form emails Kamo and, when MasterAPI is connected, also saves a copy there.
 - **Data** edits the profile the assistant uses. It is protected by an admin passcode.
 - **Updates** shows the project history (`CHANGELOG.md`).
@@ -62,8 +64,9 @@ See `.env.example` for every variable. The ones the server reads:
 | --- | --- |
 | `APP_URL` | Public address of the site |
 | `ALLOWED_ORIGINS` | Other websites allowed to call this server (the site's own address is always allowed) |
-| `OPENROUTER_API_KEY` / `GEMINI_API_KEY` | Server-side AI (optional) |
-| `RENDER_BACKEND_URL` | Address of the portfolio AI backend (`kamo-portfolio-ai`), used as a chat fallback (optional) |
+| `HF_TOKEN` | Hugging Face token for the chat AI (optional; without it the chat uses built-in answers) |
+| `HF_MODEL` | A Hugging Face model to try first (optional) |
+| `GEMINI_API_KEY` | Voice input in the chat only (optional) |
 | `SMTP_*`, `CONTACT_RECIPIENT_EMAIL` | Email for the contact form (optional) |
 | `ADMIN_PASSCODE`, `SESSION_SECRET` | Admin sign-in for the Data page |
 | `MASTERAPI_URL` + `MASTERAPI_KEY` | Address and app key of MasterAPI. Turns on the API page and saves contact messages there (optional; the key stays on the server) |
@@ -74,8 +77,8 @@ Keys belong only in the server's environment. Nothing that starts with `VITE_` s
 
 ```
 src/components/  the pages (Chat, Projects, CV, Contact, ProfileData, Changelog, Api) and the bottom navigation
-src/lib/         aiClient.ts, assistantEngine.ts, serverReadiness.ts, browserAI.ts (not used)
-server.ts        Express API: health, chat, contact, admin sign-in, profile and the MasterAPI demo routes
+src/lib/         assistantEngine.ts (built-in answers), serverReadiness.ts, aiClient.ts and browserAI.ts (not used)
+server.ts        Express API: health, chat (Hugging Face), contact, admin sign-in, profile and the MasterAPI demo routes
 masterapi.ts     Server-side client for MasterAPI
 me.json          Kamo's profile, used by the assistant
 render.yaml      Render Blueprint

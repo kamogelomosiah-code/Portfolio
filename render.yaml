@@ -29,7 +29,9 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
-      - key: OPENROUTER_API_KEY # optional: server-side AI
+      - key: HF_TOKEN           # chat AI: a Hugging Face token (without it the chat uses built-in answers)
+        sync: false
+      - key: HF_MODEL           # optional: a model to try first
         sync: false
       - key: ADMIN_PASSCODE     # admin sign-in for the Data page
         sync: false

@@ -13,6 +13,7 @@ interface UseChatSendOptions {
 }
 
 export function useChatSend({
+  messages,
   setMessages,
   isReady,
   onScrollToMessage,
@@ -20,6 +21,9 @@ export function useChatSend({
 }: UseChatSendOptions) {
   const [isLoading, setIsLoading] = useState(false);
   const activeControllerRef = useRef<AbortController | null>(null);
+  // Always the latest conversation, without re-creating handleSend on every message.
+  const messagesRef = useRef<Message[]>(messages);
+  messagesRef.current = messages;
 
   const handleSend = useCallback(
     async (text: string) => {
@@ -42,6 +46,12 @@ export function useChatSend({
         text: "",
         status: "loading",
       };
+
+      // The last few finished turns, so follow-up questions make sense to the model.
+      const history = messagesRef.current
+        .filter((m) => m.text.trim() && m.status !== "loading" && m.status !== "error")
+        .slice(-6)
+        .map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }));
 
       setMessages((prev) => [...prev, userMsg, initialAgentMsg]);
       setIsLoading(true);
@@ -68,7 +78,7 @@ export function useChatSend({
         const res = await fetch(API_ROUTES.chat, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: trimmed }),
+          body: JSON.stringify({ message: trimmed, history }),
           signal: controller.signal,
         });
 

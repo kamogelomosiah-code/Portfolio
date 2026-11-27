@@ -573,6 +573,21 @@ function generateLocalAssistantReply(userPrompt: string, profile: Record<string,
   return `I'm **${name}'s portfolio assistant**, focused strictly on helping visitors learn about ${nickname}, explore his work, and contact him.\n\nTry asking about:\n- **${nickname}'s projects or technical skills**\n- **His education, experience, or CV**\n- **How to find or contact him** (${email})\n\n[UI:CONTACT]`;
 }
 
+// --- Hugging Face chat settings ---
+const HF_CHAT_URL = process.env.HF_API_URL || 'https://router.huggingface.co/v1/chat/completions';
+const HF_TIMEOUT_MS = Number(process.env.HF_TIMEOUT_MS) || 25_000;
+const HF_MODELS = [process.env.HF_MODEL, 'Qwen/Qwen2.5-7B-Instruct', 'meta-llama/Llama-3.2-3B-Instruct']
+  .filter((m, i, all): m is string => Boolean(m) && all.indexOf(m) === i);
+
+/** Keeps only the last few well-formed turns the page sends, so follow-up questions make sense. */
+function sanitizeHistory(raw: unknown): Array<{ role: 'user' | 'assistant'; content: string }> {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((m: any) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+    .slice(-6)
+    .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 1000) }));
+}
+
 app.post('/api/chat', chatRateLimiter, async (req, res) => {
   const { message, prompt, messages } = req.body || {};
   const userMessage = (typeof message === 'string' ? message : '') || 
@@ -592,107 +607,41 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
   let isFallback = false;
   const systemPrompt = buildSystemPrompt(meData);
 
-  // Strategy 1: Attempt Gemini API with multi-model fallback
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (geminiKey) {
-    const candidateModels = [
-      process.env.GEMINI_MODEL,
-      "gemini-3.8-flash",
-      "gemini-flash-latest",
-      "gemini-3.1-flash-lite",
-    ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
-
-    const ai = new GoogleGenAI({
-      apiKey: geminiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        },
-      },
-    });
-
-    for (const model of candidateModels) {
+  // Hugging Face: small open chat models through the Inference Providers API (OpenAI-compatible).
+  // Tries the models in order and uses the first reply. HF_MODEL lets you choose your own first.
+  const hfToken = process.env.HF_TOKEN;
+  if (hfToken) {
+    const history = sanitizeHistory(req.body?.history);
+    for (const model of HF_MODELS) {
       try {
-        const result = await ai.models.generateContent({
-          model: model,
-          contents: userMessage,
-          config: {
-            systemInstruction: systemPrompt,
-            temperature: 0.5,
-            maxOutputTokens: 1200,
-          },
+        const hfRes = await fetch(HF_CHAT_URL, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${hfToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...history,
+              { role: 'user', content: userMessage.trim() },
+            ],
+            max_tokens: 500,
+            temperature: 0.4,
+          }),
+          signal: AbortSignal.timeout(HF_TIMEOUT_MS),
         });
-        if (result.text) {
-          finalReply = result.text;
-          strategy = `Gemini API (${model})`;
+        if (!hfRes.ok) {
+          console.warn(`[CHAT] Hugging Face ${model} answered HTTP ${hfRes.status}`);
+          continue;
+        }
+        const hfData: any = await hfRes.json().catch(() => null);
+        const text = hfData?.choices?.[0]?.message?.content;
+        if (typeof text === 'string' && text.trim()) {
+          finalReply = text.trim();
+          strategy = `Hugging Face (${model})`;
           break;
         }
-      } catch {
-        // Try next model
-      }
-    }
-  }
-
-  // Strategy 2: Upstream Render backend if configured
-  if (!finalReply && process.env.RENDER_BACKEND_URL) {
-    const renderUrl = process.env.RENDER_BACKEND_URL.replace(/\/$/, "");
-    const renderTimeoutMs = parseInt(process.env.RENDER_BACKEND_TIMEOUT_MS || "30000", 10);
-    try {
-      const renderController = new AbortController();
-      const timeout = setTimeout(() => renderController.abort(), renderTimeoutMs);
-      const renderRes = await fetch(`${renderUrl}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.trim() }),
-        signal: renderController.signal,
-      });
-      clearTimeout(timeout);
-
-      if (renderRes.ok) {
-        const renderData = await renderRes.json();
-        if (typeof renderData?.reply === 'string' && renderData.reply.trim()) {
-          finalReply = renderData.reply;
-          strategy = "Render Backend";
-        }
-      }
-    } catch {
-      // Continue to fallback
-    }
-  }
-
-  // Strategy 3: OpenRouter fallback if configured
-  if (!finalReply) {
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    if (openRouterKey && openRouterKey !== "MY_OPENROUTER_API_KEY") {
-      try {
-        const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${openRouterKey}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://ai.studio/build",
-            "X-Title": "CodeMind Assistant"
-          },
-          body: JSON.stringify({
-            model: process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userMessage }
-            ],
-            temperature: 0.5,
-            max_tokens: 800
-          })
-        });
-        if (orRes.ok) {
-          const orData = await orRes.json();
-          const orText = orData.choices?.[0]?.message?.content;
-          if (typeof orText === "string" && orText.trim()) {
-            finalReply = orText;
-            strategy = "OpenRouter";
-          }
-        }
-      } catch {
-        // Fall through to local responder
+      } catch (e: any) {
+        console.warn(`[CHAT] Hugging Face ${model} failed: ${e?.name === 'TimeoutError' ? 'timed out' : e?.message}`);
       }
     }
   }
