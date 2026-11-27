@@ -8,7 +8,7 @@ import fsModule from 'fs';
 import nodemailer from 'nodemailer';
 import { GoogleGenAI } from "@google/genai";
 import crypto from 'crypto';
-import { masterApiEnabled, masterApiHealth, incrementCounter, getCounter, createDoc, recentDocs } from './masterapi';
+import { masterApiEnabled, masterApiHealth, wakeMasterApi, chat as masterChat, sendContact, kvGet, kvPut, incrementCounter, getCounter, createDoc, recentDocs } from './masterapi';
 
 dotenv.config();
 
@@ -101,12 +101,46 @@ const adminAuthRateLimiter = createRateLimiter({
 
 const PORT = Number(process.env.PORT) || 3000;
 
+// --- Saved settings: the profile and the admin passcode ---
+// With MasterAPI connected they live there, because a host like Render wipes this server's files on every deploy.
+// Without it they are kept in local files, as before.
+const PROFILE_KV = 'portfolio-profile';
+const ADMIN_KV = 'portfolio-admin-credential';
+let adminCred: { salt: string; hash: string } | null = null;
+try {
+  const c = JSON.parse(fsModule.readFileSync(ADMIN_CRED_PATH, 'utf-8'));
+  if (typeof c?.salt === 'string' && typeof c?.hash === 'string') adminCred = c;
+} catch { /* no local credential yet */ }
+
+let persistReady = !masterApiEnabled;
+/** Reads the saved profile and passcode from MasterAPI. Returns false if MasterAPI could not be reached yet. */
+async function loadPersisted(): Promise<boolean> {
+  if (!masterApiEnabled) return true;
+  try {
+    const [profile, cred] = await Promise.all([kvGet(PROFILE_KV), kvGet(ADMIN_KV)]);
+    if (profile && typeof profile === 'object' && typeof profile.name === 'string') meData = profile;
+    if (cred && typeof cred.salt === 'string' && typeof cred.hash === 'string') adminCred = cred;
+    persistReady = true;
+    console.log(`[STARTUP] Saved settings loaded from MasterAPI (profile: ${profile ? 'saved copy' : 'default'}, admin passcode: ${cred ? 'set' : 'not set'})`);
+    return true;
+  } catch (e: any) {
+    console.warn(`[STARTUP] Could not read saved settings from MasterAPI yet: ${e.message}`);
+    return false;
+  }
+}
+
+/** Until the saved settings are read, the admin routes wait: otherwise a stranger could claim a "not yet set" passcode. */
+function requireSettingsReady(_req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (!persistReady) return res.status(503).json({ error: 'Starting up. Please try again in a few seconds.' });
+  return next();
+}
+
 // --- Owner Passcode & Session Token Helpers ---
 function getAdminMode(): 'env' | 'claimed' | 'unclaimed' {
   if (process.env.ADMIN_PASSCODE && process.env.ADMIN_PASSCODE.trim().length > 0) {
     return 'env';
   }
-  if (fsModule.existsSync(ADMIN_CRED_PATH)) {
+  if (adminCred) {
     return 'claimed';
   }
   return 'unclaimed';
@@ -123,16 +157,12 @@ function verifyPasscode(passcode: string): boolean {
     const b = crypto.createHash('sha256').update(envPass.trim()).digest();
     return crypto.timingSafeEqual(a, b);
   }
-  if (!fsModule.existsSync(ADMIN_CRED_PATH)) {
+  if (!adminCred) {
     return false;
   }
   try {
-    const cred = JSON.parse(fsModule.readFileSync(ADMIN_CRED_PATH, 'utf-8'));
-    if (typeof cred?.salt !== 'string' || typeof cred?.hash !== 'string') {
-      return false;
-    }
-    const derived = hashPasscodeScrypt(passcode, cred.salt);
-    const stored = Buffer.from(cred.hash, 'hex');
+    const derived = hashPasscodeScrypt(passcode, adminCred.salt);
+    const stored = Buffer.from(adminCred.hash, 'hex');
     if (derived.length !== stored.length) return false;
     return crypto.timingSafeEqual(derived, stored);
   } catch {
@@ -212,12 +242,12 @@ function isSafeHttpUrl(url: unknown): boolean {
 }
 
 // --- Admin Auth & Profile JSON Routes ---
-app.get('/api/admin/status', (_req, res) => {
+app.get('/api/admin/status', requireSettingsReady, (_req, res) => {
   const mode = getAdminMode();
   return res.json({ configured: mode !== 'unclaimed', mode });
 });
 
-app.post('/api/admin/claim', adminAuthRateLimiter, (req, res) => {
+app.post('/api/admin/claim', adminAuthRateLimiter, requireSettingsReady, async (req, res) => {
   if (getAdminMode() !== 'unclaimed') {
     return res.status(409).json({ error: "Owner passcode is already configured." });
   }
@@ -227,12 +257,22 @@ app.post('/api/admin/claim', adminAuthRateLimiter, (req, res) => {
   }
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = hashPasscodeScrypt(passcode, salt).toString('hex');
-  fsModule.writeFileSync(ADMIN_CRED_PATH, JSON.stringify({ salt, hash }, null, 2), { mode: 0o600 });
+  if (masterApiEnabled) {
+    try {
+      await kvPut(ADMIN_KV, { salt, hash });
+    } catch {
+      return res.status(502).json({ error: 'Could not save the passcode right now. Please try again.' });
+    }
+  }
+  try {
+    fsModule.writeFileSync(ADMIN_CRED_PATH, JSON.stringify({ salt, hash }, null, 2), { mode: 0o600 });
+  } catch { /* a read-only disk is fine when MasterAPI keeps the copy */ }
+  adminCred = { salt, hash };
   const token = createOwnerToken();
   return res.status(201).json({ token, mode: 'claimed' });
 });
 
-app.post('/api/admin/login', adminAuthRateLimiter, (req, res) => {
+app.post('/api/admin/login', adminAuthRateLimiter, requireSettingsReady, (req, res) => {
   if (getAdminMode() === 'unclaimed') {
     return res.status(400).json({ error: "No owner passcode configured yet. Set one first." });
   }
@@ -248,7 +288,7 @@ app.get('/api/profile', (_req, res) => {
   return res.json(meData);
 });
 
-app.put('/api/profile', requireOwnerAuth, (req, res) => {
+app.put('/api/profile', requireSettingsReady, requireOwnerAuth, async (req, res) => {
   try {
     const body = req.body;
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -284,7 +324,16 @@ app.put('/api/profile', requireOwnerAuth, (req, res) => {
       return res.status(400).json({ error: "Profile JSON exceeds 100 KB limit." });
     }
 
-    fsModule.writeFileSync(ME_FILE_PATH, serialized + '\n', 'utf-8');
+    if (masterApiEnabled) {
+      try {
+        await kvPut(PROFILE_KV, sanitized);
+      } catch {
+        return res.status(502).json({ error: "Could not save the profile right now. Nothing was changed. Please try again." });
+      }
+    }
+    try {
+      fsModule.writeFileSync(ME_FILE_PATH, serialized + '\n', 'utf-8');
+    } catch { /* a read-only disk is fine when MasterAPI keeps the copy */ }
     meData = sanitized;
     return res.json({ success: true, profile: meData });
   } catch (err: any) {
@@ -329,14 +378,6 @@ ${JSON.stringify(profile, null, 2)}`;
 
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
-// Saves a contact message to MasterAPI when MASTERAPI_URL and MASTERAPI_KEY are set.
-// Failures are logged and ignored: the email has already been sent.
-function saveContactToMasterAPI(doc: Record<string, string>) {
-  if (!masterApiEnabled) return;
-  createDoc('contact_messages', { ...doc, source: 'portfolio', read: false })
-    .catch((e: any) => console.warn(`MasterAPI contact save failed: ${e.message}`));
-}
-
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, subject, message } = req.body || {};
@@ -355,6 +396,23 @@ app.post('/api/contact', async (req, res) => {
 
     if (!message || typeof message !== 'string' || !message.trim() || message.trim().length > 5000) {
       return res.status(400).json({ error: "Message is required and must be under 5000 characters." });
+    }
+
+    // With MasterAPI connected, it saves the message and emails it (over HTTPS, which free hosts allow).
+    if (masterApiEnabled) {
+      try {
+        const sent = await sendContact({ name: name.trim(), email: email.trim(), subject: subject ? subject.trim() : '', message: message.trim() });
+        console.log(`[CONTACT] via MasterAPI: saved=${sent.saved} emailed=${sent.emailed}`);
+        if (sent.saved || sent.emailed) {
+          return res.status(200).json({
+            success: true,
+            emailed: sent.emailed,
+            message: sent.emailed ? "Message successfully delivered to Kamogelo's mailbox." : "Message received. Kamogelo will read it soon.",
+          });
+        }
+      } catch (e: any) {
+        console.warn(`[CONTACT] MasterAPI failed (${e.message}); trying direct email if it is set up`);
+      }
     }
 
     const host = process.env.SMTP_HOST;
@@ -399,8 +457,6 @@ ${message.trim()}
         </div>
       `
     });
-
-    saveContactToMasterAPI({ name: name.trim(), email: email.trim(), subject: subject ? subject.trim() : '', message: message.trim() });
 
     return res.status(200).json({ 
       success: true, 
@@ -473,6 +529,7 @@ app.post('/api/masterapi/guestbook', async (req, res) => {
 });
 
 app.get('/HEALTH', (_req, res) => {
+  wakeMasterApi(); // gets a sleeping MasterAPI ready before the first chat
   res.json({ status: 'ok', service: 'CodeMind Assistant', timestamp: new Date().toISOString() });
 });
 
@@ -573,12 +630,6 @@ function generateLocalAssistantReply(userPrompt: string, profile: Record<string,
   return `I'm **${name}'s portfolio assistant**, focused strictly on helping visitors learn about ${nickname}, explore his work, and contact him.\n\nTry asking about:\n- **${nickname}'s projects or technical skills**\n- **His education, experience, or CV**\n- **How to find or contact him** (${email})\n\n[UI:CONTACT]`;
 }
 
-// --- Hugging Face chat settings ---
-const HF_CHAT_URL = process.env.HF_API_URL || 'https://router.huggingface.co/v1/chat/completions';
-const HF_TIMEOUT_MS = Number(process.env.HF_TIMEOUT_MS) || 25_000;
-const HF_MODELS = [process.env.HF_MODEL, 'Qwen/Qwen2.5-7B-Instruct', 'meta-llama/Llama-3.2-3B-Instruct']
-  .filter((m, i, all): m is string => Boolean(m) && all.indexOf(m) === i);
-
 /** Keeps only the last few well-formed turns the page sends, so follow-up questions make sense. */
 function sanitizeHistory(raw: unknown): Array<{ role: 'user' | 'assistant'; content: string }> {
   if (!Array.isArray(raw)) return [];
@@ -607,46 +658,19 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
   let isFallback = false;
   const systemPrompt = buildSystemPrompt(meData);
 
-  // Hugging Face: small open chat models through the Inference Providers API (OpenAI-compatible).
-  // Tries the models in order and uses the first reply. HF_MODEL lets you choose your own first.
-  const hfToken = process.env.HF_TOKEN;
-  if (hfToken) {
-    const history = sanitizeHistory(req.body?.history);
-    for (const model of HF_MODELS) {
-      try {
-        const hfRes = await fetch(HF_CHAT_URL, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${hfToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...history,
-              { role: 'user', content: userMessage.trim() },
-            ],
-            max_tokens: 500,
-            temperature: 0.4,
-          }),
-          signal: AbortSignal.timeout(HF_TIMEOUT_MS),
-        });
-        if (!hfRes.ok) {
-          console.warn(`[CHAT] Hugging Face ${model} answered HTTP ${hfRes.status}`);
-          continue;
-        }
-        const hfData: any = await hfRes.json().catch(() => null);
-        const text = hfData?.choices?.[0]?.message?.content;
-        if (typeof text === 'string' && text.trim()) {
-          finalReply = text.trim();
-          strategy = `Hugging Face (${model})`;
-          break;
-        }
-      } catch (e: any) {
-        console.warn(`[CHAT] Hugging Face ${model} failed: ${e?.name === 'TimeoutError' ? 'timed out' : e?.message}`);
-      }
+  // MasterAPI's AI service tries small open models on Hugging Face and returns the first answer.
+  // If it is asleep, down, or no model can answer, the built-in answers below take over.
+  if (masterApiEnabled) {
+    try {
+      const out = await masterChat({ system: systemPrompt, history: sanitizeHistory(req.body?.history), prompt: userMessage.trim() });
+      finalReply = out.reply.trim();
+      strategy = `MasterAPI AI (${out.model})`;
+    } catch (e: any) {
+      console.warn(`[CHAT] MasterAPI AI unavailable: ${e.message}`);
     }
   }
 
-  // Strategy 4: Local knowledge responder grounded in meData
+  // Built-in answers grounded in the profile
   if (!finalReply) {
     finalReply = generateLocalAssistantReply(userMessage, meData);
     strategy = "Local Knowledge Assistant";
@@ -699,6 +723,19 @@ app.post('/api/gemini/transcribe', transcribeRateLimiter, upload.single('audio')
 });
 
 async function startServer() {
+  if (masterApiEnabled) {
+    // Read the saved profile and passcode before opening up. If MasterAPI is asleep, carry on and keep retrying;
+    // the admin routes stay closed until it answers.
+    const first = await Promise.race([loadPersisted(), new Promise<boolean>((r) => setTimeout(() => r(false), 12_000))]);
+    if (!first) {
+      const retry = setInterval(async () => {
+        if (await loadPersisted()) clearInterval(retry);
+      }, 15_000);
+    }
+  }
+  if (process.env.NODE_ENV === 'production' && getAdminMode() === 'unclaimed' && persistReady) {
+    console.warn('[SECURITY] No admin passcode is set. The first person to open the Data page can claim it. Set ADMIN_PASSCODE on the server.');
+  }
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
