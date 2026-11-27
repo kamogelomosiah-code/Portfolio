@@ -6,6 +6,7 @@ import multer from 'multer';
 import * as dotenv from 'dotenv';
 import fsModule from 'fs';
 import plannerRouter from './plannerRouter';
+import { masterApiEnabled, upsertDoc, listDocs, deleteDoc, MasterApiError } from './masterapi';
 import nodemailer from 'nodemailer';
 import { Pool } from 'pg';
 import { GoogleGenAI } from "@google/genai";
@@ -357,6 +358,14 @@ if (process.env.DATABASE_URL) {
 }
 
 app.get('/api/goals', async (req, res) => {
+  if (masterApiEnabled) {
+    try {
+      const rows = await listDocs('goals');
+      return res.json(rows.map(({ id, createdAt, updatedAt, ...goal }) => ({ id, ...goal })));
+    } catch (error: any) {
+      return res.status(502).json({ error: 'Could not load goals from MasterAPI.' });
+    }
+  }
   if (!pgPool) return res.json([]);
   try {
     const result = await pgPool.query('SELECT data FROM goals');
@@ -368,7 +377,7 @@ app.get('/api/goals', async (req, res) => {
 });
 
 app.post('/api/goals', requireWriteAuth, async (req, res) => {
-  if (!pgPool) {
+  if (!pgPool && !masterApiEnabled) {
     return res.status(503).json({
       error: "Postgres database persistence is not configured (DATABASE_URL is not set)."
     });
@@ -390,6 +399,11 @@ app.post('/api/goals', requireWriteAuth, async (req, res) => {
       if (!goal || typeof goal !== 'object' || !goal.id || typeof goal.id !== 'string') {
         return res.status(400).json({ error: "Invalid goal item: each goal must be an object with an 'id' string" });
       }
+    }
+
+    if (masterApiEnabled) {
+      for (const goal of goalsToUpsert) await upsertDoc('goals', goal.id, goal);
+      return res.json({ success: true, count: goalsToUpsert.length, store: 'masterapi' });
     }
 
     // Write the entire validated batch inside a single transaction
@@ -417,7 +431,7 @@ app.post('/api/goals', requireWriteAuth, async (req, res) => {
 });
 
 app.delete('/api/goals/:id', requireWriteAuth, async (req, res) => {
-  if (!pgPool) {
+  if (!pgPool && !masterApiEnabled) {
     return res.status(503).json({
       error: "Postgres database persistence is not configured (DATABASE_URL is not set)."
     });
@@ -428,7 +442,11 @@ app.delete('/api/goals/:id', requireWriteAuth, async (req, res) => {
     if (!id || typeof id !== 'string') {
       return res.status(400).json({ error: "Valid goal ID parameter is required" });
     }
-    await pgPool.query('DELETE FROM goals WHERE id = $1', [id]);
+    if (masterApiEnabled) {
+      await deleteDoc('goals', id);
+    } else {
+      await pgPool!.query('DELETE FROM goals WHERE id = $1', [id]);
+    }
     return res.json({ success: true, id });
   } catch (error: any) {
     return res.status(400).json({ error: error.message });
