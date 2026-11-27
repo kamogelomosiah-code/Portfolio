@@ -65,6 +65,15 @@ export function wasBrowserAIEnabled(): boolean {
   }
 }
 
+/** Turns a technical load error into a sentence a visitor can act on. */
+export function explainLoadError(err: any): string {
+  const m = String(err?.message || err || "");
+  if (/WebGPU|gpu|adapter/i.test(m)) return "Your browser can't use the graphics card for AI. Try a recent Chrome or Edge.";
+  if (/Failed to fetch|NetworkError|network|ERR_/i.test(m)) return "Couldn't download the AI model. Check your connection and try again.";
+  if (/memory|out of memory|allocation/i.test(m)) return "Not enough memory on this device for the AI model. The chat still works without it.";
+  return "The AI model couldn't start. The chat still works without it.";
+}
+
 /** Download (first time) and start the in-browser model. Safe to call repeatedly. */
 export function loadBrowserAI(): Promise<void> {
   if (engine) return Promise.resolve();
@@ -88,7 +97,7 @@ export function loadBrowserAI(): Promise<void> {
       engine = null;
       loadPromise = null;
       rememberEnabled(false);
-      setState({ status: "error", message: err?.message || "Failed to load the model" });
+      setState({ status: "error", message: explainLoadError(err) });
       throw err;
     }
   })();
