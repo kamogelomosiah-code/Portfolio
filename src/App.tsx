@@ -16,6 +16,7 @@ const CvPage = lazy(() => import("./components/CvPage"));
 const ContactPage = lazy(() => import("./components/ContactPage"));
 const ProfileDataPage = lazy(() => import("./components/ProfileDataPage"));
 const ChangelogPage = lazy(() => import("./components/ChangelogPage"));
+const ApiPage = lazy(() => import("./components/ApiPage"));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-background">
@@ -221,6 +222,20 @@ export default function App() {
             >
               <Suspense fallback={<FallbackLoader />}>
                 <ChangelogPage onBackToChat={() => setCurrentTab("chat")} />
+              </Suspense>
+            </motion.div>
+          )}
+          {currentTab === "api" && (
+            <motion.div
+              key="api"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex-1 h-full w-full flex flex-col overflow-hidden"
+            >
+              <Suspense fallback={<FallbackLoader />}>
+                <ApiPage onBackToChat={() => setCurrentTab("chat")} />
               </Suspense>
             </motion.div>
           )}

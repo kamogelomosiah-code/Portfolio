@@ -1,9 +1,7 @@
 {
-  "name": "CodeMind Assistant",
-  "description": "CodeMind Assistant - an orchestration AI powered by Hugging Face models.",
-  "requestFramePermissions": [
-    "microphone"
-  ],
+  "name": "Kamo's AI",
+  "description": "Kamo's portfolio assistant: answers questions about Kamo, with his projects, CV and a live demo of his API.",
+  "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]

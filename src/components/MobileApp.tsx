@@ -8,6 +8,7 @@ const CvPage = lazy(() => import("./CvPage"));
 const ContactPage = lazy(() => import("./ContactPage"));
 const ProfileDataPage = lazy(() => import("./ProfileDataPage"));
 const ChangelogPage = lazy(() => import("./ChangelogPage"));
+const ApiPage = lazy(() => import("./ApiPage"));
 
 const FallbackLoader = () => (
   <div className="flex w-full h-full items-center justify-center bg-background">
@@ -85,6 +86,12 @@ export default function MobileApp({
         {activeTab === "changelog" && (
           <Suspense fallback={<FallbackLoader />}>
             <ChangelogPage onBackToChat={() => setActiveTab("chat")} />
+          </Suspense>
+        )}
+
+        {activeTab === "api" && (
+          <Suspense fallback={<FallbackLoader />}>
+            <ApiPage onBackToChat={() => setActiveTab("chat")} />
           </Suspense>
         )}
       </main>

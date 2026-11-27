@@ -1,4 +1,4 @@
-import { MessageSquare, Code2, FileText, Mail, Database, History } from "lucide-react";
+import { MessageSquare, Code2, FileText, Mail, Database, History, Webhook } from "lucide-react";
 import type { NavTab } from "../types/profile";
 
 interface BottomNavProps {
@@ -13,6 +13,7 @@ const NAV_ITEMS: Array<{ id: NavTab; label: string; icon: typeof MessageSquare; 
   { id: "contact", label: "Contact", icon: Mail, title: "Contact Kamogelo" },
   { id: "data", label: "Data", icon: Database, title: "Teach AI via JSON & Forms" },
   { id: "changelog", label: "Updates", icon: History, title: "System Updates" },
+  { id: "api", label: "API", icon: Webhook, title: "My API: live demo" },
 ];
 
 export default function BottomNav({ currentTab, onTabChange }: BottomNavProps) {
@@ -21,8 +22,8 @@ export default function BottomNav({ currentTab, onTabChange }: BottomNavProps) {
       aria-label="Page navigation"
       className="shrink-0 border-t border-outline-variant bg-surface z-30 print:hidden select-none"
     >
-      {/* Mobile: 6-column quick tab bar */}
-      <div className="grid grid-cols-6 md:hidden h-14 px-1">
+      {/* Mobile: 7-column quick tab bar */}
+      <div className="grid grid-cols-7 md:hidden h-14 px-1">
         {NAV_ITEMS.map(({ id, label, icon: Icon, title }) => {
           const isActive = currentTab === id;
           return (

@@ -1,4 +1,4 @@
-export type NavTab = "chat" | "projects" | "cv" | "contact" | "data" | "changelog";
+export type NavTab = "chat" | "projects" | "cv" | "contact" | "data" | "changelog" | "api";
 
 export interface ProfileEducation {
   degree: string;
