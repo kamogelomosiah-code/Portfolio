@@ -1,6 +1,6 @@
 {
   "name": "Kamo's AI",
-  "description": "Kamo's portfolio assistant: answers questions about Kamo, runs in the browser or on the server, and keeps a private calendar.",
+  "description": "Kamo's portfolio assistant: answers questions about Kamo, with his projects, CV and a live demo of his API.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
