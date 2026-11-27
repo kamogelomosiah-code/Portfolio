@@ -1,48 +1,59 @@
-# CodeMind Assistant
+# Kamo's AI
 
-A full-stack, AI-powered web application utilizing Hugging Face's Inference Providers API. 
+Kamo's portfolio: a chat assistant that answers questions about Kamo, an AI calendar, the projects,
+CV and contact pages. It runs as one app: React + Vite on the front end, Express on the server.
 
-The application has two modes:
-1. **Quick Mode**: A fast, single-model call for general questions.
-2. **Think Longer Mode**: An orchestrated, multi-step backend process that uses multiple models (Reasoning, Code Generation, and optionally Live Search) to synthesize a highly accurate and structured answer.
+## Features
 
-## Deployment on Render
+- **Chat** answers from Kamo's profile (`me.json`). Answers come from, in order: the on-device model
+  (if switched on), the server, then built-in answers, so the chat always replies.
+- **Run AI in browser:** an optional on-device model (WebLLM, Qwen2.5 0.5B, about 400 MB, downloaded
+  once and cached). Needs WebGPU (recent Chrome or Edge). Nothing you type leaves the device while it's on.
+- **Calendar:** private notes and AI "Smart Add" (type "Call John next Friday"). Notes are saved in
+  your browser, so they survive reloads and redeploys. Use the download and upload buttons to back them up.
+- **Projects, CV and contact** pages, with a responsive layout for phones and desktop.
 
-This project is structured as a full-stack Node.js + Express backend with a React (Vite) frontend, designed to be deployed easily on [Render](https://render.com).
+## Run locally
 
-### Instructions
+```bash
+npm install
+cp .env.example .env     # optional: the chat works without any keys
+npm run dev              # http://localhost:3000
+```
 
-1. **Push your code to a GitHub repository.**
-2. **Create a new "Web Service" on Render.**
-3. **Connect your GitHub repository.**
-4. **Configure the deployment settings:**
-   - **Environment:** `Node`
-   - **Build Command:** `npm install && npm run build`
-   - **Start Command:** `npm run start`
-5. **Add Environment Variables in Render's Dashboard:**
-   - `HF_TOKEN`: Your Hugging Face access token with Serverless Inference rights.
-   - `SEARCH_API_KEY`: (Optional) Your Tavily or Serper API key to enable live web search in "Think Longer" mode.
-6. **Deploy.**
+Other scripts: `npm run typecheck`, `npm run build`, `npm start` (runs the built server).
 
-Render will automatically handle compiling the React application via Vite and spinning up the compiled Node `dist/server.cjs` backend. 
+## Deploy (Render)
 
-### Security Note
-The `HF_TOKEN` and `SEARCH_API_KEY` are kept securely on the server side and are never exposed to the frontend browser. All model inference and orchestration occur on the backend Express application.
+- Build command: `npm install && npm run build`
+- Start command: `npm start`
+- Set the variables you need from `.env.example` in Render's **Environment** tab. `PORT` is set by Render.
 
-## Browser AI (on-device)
+Server-side AI and email are optional. Without them the chat uses the built-in answers and the
+contact form is disabled.
 
-The chat header has a **Run AI in browser** button. It downloads a small model
-(`Qwen2.5-0.5B-Instruct`, ~400 MB, cached after the first time) via
-[WebLLM](https://github.com/mlc-ai/web-llm) and runs it on the visitor's GPU with
-WebGPU — no server or API key. When it's on, chat replies and the calendar's
-**AI Smart Add** are generated on-device; otherwise the app uses the server and
-then the built-in offline replies. Needs a WebGPU browser (recent Chrome/Edge,
-Safari 26+); other browsers simply don't show it as available.
+## Configuration
 
-## Calendar storage
+See `.env.example` for every variable and what it does. The important ones:
 
-Calendar notes are saved in the browser's `localStorage` (key
-`kamo_planner_notes_v1`), so they persist across reloads and server redeploys
-without any API key. Use the download / upload buttons in the calendar header to
-back up notes or move them to another device. Notes previously stored in
-`planner_notes.json` on the server are imported automatically on first load.
+| Variable | Purpose |
+| --- | --- |
+| `APP_URL` | Public address of the site |
+| `OPENROUTER_API_KEY` / `GEMINI_API_KEY` | Server-side AI (optional) |
+| `DATABASE_URL` | PostgreSQL for planner data (optional) |
+| `API_WRITE_KEY` + `VITE_API_WRITE_KEY` | Shared secret protecting write routes |
+| `SMTP_*` | Email for the contact form (optional) |
+
+Keys belong only in the server's environment. Nothing that starts with `VITE_` should be secret,
+because the browser can read it.
+
+## Project layout
+
+```
+src/            React app: chat, calendar, projects, CV and contact pages
+src/lib/        browserAI.ts (on-device model), plannerStorage.ts (local calendar), smartAdd.ts, aiClient.ts
+server.ts       Express API: health, chat, contact, planner routes
+plannerRouter.ts  Planner notes storage
+me.json         Kamo's profile, used by the assistant
+CHANGELOG.md    Project history
+```

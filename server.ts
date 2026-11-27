@@ -266,7 +266,7 @@ async function processAutomationRequests(text: string, clientIp: string = 'unkno
     <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 2px solid #e2e8f0; border-radius: 24px; background-color: #ffffff; color: #1e293b; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
       <div style="border-bottom: 2px solid #4F46E5; padding-bottom: 16px; margin-bottom: 24px;">
         <h2 style="color: #4F46E5; font-weight: 700; margin: 0; font-size: 24px;">🎯 Chat AI Strategic Goal Roadmap</h2>
-        <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">CodeMind AI-Generated Action Plan</p>
+        <p style="color: #64748b; font-size: 14px; margin: 4px 0 0 0;">Kamo's AI-Generated Action Plan</p>
       </div>
       
       <p style="font-size: 16px; line-height: 1.6; color: #334155;">
@@ -312,7 +312,7 @@ async function processAutomationRequests(text: string, clientIp: string = 'unkno
     `;
 
     const mailOptions = {
-      from: process.env.SMTP_FROM || '"CodeMind Assistant" <assistant@kamocodes.com>',
+      from: process.env.SMTP_FROM || "\"Kamo's AI\" <assistant@kamocodes.com>",
       to: emailAddress,
       subject: `🎯 Chat AI Strategic Roadmap: "${goal.slice(0, 50)}"`,
       html: emailHtml,
@@ -513,11 +513,11 @@ ${message.trim()}
 });
 
 app.get('/HEALTH', (req, res) => {
-  res.json({ status: 'ok', service: 'CodeMind Assistant', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: "Kamo's AI", timestamp: new Date().toISOString() });
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'CodeMind Assistant', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: "Kamo's AI", timestamp: new Date().toISOString() });
 });
 
 // Helper for local knowledge assistant when upstream LLM/RAG is offline
@@ -713,7 +713,7 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
             "Authorization": `Bearer ${openRouterKey}`,
             "Content-Type": "application/json",
             "HTTP-Referer": "https://ai.studio/build",
-            "X-Title": "CodeMind Assistant"
+            "X-Title": "Kamo's AI"
           },
           body: JSON.stringify({
             model: process.env.DEFAULT_MODEL || "meta-llama/llama-3.3-70b-instruct",

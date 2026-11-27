@@ -554,7 +554,7 @@ export default function ChatInterface({
             <AppIcon />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-title-medium font-bold text-on-surface leading-tight">CodeMind AI</h1>
+            <h1 className="text-title-medium font-bold text-on-surface leading-tight">Kamo's AI</h1>
             <div className="flex items-center gap-1.5 text-label-small text-on-surface-variant">
               <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-ping' : 'bg-primary animate-pulse'}`} />
               {isLoading ? "Thinking..." : "Ready"}
