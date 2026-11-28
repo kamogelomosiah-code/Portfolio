@@ -1,5 +1,6 @@
 # Render Blueprint: New + > Blueprint, pick this repo.
-# The site works with no keys at all (chat uses built-in answers). Add the optional ones below as you need them.
+# The site works with no keys at all (the chat then uses built-in answers).
+# Connect MasterAPI (the two MASTERAPI_ lines) to turn on the AI chat, contact mail and a saved profile.
 services:
   - type: web
     name: kamo-portfolio
@@ -17,7 +18,7 @@ services:
         value: production
       - key: APP_URL            # this site's public address, e.g. https://kamo-portfolio.onrender.com
         sync: false
-      - key: MASTERAPI_URL      # your MasterAPI address: turns on the "My API" page, saves goals and contact messages
+      - key: MASTERAPI_URL      # your MasterAPI address: turns on the AI chat, contact mail, saved profile and the API page
         sync: false
       - key: MASTERAPI_KEY      # an app key created in the MasterAPI console (kept on the server)
         sync: false
@@ -28,8 +29,6 @@ services:
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
-        sync: false
-      - key: OPENROUTER_API_KEY # optional: server-side AI
         sync: false
       - key: ADMIN_PASSCODE     # admin sign-in for the Data page
         sync: false

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, UIEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowUp, Mic, Square, RefreshCw, X, AlertCircle, RotateCcw, Trash2, Sun, Moon } from "lucide-react";
+import { ArrowUp, Mic, Square, RefreshCw, X, AlertCircle, RotateCcw, Trash2 } from "lucide-react";
 import { ProjectCards, SkillChips, DownloadCV, ContactCard } from "./RichComponents";
 import { AppIcon } from "./AppIcon";
 import { AIMessage } from "./chat/AIMessage";
@@ -54,8 +54,7 @@ export default function ChatInterface({
   setMessages,
   onNavigateTab,
   profile,
-  theme = "dark",
-  onToggleTheme,
+  menu,
 }: {
   selectedModel?: string;
   setSelectedModel?: (model: string) => void;
@@ -66,6 +65,8 @@ export default function ChatInterface({
   profile?: ProfileData;
   theme?: "dark" | "light";
   onToggleTheme?: () => void;
+  /** The page menu button, shown inside the message bar (so the chat has one bar, not two). */
+  menu?: React.ReactNode;
 }) {
   const [input, setInput] = useState("");
   const [promptSetIndex, setPromptSetIndex] = useState(0);
@@ -402,17 +403,6 @@ export default function ChatInterface({
               <span className="hidden sm:inline">Clear</span>
             </button>
           )}
-          {onToggleTheme && (
-            <button
-              type="button"
-              onClick={onToggleTheme}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-background hover:bg-surface-container transition-colors cursor-pointer"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              aria-label="Toggle color theme"
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-          )}
         </div>
       </header>
 
@@ -423,40 +413,14 @@ export default function ChatInterface({
       >
         <div className="min-h-full flex flex-col px-4 sm:px-6 py-5 sm:py-8 w-full max-w-3xl mx-auto">
           {messages.length === 0 ? (
-            <div className="my-auto max-w-xl mx-auto w-full py-4">
+            // A short welcome and three questions to start with. Contact, CV and Projects are in the menu.
+            <div className="my-auto max-w-xl mx-auto w-full py-4" data-testid="chat-welcome">
               <h2 className="text-2xl sm:text-3xl font-semibold text-on-background tracking-tight text-balance">
-                Ask about {profile?.name || "Kamogelo Mosia"}.
+                Ask me anything about {profile?.nickname || profile?.name?.split(" ")[0] || "Kamo"}.
               </h2>
-              <p className="text-sm sm:text-base text-on-surface-variant mt-2.5 leading-relaxed">
-                Learn about his background, explore his projects and CV, or find out how to contact him directly.
+              <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">
+                Work, projects, skills or how to get in touch.
               </p>
-
-              {onNavigateTab && (
-                <div className="flex flex-wrap items-center gap-2 mt-5">
-                  <button
-                    type="button"
-                    onClick={() => onNavigateTab("contact")}
-                    className="inline-flex items-center justify-center px-4 h-10 rounded-lg bg-primary text-on-primary text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
-                  >
-                    Contact {profile?.nickname || "Kamo"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onNavigateTab("cv")}
-                    className="inline-flex items-center justify-center px-4 h-10 rounded-lg border border-outline-variant bg-surface text-on-background text-xs sm:text-sm font-medium hover:bg-surface-container transition-colors cursor-pointer"
-                  >
-                    View CV
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onNavigateTab("projects")}
-                    className="inline-flex items-center justify-center px-4 h-10 rounded-lg border border-outline-variant bg-surface text-on-background text-xs sm:text-sm font-medium hover:bg-surface-container transition-colors cursor-pointer"
-                  >
-                    Explore Projects
-                  </button>
-                </div>
-              )}
-
               <div className="mt-6 flex flex-col gap-2">
                 {PROMPT_SETS[promptSetIndex].map((prompt) => (
                   <button
@@ -464,24 +428,21 @@ export default function ChatInterface({
                     type="button"
                     disabled={!isReady}
                     onClick={() => onSubmitInput(prompt)}
-                    className="w-full text-left px-4 py-3 rounded-xl border border-outline-variant bg-surface hover:border-outline hover:bg-surface-container-low transition-colors text-xs sm:text-sm text-on-background cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between gap-3 min-h-[44px]"
+                    className="w-full text-left px-4 py-3 rounded-xl border border-outline-variant bg-surface hover:border-outline hover:bg-surface-container-low transition-colors text-sm text-on-background cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between gap-3 min-h-[44px]"
                   >
                     <span>{prompt}</span>
                     <ArrowUp size={14} className="text-on-surface-variant shrink-0 rotate-45" />
                   </button>
                 ))}
               </div>
-
-              <div className="mt-3">
-                <button
-                  type="button"
-                  onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
-                  className="inline-flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-on-background py-2 transition-colors cursor-pointer"
-                >
-                  <RefreshCw size={12} />
-                  <span>More suggestions</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setPromptSetIndex((prev) => (prev + 1) % PROMPT_SETS.length)}
+                className="mt-2 inline-flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-on-background py-2 transition-colors cursor-pointer"
+              >
+                <RefreshCw size={12} />
+                <span>Other questions</span>
+              </button>
             </div>
           ) : (
             <div className="flex flex-col gap-6 pb-4">
@@ -666,6 +627,7 @@ export default function ChatInterface({
                 : "border-outline-variant/70 opacity-75"
             }`}
           >
+            {menu}
             <textarea
               ref={textareaRef}
               value={input}

@@ -6,15 +6,15 @@ front end, Express on the server. Suggested GitHub name: `kamo-portfolio`.
 
 ## Where this project is now (27 Nov 2026)
 
-**Status: working. Ready to deploy from `main`.**
+**Status: working. Ready to deploy from `main`. All of its server-side services come from MasterAPI.**
 
 | | |
 |---|---|
-| **Works and tested** | All seven tabs (Chat, Projects, CV, Contact, Data, Updates, API) load on phone and desktop with no page errors and no sideways scrolling. The **API** page (status, visit counter, guestbook, code examples) and the **contact form** (emailed, and saved to MasterAPI) pass 11 server checks in production mode against a local MasterAPI. The guestbook rejects bad input and allows 5 posts per visitor every 10 minutes |
-| **Not tested** | The **Data** page and admin sign-in (from the 26 Nov redesign), the live Render site with a real MasterAPI address, and real email delivery |
-| **Left over, not used** | `browserAI.ts` and `BrowserAIToggle.tsx` (the on-device AI) are no longer shown in the app after the redesign. They can be wired back in or deleted |
-
-**To turn on the API page:** set `MASTERAPI_URL` and `MASTERAPI_KEY` on the Render service. Without them the page says "Not connected" and the rest of the site works as normal.
+| **Works and tested** | **Chat** on phone and desktop through the real chain (page → this server → MasterAPI → model): suggestions, typed follow-ups with memory, bold text and project cards, a built-in answer when the AI is down, a clear message and Retry when the server drops, Clear, and the floating menu. **Contact form**: saved and emailed, still succeeds if the email provider fails. **Profile and admin passcode** survive a redeploy (checked by wiping the server's files and restarting). If MasterAPI is unreachable at start-up, the admin routes stay closed until it answers. All tested against a local MasterAPI v3 with stand-ins for Hugging Face and the email provider |
+| **Not tested** | The chat against the **real Hugging Face service** and the **real email provider** (neither can be reached from the build environment), the Data page screens themselves, and the live Render site |
+| **Note** | The project cards in the chat come from the profile on the **Data** page. They currently list older projects: edit them there |
+**To connect everything:** set `MASTERAPI_URL` and `MASTERAPI_KEY` on the Render service (the MasterAPI console shows both lines when you create an app). On MasterAPI itself, set `HF_TOKEN` for the AI and `RESEND_API_KEY` + `MAIL_TO` for email. Without the connection the site still works: the chat uses built-in answers and the API page says "Not connected".
+**Also set `ADMIN_PASSCODE`** on the Render service. If it is empty, the first person to open the Data page can claim it.
 
 ## My projects
 
@@ -24,15 +24,16 @@ front end, Express on the server. Suggested GitHub name: `kamo-portfolio`.
 | MasterAPI | Shared backend for my apps (data, accounts, settings, counters) | `masterapi` |
 | Elysian | Video directory with an admin panel | `elysian-video-site` |
 | Household budget | Phone-first money app that syncs through MasterAPI | `household-budget` |
-| Portfolio AI backend | RAG chat backend for this site | `portfolio-ai-backend` |
+| Portfolio AI backend | Separate RAG chat backend (Hugging Face + Pinecone). This site's chat no longer uses it | `portfolio-ai-backend` |
 | UJ Cafeteria Stock Manager | Inventory and orders for a cafeteria (prototype) | `uj-cafeteria-stock-manager` |
 | Realtime chat | Private one-to-one chat over websockets (prototype) | `realtime-chat-app` |
 
 ## Pages
 
-- **Chat** answers from Kamo's profile (`me.json`). Answers come from the server's AI when it is set up, and built-in answers otherwise, so the chat always replies.
-- **Projects, CV and Contact.** The contact form emails Kamo and, when MasterAPI is connected, also saves a copy there.
-- **Data** edits the profile the assistant uses. It is protected by an admin passcode.
+- **Chat** answers from Kamo's profile using small open models on **Hugging Face**, reached through MasterAPI's AI service (`Qwen/Qwen2.5-7B-Instruct`, then `meta-llama/Llama-3.2-3B-Instruct`; MasterAPI's `HF_MODEL` picks your own first). It remembers the last few turns. If MasterAPI is asleep, down, or no model can answer, it answers from built-in knowledge, so the chat always replies.
+- **Navigation** is a floating pill at the bottom. Tap the menu button and it grows upward into every page.
+- **Projects, CV and Contact.** The contact form goes to MasterAPI, which saves the message and emails Kamo. Without MasterAPI it falls back to direct SMTP email.
+- **Data** edits the profile the assistant uses. It is protected by an admin passcode. With MasterAPI connected, the profile and passcode are saved there, so they survive redeploys.
 - **Updates** shows the project history (`CHANGELOG.md`).
 - **API** is a live demo of MasterAPI: a visit counter and a guestbook stored in it, with copyable examples of how to call it.
 
@@ -62,11 +63,10 @@ See `.env.example` for every variable. The ones the server reads:
 | --- | --- |
 | `APP_URL` | Public address of the site |
 | `ALLOWED_ORIGINS` | Other websites allowed to call this server (the site's own address is always allowed) |
-| `OPENROUTER_API_KEY` / `GEMINI_API_KEY` | Server-side AI (optional) |
-| `RENDER_BACKEND_URL` | Address of the portfolio AI backend (`kamo-portfolio-ai`), used as a chat fallback (optional) |
-| `SMTP_*`, `CONTACT_RECIPIENT_EMAIL` | Email for the contact form (optional) |
+| `GEMINI_API_KEY` | Voice input in the chat only (optional) |
+| `SMTP_*`, `CONTACT_RECIPIENT_EMAIL` | Direct email for the contact form, used only when MasterAPI is not connected (optional) |
 | `ADMIN_PASSCODE`, `SESSION_SECRET` | Admin sign-in for the Data page |
-| `MASTERAPI_URL` + `MASTERAPI_KEY` | Address and app key of MasterAPI. Turns on the API page and saves contact messages there (optional; the key stays on the server) |
+| `MASTERAPI_URL` + `MASTERAPI_KEY` | Address and app key of MasterAPI: turns on the AI chat, contact mail, saved profile and the API page (optional; the key stays on the server) |
 
 Keys belong only in the server's environment. Nothing that starts with `VITE_` should be secret, because the browser can read it.
 
@@ -74,9 +74,9 @@ Keys belong only in the server's environment. Nothing that starts with `VITE_` s
 
 ```
 src/components/  the pages (Chat, Projects, CV, Contact, ProfileData, Changelog, Api) and the bottom navigation
-src/lib/         aiClient.ts, assistantEngine.ts, serverReadiness.ts, browserAI.ts (not used)
+src/lib/         assistantEngine.ts (built-in answers), serverReadiness.ts, aiClient.ts and browserAI.ts (not used)
 server.ts        Express API: health, chat, contact, admin sign-in, profile and the MasterAPI demo routes
-masterapi.ts     Server-side client for MasterAPI
+masterapi.ts     Server-side client for MasterAPI (chat, mail, saved settings, counters)
 me.json          Kamo's profile, used by the assistant
 render.yaml      Render Blueprint
 CHANGELOG.md     Project history
