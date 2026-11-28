@@ -148,6 +148,7 @@ export default function App() {
                 profile={profile}
                 theme={theme}
                 onToggleTheme={toggleTheme}
+                menu={<BottomNav variant="inline" currentTab={currentTab} onTabChange={setCurrentTab} theme={theme} onToggleTheme={toggleTheme} />}
               />
             </motion.div>
           )}
@@ -242,7 +243,8 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
+      {/* On the chat page the menu sits inside the message bar; other pages get the floating pill. */}
+      {currentTab !== "chat" && <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} theme={theme} onToggleTheme={toggleTheme} />}
     </div>
   );
 }

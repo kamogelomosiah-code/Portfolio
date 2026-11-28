@@ -52,6 +52,7 @@ export default function MobileApp({
             profile={profile}
             theme={theme}
             onToggleTheme={onToggleTheme}
+            menu={<BottomNav variant="inline" currentTab={activeTab} onTabChange={setActiveTab} theme={theme} onToggleTheme={onToggleTheme} />}
           />
         )}
 
@@ -96,7 +97,8 @@ export default function MobileApp({
         )}
       </main>
 
-      <BottomNav currentTab={activeTab} onTabChange={setActiveTab} />
+      {/* On the chat page the menu sits inside the message bar; other pages get the floating pill. */}
+      {activeTab !== "chat" && <BottomNav currentTab={activeTab} onTabChange={setActiveTab} theme={theme} onToggleTheme={onToggleTheme} />}
     </div>
   );
 }
